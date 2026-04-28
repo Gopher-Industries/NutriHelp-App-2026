@@ -106,11 +106,10 @@ Copy `.env.example` to `.env` and fill in the required values:
 
 | Branch | Purpose |
 |--------|---------|
-| `master` | Production-ready, protected — PRs required, 1 approval minimum |
-| `develop` | Integration branch — merge feature branches here first |
+| `main` | Production-ready, protected — PRs required, 1 approval minimum, no direct pushes |
 | `feature/M-XX-description` | Individual feature work (e.g. `feature/M-13-login-screen`) |
 
-**Workflow:** create a `feature/` branch from `develop` → open PR into `develop` → squash merge → periodically release `develop` → `master`.
+**Workflow:** create a `feature/` branch from `main` → open PR → get 1 approval → merge directly into `main`.
 
 ---
 

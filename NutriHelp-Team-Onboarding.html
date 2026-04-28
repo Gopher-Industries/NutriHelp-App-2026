@@ -114,14 +114,13 @@
   <table>
     <tr><th>Branch</th><th>Purpose</th></tr>
     <tr><td><strong>main</strong></td><td>Production-ready. Protected — PRs required, 1 approval minimum, no direct pushes.</td></tr>
-    <tr><td><strong>develop</strong></td><td>Integration branch. All feature branches merge here first.</td></tr>
     <tr><td><strong>feature/M-XX-name</strong></td><td>Individual feature work. Example: <code>feature/M-13-login-screen</code></td></tr>
   </table>
 
   <h3>Daily Workflow</h3>
-  <pre># 1. Always start from develop
-  git checkout develop
-  git pull origin develop
+  <pre># 1. Always start from main
+  git checkout main
+  git pull origin main
 
   # 2. Create your feature branch (use your task number)
   git checkout -b feature/M-XX-your-feature-name
@@ -133,10 +132,11 @@
   # 4. Push your branch
   git push origin feature/M-XX-your-feature-name
 
-  # 5. Open a Pull Request into develop on GitHub</pre>
+  # 5. Open a Pull Request into main on GitHub
+  # 6. Get 1 approval → merge</pre>
 
   <div class="note">
-    <strong>Rule:</strong> Never push directly to <code>main</code> or <code>develop</code>. Always use a feature branch and open a PR.
+    <strong>Rule:</strong> Never push directly to <code>main</code>. Always use a feature branch and open a PR — merges require at least 1 approval.
   </div>
 
   <hr>
@@ -148,7 +148,7 @@
     <tr><td>Git (feature branch)</td><td>Standard code sharing</td><td>Push branch → teammates checkout and run</td></tr>
     <tr><td>Expo Tunnel</td><td>Demo across different networks</td><td><code>npx expo start --tunnel</code> → share QR code</td></tr>
     <tr><td>Same WiFi LAN</td><td>In-person team sessions</td><td><code>npx expo start</code> → scan QR (same network only)</td></tr>
-    <tr><td>EAS Update</td><td>Remote device testing without rebuilding</td><td><code>eas update --branch develop</code></td></tr>
+    <tr><td>EAS Update</td><td>Remote device testing without rebuilding</td><td><code>eas update --branch main</code></td></tr>
   </table>
 
   <hr>
