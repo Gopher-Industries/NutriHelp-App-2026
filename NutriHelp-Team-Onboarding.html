@@ -1,0 +1,217 @@
+  <!DOCTYPE html>
+  <html>
+  <head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; margin: 2.5cm; color: #000; }
+    h1 { font-size: 20pt; color: #1a7a3c; border-bottom: 2px solid #1a7a3c; padding-bottom: 6px; }
+    h2 { font-size: 14pt; color: #1a7a3c; margin-top: 24px; }
+    h3 { font-size: 12pt; color: #333; margin-top: 16px; }
+    pre { background: #f4f4f4; border-left: 4px solid #1a7a3c; padding: 10px 14px; font-family: Consolas, monospace; font-size: 10pt; white-space: pre-wrap; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th { background: #1a7a3c; color: white; padding: 8px 12px; text-align: left; }
+    td { border: 1px solid #ccc; padding: 7px 12px; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .note { background: #fff8e1; border-left: 4px solid #f9a825; padding: 8px 14px; margin: 10px 0; }
+    .warning { background: #fdecea; border-left: 4px solid #e53935; padding: 8px 14px; margin: 10px 0; }
+    ul, ol { margin: 8px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+    .step { background: #e8f5e9; border-radius: 4px; padding: 2px 8px; font-weight: bold; color: #1a7a3c; }
+  </style>
+  </head>
+  <body>
+
+  <h1>NutriHelp Mobile App — Team Onboarding Guide</h1>
+  <p><strong>Project:</strong> NutriHelp-App-2026 &nbsp;|&nbsp; <strong>Platform:</strong> Android (Expo / React Native) &nbsp;|&nbsp; <strong>Updated:</strong> April 2026</p>
+
+  <hr>
+
+  <h2>1. What Is This Project?</h2>
+  <p>NutriHelp is a cross-platform mobile application that helps users track nutrition, scan food barcodes, discover recipes, and manage health and wellness goals. It is built with <strong>Expo SDK 54 (React Native + TypeScript)</strong> and connects to a hosted backend API.</p>
+
+  <table>
+    <tr><th>Resource</th><th>URL</th></tr>
+    <tr><td>GitHub Repository</td><td>https://github.com/Gopher-Industries/NutriHelp-App-2026</td></tr>
+    <tr><td>Backend API</td><td>https://nutrihelp-backend-deployment.onrender.com</td></tr>
+    <tr><td>API Docs (Swagger)</td><td>https://nutrihelp-backend-deployment.onrender.com/api-docs</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Note:</strong> The backend is hosted on Render's free tier. The first API request after inactivity may take ~30 seconds to wake the server.
+  </div>
+
+  <hr>
+
+  <h2>2. Prerequisites — Install Once</h2>
+  <p>Every team member must install the following before cloning the repo:</p>
+
+  <table>
+    <tr><th>Tool</th><th>Purpose</th><th>Where to Get It</th></tr>
+    <tr><td>Node.js 18 LTS</td><td>JavaScript runtime</td><td>https://nodejs.org</td></tr>
+    <tr><td>Git</td><td>Version control</td><td>https://git-scm.com</td></tr>
+    <tr><td>Android Studio</td><td>Android emulator</td><td>https://developer.android.com/studio</td></tr>
+    <tr><td>EAS CLI (optional)</td><td>Build APKs for physical devices</td><td><code>npm install -g eas-cli</code></td></tr>
+  </table>
+
+  <h3>Set Up Android Emulator (Android Studio)</h3>
+  <ol>
+    <li>Open Android Studio</li>
+    <li>Go to <strong>Tools → Device Manager → Create Device</strong></li>
+    <li>Select <strong>Phone → Pixel 6 or Pixel 7</strong></li>
+    <li>Select <strong>API Level 33</strong> (download if prompted)</li>
+    <li>Click <strong>Finish</strong></li>
+    <li>Press the ▶ Play button to start the emulator</li>
+  </ol>
+
+  <hr>
+
+  <h2>3. Getting the Project Running Locally</h2>
+
+  <h3>Step 1 — Clone the Repository</h3>
+  <pre>git clone https://github.com/Gopher-Industries/NutriHelp-App-2026.git
+  cd NutriHelp-App-2026</pre>
+
+  <h3>Step 2 — Install Dependencies</h3>
+  <pre>npm install
+  npx expo install</pre>
+  <p><code>npm install</code> handles all JavaScript packages. <code>npx expo install</code> ensures all Expo SDK packages are at the correct compatible versions.</p>
+
+  <h3>Step 3 — Set Up Environment Variables</h3>
+  <pre>cp .env.example .env</pre>
+  <p>The <code>.env.example</code> file already contains the backend API URL and Supabase credentials. Simply copy it — no manual changes needed for most developers.</p>
+
+  <div class="warning">
+    <strong>Important:</strong> Never commit the <code>.env</code> file to Git. It is already listed in <code>.gitignore</code>.
+  </div>
+
+  <h3>Step 4 — Start the Development Server</h3>
+  <pre>npx expo start --clear</pre>
+  <p>Then choose how to run the app:</p>
+  <ul>
+    <li>Press <strong>a</strong> → opens on Android emulator (must be running first)</li>
+    <li>Scan the <strong>QR code</strong> with Expo Go app on your phone (same WiFi required)</li>
+  </ul>
+
+  <hr>
+
+  <h2>4. Environment Variables Reference</h2>
+
+  <table>
+    <tr><th>Variable</th><th>Description</th><th>Pre-filled?</th></tr>
+    <tr><td>EXPO_PUBLIC_API_BASE_URL</td><td>Backend API base URL</td><td>Yes</td></tr>
+    <tr><td>EXPO_PUBLIC_SUPABASE_URL</td><td>Supabase project URL</td><td>Yes</td></tr>
+    <tr><td>EXPO_PUBLIC_SUPABASE_ANON_KEY</td><td>Supabase anonymous key</td><td>Yes</td></tr>
+    <tr><td>EXPO_PUBLIC_API_BARCODE_URL</td><td>Barcode lookup API URL</td><td>No — ask team lead</td></tr>
+    <tr><td>EXPO_PUBLIC_AI_MODEL_URL</td><td>AI/ML model endpoint</td><td>No — ask team lead</td></tr>
+    <tr><td>EXPO_PUBLIC_FIREBASE_CONFIG</td><td>Firebase config JSON string</td><td>No — ask team lead</td></tr>
+  </table>
+
+  <hr>
+
+  <h2>5. Branch Strategy</h2>
+
+  <table>
+    <tr><th>Branch</th><th>Purpose</th></tr>
+    <tr><td><strong>main</strong></td><td>Production-ready. Protected — PRs required, 1 approval minimum, no direct pushes.</td></tr>
+    <tr><td><strong>develop</strong></td><td>Integration branch. All feature branches merge here first.</td></tr>
+    <tr><td><strong>feature/M-XX-name</strong></td><td>Individual feature work. Example: <code>feature/M-13-login-screen</code></td></tr>
+  </table>
+
+  <h3>Daily Workflow</h3>
+  <pre># 1. Always start from develop
+  git checkout develop
+  git pull origin develop
+
+  # 2. Create your feature branch (use your task number)
+  git checkout -b feature/M-XX-your-feature-name
+
+  # 3. Write code, commit often
+  git add .
+  git commit -m "feat: description of what you did"
+
+  # 4. Push your branch
+  git push origin feature/M-XX-your-feature-name
+
+  # 5. Open a Pull Request into develop on GitHub</pre>
+
+  <div class="note">
+    <strong>Rule:</strong> Never push directly to <code>main</code> or <code>develop</code>. Always use a feature branch and open a PR.
+  </div>
+
+  <hr>
+
+  <h2>6. Sharing Live Changes With the Team</h2>
+
+  <table>
+    <tr><th>Method</th><th>Best For</th><th>How</th></tr>
+    <tr><td>Git (feature branch)</td><td>Standard code sharing</td><td>Push branch → teammates checkout and run</td></tr>
+    <tr><td>Expo Tunnel</td><td>Demo across different networks</td><td><code>npx expo start --tunnel</code> → share QR code</td></tr>
+    <tr><td>Same WiFi LAN</td><td>In-person team sessions</td><td><code>npx expo start</code> → scan QR (same network only)</td></tr>
+    <tr><td>EAS Update</td><td>Remote device testing without rebuilding</td><td><code>eas update --branch develop</code></td></tr>
+  </table>
+
+  <hr>
+
+  <h2>7. Project Structure</h2>
+
+  <pre>src/
+  ├── api/           ← API clients and fetch helpers
+  ├── context/       ← React context providers (auth, theme, etc.)
+  ├── hooks/         ← Custom React hooks
+  ├── utils/         ← Utility and helper functions
+  ├── navigation/    ← React Navigation stacks, tabs, drawers
+  ├── screens/       ← Screen components grouped by feature
+  │   ├── auth/
+  │   ├── home/
+  │   ├── meal/
+  │   ├── recipes/
+  │   ├── scan/
+  │   ├── health/
+  │   ├── community/
+  │   ├── wellness/
+  │   └── account/
+  ├── components/    ← Shared reusable UI components
+  └── styles/        ← Global Tailwind CSS and theme styles
+  assets/            ← Images, icons, fonts</pre>
+
+  <hr>
+
+  <h2>8. Testing on a Physical Android Device</h2>
+  <p>For large projects, Expo Go can be slow. A <strong>development build APK</strong> is faster and supports all native features.</p>
+
+  <ol>
+    <li>Install EAS CLI: <code>npm install -g eas-cli</code></li>
+    <li>Login: <code>eas login</code></li>
+    <li>Build the APK: <code>eas build --platform android --profile development --local</code></li>
+    <li>Install the generated <code>.apk</code> on your Android phone</li>
+    <li>Run: <code>npx expo start --dev-client</code></li>
+    <li>Connect your phone — hot reload works instantly</li>
+  </ol>
+
+  <div class="note">
+    <strong>Tip:</strong> The dev APK only needs to be rebuilt when native dependencies change. JS/UI changes always hot-reload.
+  </div>
+
+  <hr>
+
+  <h2>9. Useful Commands Cheat Sheet</h2>
+
+  <table>
+    <tr><th>Command</th><th>What It Does</th></tr>
+    <tr><td><code>npx expo start</code></td><td>Start development server</td></tr>
+    <tr><td><code>npx expo start --clear</code></td><td>Start and clear Metro bundler cache</td></tr>
+    <tr><td><code>npx expo start --tunnel</code></td><td>Start with public tunnel URL (share across networks)</td></tr>
+    <tr><td><code>npx expo start --dev-client</code></td><td>Start for development build APK</td></tr>
+    <tr><td><code>npm install</code></td><td>Install all JS dependencies</td></tr>
+    <tr><td><code>npx expo install</code></td><td>Install Expo-compatible package versions</td></tr>
+    <tr><td><code>eas build --platform android --profile development --local</code></td><td>Build dev APK locally</td></tr>
+    <tr><td><code>eas update --branch develop</code></td><td>Push JS update to all dev build devices</td></tr>
+  </table>
+
+  <hr>
+
+  <p style="color:#888; font-size:9pt;">NutriHelp Team — T1 2026 | Gopher Industries</p>
+
+  </body>
+  </html>
