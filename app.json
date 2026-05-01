@@ -28,7 +28,8 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      "expo-font"
     ]
   }
 }
