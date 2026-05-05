@@ -9,8 +9,15 @@ import SignupScreen from "./src/screens/auth/SignupScreen";
 import ForgotPasswordStep1Screen from "./src/screens/auth/ForgotPasswordStep1Screen";
 import ForgotPasswordStep2Screen from "./src/screens/auth/ForgotPasswordStep2Screen";
 import ForgotPasswordStep3Screen from "./src/screens/auth/ForgotPasswordStep3Screen";
+import MFAScreen from "./src/screens/auth/MFAScreen";
 
-type AuthScreenName = "login" | "signup" | "forgot1" | "forgot2" | "forgot3";
+type AuthScreenName =
+  | "login"
+  | "signup"
+  | "forgot1"
+  | "forgot2"
+  | "forgot3"
+  | "mfa";
 
 type AuthParams = {
   email?: string;
@@ -79,6 +86,15 @@ function AppContent() {
             code={authParams.code}
             goTo={goTo}
           />
+          <StatusBar style="auto" />
+        </>
+      );
+    }
+
+    if (screen === "mfa") {
+      return (
+        <>
+          <MFAScreen email={authParams.email} goTo={goTo} />
           <StatusBar style="auto" />
         </>
       );

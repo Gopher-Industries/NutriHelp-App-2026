@@ -83,7 +83,9 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
         }
 
         if (error.status === 202) {
-          setGeneralError("MFA screen will be connected next.");
+          goTo("mfa", {
+            email: values.email.trim(),
+          });
           return;
         }
       }
