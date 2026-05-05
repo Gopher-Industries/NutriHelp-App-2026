@@ -33,7 +33,7 @@ const loginSchema = {
   },
 };
 
-export default function LoginScreen({ goTo = (_nextScreen) => {} }) {
+export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
 
   const [loading, setLoading] = useState(false);
@@ -188,9 +188,7 @@ export default function LoginScreen({ goTo = (_nextScreen) => {} }) {
 
               <HelperLink
                 title="Forgot Password?"
-                onPress={() =>
-                  setGeneralError("Forgot Password screen will be connected next.")
-                }
+                onPress={() => goTo("forgot1")}
               />
             </View>
           </AuthCard>

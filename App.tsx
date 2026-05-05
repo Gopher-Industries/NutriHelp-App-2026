@@ -6,15 +6,28 @@ import { ActivityIndicator, Text, View } from "react-native";
 import { UserProvider, useUser } from "./src/context/UserContext";
 import LoginScreen from "./src/screens/auth/LoginScreen";
 import SignupScreen from "./src/screens/auth/SignupScreen";
+import ForgotPasswordStep1Screen from "./src/screens/auth/ForgotPasswordStep1Screen";
+import ForgotPasswordStep2Screen from "./src/screens/auth/ForgotPasswordStep2Screen";
+import ForgotPasswordStep3Screen from "./src/screens/auth/ForgotPasswordStep3Screen";
 
-type AuthScreenName = "login" | "signup";
+type AuthScreenName = "login" | "signup" | "forgot1" | "forgot2" | "forgot3";
+
+type AuthParams = {
+  email?: string;
+  code?: string;
+};
 
 function AppContent() {
   const { loading, isAuthenticated, logout } = useUser();
   const [screen, setScreen] = useState<AuthScreenName>("login");
+  const [authParams, setAuthParams] = useState<AuthParams>({});
 
-  const goTo = (nextScreen: AuthScreenName) => {
+  const goTo = (nextScreen: AuthScreenName, params: AuthParams = {}) => {
     setScreen(nextScreen);
+    setAuthParams((previous) => ({
+      ...previous,
+      ...params,
+    }));
   };
 
   if (loading) {
@@ -32,6 +45,40 @@ function AppContent() {
       return (
         <>
           <SignupScreen goTo={goTo} />
+          <StatusBar style="auto" />
+        </>
+      );
+    }
+
+    if (screen === "forgot1") {
+      return (
+        <>
+          <ForgotPasswordStep1Screen goTo={goTo} />
+          <StatusBar style="auto" />
+        </>
+      );
+    }
+
+    if (screen === "forgot2") {
+      return (
+        <>
+          <ForgotPasswordStep2Screen
+            email={authParams.email}
+            goTo={goTo}
+          />
+          <StatusBar style="auto" />
+        </>
+      );
+    }
+
+    if (screen === "forgot3") {
+      return (
+        <>
+          <ForgotPasswordStep3Screen
+            email={authParams.email}
+            code={authParams.code}
+            goTo={goTo}
+          />
           <StatusBar style="auto" />
         </>
       );
