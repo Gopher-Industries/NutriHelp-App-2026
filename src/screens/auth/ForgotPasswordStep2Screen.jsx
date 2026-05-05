@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import { post } from "../../api/baseApi";
+import { verifyPasswordResetCode, requestPasswordReset } from "../../api/authApi";
 
 import {
   AuthButton,
@@ -56,21 +56,14 @@ export default function ForgotPasswordStep2Screen({
     setLoading(true);
 
     try {
-      await post(
-        "/api/auth/verify-reset-code",
-        {
-          email,
-          code,
-        },
-        { skipAuth: true }
-      );
+      await verifyPasswordResetCode(email, code);
 
       goTo("forgot3", {
         email,
         code,
       });
-    } catch {
-      setError("Invalid code. You can continue for UI testing.");
+    } catch (error) {
+      setError(error.message || "Invalid code. You can continue for UI testing.");
 
       setTimeout(() => {
         goTo("forgot3", {
@@ -92,15 +85,9 @@ export default function ForgotPasswordStep2Screen({
     setError("");
 
     try {
-      await post(
-        "/api/auth/forgot-password",
-        {
-          email,
-        },
-        { skipAuth: true }
-      );
-    } catch {
-      setError("Resend is unavailable right now. Please try again later.");
+      await requestPasswordReset(email);
+    } catch (error) {
+      setError(error.message || "Unable to resend code right now. Please try again later.");
     }
   };
 

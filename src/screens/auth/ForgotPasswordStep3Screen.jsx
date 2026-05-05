@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { post } from "../../api/baseApi";
+import { resetPassword } from "../../api/authApi";
 import useFormValidation from "../../hooks/useFormValidation";
 
 import {
@@ -60,20 +60,11 @@ export default function ForgotPasswordStep3Screen({
     setLoading(true);
 
     try {
-      await post(
-        "/api/auth/reset-password",
-        {
-          email,
-          code,
-          password: values.password,
-        },
-        { skipAuth: true }
-      );
-
+      await resetPassword(email, code, values.password);
       setPasswordReset(true);
-    } catch {
+    } catch (error) {
       setGeneralError(
-        "Password reset could not be completed right now. Showing success for UI testing."
+        error.message || "Password reset could not be completed right now. Showing success for UI testing."
       );
 
       setTimeout(() => {

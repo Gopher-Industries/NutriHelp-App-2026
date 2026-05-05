@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { post } from "../../api/baseApi";
+import { requestPasswordReset } from "../../api/authApi";
 import useFormValidation from "../../hooks/useFormValidation";
 
 import {
@@ -47,20 +47,14 @@ export default function ForgotPasswordStep1Screen({ goTo = (_nextScreen, _params
     setLoading(true);
 
     try {
-      await post(
-        "/api/auth/forgot-password",
-        {
-          email: values.email.trim(),
-        },
-        { skipAuth: true }
-      );
+      await requestPasswordReset(values.email);
 
       goTo("forgot2", {
         email: values.email.trim(),
       });
-    } catch {
+    } catch (error) {
       setGeneralError(
-        "We could not send the reset email right now. You can still continue for UI testing."
+        error.message || "We could not send the reset email right now. You can still continue for UI testing."
       );
 
       setTimeout(() => {

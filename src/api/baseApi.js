@@ -58,9 +58,11 @@ async function parseResponseBody(response) {
 
 async function triggerUnauthorizedHandler() {
   if (!onUnauthorized || unauthorizedInProgress) {
+    console.log("[baseApi] Unauthorized handler not set or already in progress");
     return;
   }
 
+  console.log("[baseApi] Triggering unauthorized handler");
   unauthorizedInProgress = true;
   try {
     await onUnauthorized();
@@ -95,7 +97,10 @@ export async function request(method, path, options = {}) {
     }
   }
 
-  const response = await fetch(toAbsoluteUrl(path, query), {
+  const url = toAbsoluteUrl(path, query);
+  console.log(`[baseApi] ${method} ${url}`, { body });
+
+  const response = await fetch(url, {
     method,
     headers: requestHeaders,
     body: requestBody,
@@ -103,6 +108,10 @@ export async function request(method, path, options = {}) {
   });
 
   const data = await parseResponseBody(response);
+
+  console.log(`[baseApi] Response status: ${response.status}`, { 
+    data: data ? JSON.stringify(data) : null 
+  });
 
   if (response.status === 401) {
     await triggerUnauthorizedHandler();

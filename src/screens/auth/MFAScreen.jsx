@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import { post } from "../../api/baseApi";
+import { verifyMFA, resendMFACode } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 
 import {
@@ -21,6 +21,7 @@ import {
 
 export default function MFAScreen({
   email = "",
+  password = "",
   goTo = (_nextScreen, _params) => {},
 }) {
   const { login } = useUser();
@@ -29,6 +30,11 @@ export default function MFAScreen({
   const [loading, setLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(60);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Send MFA code when screen loads
+    handleResend();
+  }, []);
 
   useEffect(() => {
     if (resendSeconds <= 0) {
@@ -62,21 +68,21 @@ export default function MFAScreen({
       return;
     }
 
+    if (!password) {
+      setError("Missing password for MFA verification.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await post(
-        "/api/auth/mfa/verify",
-        {
-          email,
-          code,
-        },
-        { skipAuth: true }
-      );
-
+      const response = await verifyMFA(email, password, code);
       await login(response);
-    } catch {
-      setError("Invalid MFA code. Please try again.");
+    } catch (error) {
+      console.error("[MFAScreen] verifyMFA error:", error);
+      setError(
+        error?.message || "Invalid MFA code. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -87,18 +93,18 @@ export default function MFAScreen({
       return;
     }
 
+    if (!email) {
+      setError("Cannot resend MFA code: missing email.");
+      return;
+    }
+
     setResendSeconds(60);
     setError("");
 
     try {
-      await post(
-        "/api/auth/mfa/resend",
-        {
-          email,
-        },
-        { skipAuth: true }
-      );
-    } catch {
+      await resendMFACode(email);
+    } catch (error) {
+      console.error("[MFAScreen] resendMFACode error:", error);
       setError("Unable to resend MFA code right now. Please try again later.");
     }
   };

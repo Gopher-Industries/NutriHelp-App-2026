@@ -8,7 +8,8 @@ import {
   View,
 } from "react-native";
 
-import { ApiError, post } from "../../api/baseApi";
+import { ApiError } from "../../api/baseApi";
+import { registerUser } from "../../api/authApi";
 import useFormValidation from "../../hooks/useFormValidation";
 
 import {
@@ -68,27 +69,57 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
     setLoading(true);
 
     try {
-      await post(
-        "/api/auth/register",
-        {
-          firstName: values.firstName.trim(),
-          lastName: values.lastName.trim(),
-          email: values.email.trim(),
-          password: values.password,
-        },
-        { skipAuth: true }
+      console.log("[SignupScreen] Attempting signup");
+      await registerUser(
+        values.firstName,
+        values.lastName,
+        values.email,
+        values.password
       );
 
       setAccountCreated(true);
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        setErrors({
-          email: "An account with this email already exists.",
+      console.error("[SignupScreen] Signup error:", error);
+      
+      if (error instanceof ApiError) {
+        console.error("[SignupScreen] API Error details:", {
+          status: error.status,
+          data: error.data,
+          message: error.message
         });
-        return;
+        
+        if (error.status === 409) {
+          setErrors({
+            email: "An account with this email already exists.",
+          });
+          return;
+        }
+
+        // Extract error messages from validation errors
+        if (error.data?.errors && Array.isArray(error.data.errors)) {
+          const messages = error.data.errors
+            .map(err => {
+              if (typeof err === 'string') return err;
+              if (err.message) return err.message;
+              if (err.msg) return err.msg;
+              return JSON.stringify(err);
+            })
+            .filter(msg => msg)
+            .join(", ");
+          
+          if (messages) {
+            setGeneralError(messages);
+            return;
+          }
+        }
+
+        if (error.data?.error) {
+          setGeneralError(error.data.error);
+          return;
+        }
       }
 
-      setGeneralError("Account creation failed. Please try again.");
+      setGeneralError(error.message || "Account creation failed. Please try again.");
     } finally {
       setLoading(false);
     }

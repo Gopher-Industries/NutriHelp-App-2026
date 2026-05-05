@@ -9,7 +9,8 @@ import {
   View,
 } from "react-native";
 
-import { ApiError, post } from "../../api/baseApi";
+import { ApiError } from "../../api/baseApi";
+import { loginUser } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 import useFormValidation from "../../hooks/useFormValidation";
 
@@ -57,22 +58,43 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
     setLoading(true);
 
     try {
-      const response = await post(
-        "/api/auth/login",
-        {
+      console.log("[LoginScreen] Attempting login with email:", values.email);
+      const response = await loginUser(values.email, values.password, rememberMe);
+      console.log("[LoginScreen] Login response received:", JSON.stringify(response, null, 2));
+
+      if (
+        response?.mfaRequired ||
+        response?.mfa_enabled ||
+        response?.user?.mfa_enabled ||
+        response?.response?.user?.mfa_enabled
+      ) {
+        console.log("[LoginScreen] MFA required, navigating to MFA screen");
+        goTo("mfa", {
           email: values.email.trim(),
           password: values.password,
-          rememberMe,
-        },
-        { skipAuth: true }
-      );
+        });
+        return;
+      }
 
-      await login(response);
+      const loginResult = await login(response);
+      console.log("[LoginScreen] Login to UserContext result:", loginResult);
     } catch (error) {
+      console.error("[LoginScreen] Login error:", error);
+      
+      // Check for MFA required error (thrown from authApi)
+      if (error.code === "MFA_REQUIRED" || error.status === 202) {
+        console.log("[LoginScreen] MFA required, navigating to MFA screen");
+        goTo("mfa", {
+          email: values.email.trim(),
+          password: values.password,
+        });
+        return;
+      }
+      
       if (error instanceof ApiError) {
         if (error.status === 401) {
           setErrors({
-            password: "Password incorrect.",
+            password: "Email or password incorrect.",
           });
           return;
         }
@@ -81,16 +103,9 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
           setGeneralError("Your account has been deactivated. Contact support.");
           return;
         }
-
-        if (error.status === 202) {
-          goTo("mfa", {
-            email: values.email.trim(),
-          });
-          return;
-        }
       }
 
-      setGeneralError("Login failed. Please try again.");
+      setGeneralError(error.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

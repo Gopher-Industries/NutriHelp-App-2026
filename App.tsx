@@ -21,6 +21,7 @@ type AuthScreenName =
 
 type AuthParams = {
   email?: string;
+  password?: string;
   code?: string;
 };
 
@@ -94,7 +95,11 @@ function AppContent() {
     if (screen === "mfa") {
       return (
         <>
-          <MFAScreen email={authParams.email} goTo={goTo} />
+          <MFAScreen
+            email={authParams.email}
+            password={authParams.password}
+            goTo={goTo}
+          />
           <StatusBar style="auto" />
         </>
       );
