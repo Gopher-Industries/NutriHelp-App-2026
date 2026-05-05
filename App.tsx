@@ -1,12 +1,21 @@
 import "./src/styles/global.css";
 import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 import { UserProvider, useUser } from "./src/context/UserContext";
 import LoginScreen from "./src/screens/auth/LoginScreen";
+import SignupScreen from "./src/screens/auth/SignupScreen";
+
+type AuthScreenName = "login" | "signup";
 
 function AppContent() {
   const { loading, isAuthenticated, logout } = useUser();
+  const [screen, setScreen] = useState<AuthScreenName>("login");
+
+  const goTo = (nextScreen: AuthScreenName) => {
+    setScreen(nextScreen);
+  };
 
   if (loading) {
     return (
@@ -19,9 +28,18 @@ function AppContent() {
   }
 
   if (!isAuthenticated) {
+    if (screen === "signup") {
+      return (
+        <>
+          <SignupScreen goTo={goTo} />
+          <StatusBar style="auto" />
+        </>
+      );
+    }
+
     return (
       <>
-        <LoginScreen />
+        <LoginScreen goTo={goTo} />
         <StatusBar style="auto" />
       </>
     );

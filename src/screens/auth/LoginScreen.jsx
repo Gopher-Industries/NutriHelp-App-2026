@@ -33,7 +33,7 @@ const loginSchema = {
   },
 };
 
-export default function LoginScreen() {
+export default function LoginScreen({ goTo = (_nextScreen) => {} }) {
   const { login } = useUser();
 
   const [loading, setLoading] = useState(false);
@@ -177,12 +177,10 @@ export default function LoginScreen() {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                Don&apos;t have an account?{" "}
+                {"Don't have an account? "}
                 <Text
                   style={styles.footerLinkDark}
-                  onPress={() =>
-                    setGeneralError("Create Account screen will be connected next.")
-                  }
+                  onPress={() => goTo("signup")}
                 >
                   Create Account.
                 </Text>
