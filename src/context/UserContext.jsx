@@ -83,16 +83,21 @@ export function UserProvider({ children }) {
     (nextExpiresAt) => {
       clearAutoLogoutTimer();
       if (!nextExpiresAt) {
+        console.log("[UserContext] No expiration time, auto-logout not scheduled");
         return;
       }
 
       const remaining = nextExpiresAt - Date.now();
+      console.log("[UserContext] Auto-logout scheduled. Expires at:", new Date(nextExpiresAt).toISOString(), "Remaining ms:", remaining);
+      
       if (remaining <= 0) {
+        console.log("[UserContext] Token already expired, logging out immediately");
         logout();
         return;
       }
 
       autoLogoutTimerRef.current = setTimeout(() => {
+        console.log("[UserContext] Auto-logout timer fired");
         logout();
       }, remaining);
     },
@@ -101,6 +106,8 @@ export function UserProvider({ children }) {
 
   const login = useCallback(
     async (authOrToken, maybeUser = null, maybeExpiresAt = null) => {
+      console.log("[UserContext] login() called with:", { authOrToken, maybeUser, maybeExpiresAt });
+      
       const authObject =
         authOrToken && typeof authOrToken === "object" && !Array.isArray(authOrToken)
           ? authOrToken
@@ -115,11 +122,14 @@ export function UserProvider({ children }) {
           ? authObject.expiresAt
           : maybeExpiresAt || getTokenExpiryMs(nextToken);
 
+      console.log("[UserContext] Processed login data:", { nextToken: nextToken ? "***" : null, nextUser, nextExpiresAt: nextExpiresAt ? new Date(nextExpiresAt).toISOString() : null });
+
       if (!nextToken) {
         throw new Error("login() requires a JWT token.");
       }
 
       if (nextExpiresAt && nextExpiresAt <= Date.now()) {
+        console.log("[UserContext] Token already expired");
         await logout();
         return false;
       }
@@ -135,6 +145,7 @@ export function UserProvider({ children }) {
       setUser(nextUser);
       setExpiresAt(nextExpiresAt || null);
       scheduleAutoLogout(nextExpiresAt || null);
+      console.log("[UserContext] Login successful");
       return true;
     },
     [logout, scheduleAutoLogout]
@@ -150,12 +161,18 @@ export function UserProvider({ children }) {
           AsyncStorage.getItem(USER_STORAGE_KEY),
         ]);
 
+        console.log("[UserContext] Bootstrap auth - storedToken:", storedToken ? "***" : null, "storedUser:", storedUser ? "***" : null);
+
         if (!storedToken) {
+          console.log("[UserContext] No stored token");
           return;
         }
 
         const nextExpiresAt = getTokenExpiryMs(storedToken);
+        console.log("[UserContext] Token expiry:", nextExpiresAt ? new Date(nextExpiresAt).toISOString() : null);
+        
         if (nextExpiresAt && nextExpiresAt <= Date.now()) {
+          console.log("[UserContext] Stored token already expired");
           await logout();
           return;
         }
@@ -169,6 +186,7 @@ export function UserProvider({ children }) {
         setUser(parsedUser);
         setExpiresAt(nextExpiresAt || null);
         scheduleAutoLogout(nextExpiresAt || null);
+        console.log("[UserContext] Bootstrap auth successful");
       } finally {
         if (isMounted) {
           setLoading(false);
