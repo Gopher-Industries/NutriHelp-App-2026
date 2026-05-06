@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
 export const AUTH_TOKEN_KEY = "nutrihelp.auth.token";
+export const REFRESH_TOKEN_KEY = "nutrihelp.auth.refreshToken";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 

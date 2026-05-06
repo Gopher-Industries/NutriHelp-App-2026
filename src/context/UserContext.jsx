@@ -11,7 +11,8 @@ import {
   useState,
 } from "react";
 
-import { AUTH_TOKEN_KEY, setUnauthorizedHandler } from "../api/baseApi";
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from "../api/baseApi";
+import { logoutUser } from "../api/authApi";
 
 const USER_STORAGE_KEY = "nutrihelp.auth.user";
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
@@ -53,6 +54,7 @@ function getTokenExpiryMs(token) {
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [refreshToken, setRefreshToken] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -69,12 +71,18 @@ export function UserProvider({ children }) {
 
   const logout = useCallback(async () => {
     clearAutoLogoutTimer();
+
+    const storedRefreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    await logoutUser(storedRefreshToken);
+
     setUser(null);
     setToken(null);
+    setRefreshToken(null);
     setExpiresAt(null);
 
     await Promise.all([
       SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
+      SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
       AsyncStorage.removeItem(USER_STORAGE_KEY),
     ]);
   }, [clearAutoLogoutTimer]);
@@ -116,25 +124,26 @@ export function UserProvider({ children }) {
       const nextToken = authObject
         ? authObject.token || authObject.accessToken
         : authOrToken;
+      const nextRefreshToken = authObject?.refreshToken || null;
       const nextUser = authObject ? authObject.user ?? null : maybeUser;
       const nextExpiresAt =
         authObject && authObject.expiresAt
           ? authObject.expiresAt
           : maybeExpiresAt || getTokenExpiryMs(nextToken);
 
-      console.log("[UserContext] Processed login data:", { nextToken: nextToken ? "***" : null, nextUser, nextExpiresAt: nextExpiresAt ? new Date(nextExpiresAt).toISOString() : null });
-
       if (!nextToken) {
         throw new Error("login() requires a JWT token.");
       }
 
       if (nextExpiresAt && nextExpiresAt <= Date.now()) {
-        console.log("[UserContext] Token already expired");
         await logout();
         return false;
       }
 
       await SecureStore.setItemAsync(AUTH_TOKEN_KEY, nextToken);
+      if (nextRefreshToken) {
+        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, nextRefreshToken);
+      }
       if (nextUser) {
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
       } else {
@@ -142,10 +151,10 @@ export function UserProvider({ children }) {
       }
 
       setToken(nextToken);
+      setRefreshToken(nextRefreshToken);
       setUser(nextUser);
       setExpiresAt(nextExpiresAt || null);
       scheduleAutoLogout(nextExpiresAt || null);
-      console.log("[UserContext] Login successful");
       return true;
     },
     [logout, scheduleAutoLogout]
@@ -156,8 +165,9 @@ export function UserProvider({ children }) {
 
     async function bootstrapAuth() {
       try {
-        const [storedToken, storedUser] = await Promise.all([
+        const [storedToken, storedRefresh, storedUser] = await Promise.all([
           SecureStore.getItemAsync(AUTH_TOKEN_KEY),
+          SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
           AsyncStorage.getItem(USER_STORAGE_KEY),
         ]);
 
@@ -183,10 +193,10 @@ export function UserProvider({ children }) {
         }
 
         setToken(storedToken);
+        setRefreshToken(storedRefresh || null);
         setUser(parsedUser);
         setExpiresAt(nextExpiresAt || null);
         scheduleAutoLogout(nextExpiresAt || null);
-        console.log("[UserContext] Bootstrap auth successful");
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -243,12 +253,13 @@ export function UserProvider({ children }) {
     () => ({
       user,
       token,
+      refreshToken,
       loading,
       isAuthenticated,
       login,
       logout,
     }),
-    [user, token, loading, isAuthenticated, login, logout]
+    [user, token, refreshToken, loading, isAuthenticated, login, logout]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

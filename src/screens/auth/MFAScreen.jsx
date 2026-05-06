@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import { verifyMFA, resendMFACode } from "../../api/authApi";
+import { verifyMFA } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 
 import {
@@ -28,25 +28,7 @@ export default function MFAScreen({
 
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resendSeconds, setResendSeconds] = useState(60);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    // Send MFA code when screen loads
-    handleResend();
-  }, []);
-
-  useEffect(() => {
-    if (resendSeconds <= 0) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setResendSeconds((previous) => previous - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [resendSeconds]);
 
   useEffect(() => {
     if (code.length === 6) {
@@ -69,7 +51,7 @@ export default function MFAScreen({
     }
 
     if (!password) {
-      setError("Missing password for MFA verification.");
+      setError("Session expired. Please go back and log in again.");
       return;
     }
 
@@ -79,38 +61,15 @@ export default function MFAScreen({
       const response = await verifyMFA(email, password, code);
       await login(response);
     } catch (error) {
-      console.error("[MFAScreen] verifyMFA error:", error);
-      setError(
-        error?.message || "Invalid MFA code. Please try again."
-      );
+      setError(error?.message || "Invalid MFA code. Please try again.");
+      setCode("");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    if (resendSeconds > 0) {
-      return;
-    }
-
-    if (!email) {
-      setError("Cannot resend MFA code: missing email.");
-      return;
-    }
-
-    setResendSeconds(60);
-    setError("");
-
-    try {
-      await resendMFACode(email);
-    } catch (error) {
-      console.error("[MFAScreen] resendMFACode error:", error);
-      setError("Unable to resend MFA code right now. Please try again later.");
-    }
-  };
-
   return (
-    <AuthScreen>
+    <AuthScreen onBack={() => goTo("login")}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -129,7 +88,7 @@ export default function MFAScreen({
               <Text style={styles.title}>Two-Step Verification</Text>
 
               <Text style={styles.subtitle}>
-                Enter the 6-digit security code sent to your email to continue.
+                A 6-digit security code was sent to your email when you logged in.
               </Text>
 
               <Text style={styles.emailText}>{email || "your email"}</Text>
@@ -150,12 +109,6 @@ export default function MFAScreen({
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <Text style={styles.resendText} onPress={handleResend}>
-              {resendSeconds > 0
-                ? `Resend code in ${resendSeconds}s`
-                : "Resend code"}
-            </Text>
 
             <AuthButton
               title="Verify"
@@ -180,7 +133,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 24,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
 
   iconCircle: {
@@ -250,14 +203,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     color: "#EF4444",
-  },
-
-  resendText: {
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#1F73B7",
-    marginBottom: 8,
   },
 
   footer: {

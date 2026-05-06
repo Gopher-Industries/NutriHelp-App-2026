@@ -33,7 +33,7 @@ const newPasswordSchema = {
 
 export default function ForgotPasswordStep3Screen({
   email = "",
-  code = "",
+  resetToken = "",
   goTo = (_nextScreen, _params) => {},
 }) {
   const [loading, setLoading] = useState(false);
@@ -60,16 +60,10 @@ export default function ForgotPasswordStep3Screen({
     setLoading(true);
 
     try {
-      await resetPassword(email, code, values.password);
+      await resetPassword(email, resetToken, values.password);
       setPasswordReset(true);
     } catch (error) {
-      setGeneralError(
-        error.message || "Password reset could not be completed right now. Showing success for UI testing."
-      );
-
-      setTimeout(() => {
-        setPasswordReset(true);
-      }, 900);
+      setGeneralError(error.data?.error || error.message || "Password reset failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -77,7 +71,7 @@ export default function ForgotPasswordStep3Screen({
 
   if (passwordReset) {
     return (
-      <AuthScreen>
+      <AuthScreen onBack={() => goTo("login")}>
         <View style={styles.successWrapper}>
           <View style={styles.successCircle}>
             <Text style={styles.successTick}>✓</Text>
@@ -96,7 +90,7 @@ export default function ForgotPasswordStep3Screen({
   }
 
   return (
-    <AuthScreen>
+    <AuthScreen onBack={() => goTo("forgot2", { email })}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -185,7 +179,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 24,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
 
   titleBlock: {

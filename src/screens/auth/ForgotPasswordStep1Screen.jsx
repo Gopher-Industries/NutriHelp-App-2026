@@ -53,22 +53,14 @@ export default function ForgotPasswordStep1Screen({ goTo = (_nextScreen, _params
         email: values.email.trim(),
       });
     } catch (error) {
-      setGeneralError(
-        error.message || "We could not send the reset email right now. You can still continue for UI testing."
-      );
-
-      setTimeout(() => {
-        goTo("forgot2", {
-          email: values.email.trim(),
-        });
-      }, 900);
+      setGeneralError(error.data?.error || error.message || "We could not send the reset email. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthScreen>
+    <AuthScreen onBack={() => goTo("login")}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -130,7 +122,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 32,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
 
   iconCircle: {
