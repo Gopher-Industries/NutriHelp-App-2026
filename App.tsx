@@ -2,6 +2,7 @@ import "./src/styles/global.css";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { UserProvider, useUser } from "./src/context/UserContext";
 import LoginScreen from "./src/screens/auth/LoginScreen";
@@ -22,7 +23,7 @@ type AuthScreenName =
 type AuthParams = {
   email?: string;
   password?: string;
-  code?: string;
+  resetToken?: string;
 };
 
 function AppContent() {
@@ -84,7 +85,7 @@ function AppContent() {
         <>
           <ForgotPasswordStep3Screen
             email={authParams.email}
-            code={authParams.code}
+            resetToken={authParams.resetToken}
             goTo={goTo}
           />
           <StatusBar style="auto" />
@@ -137,8 +138,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <UserProvider>
-      <AppContent />
-    </UserProvider>
+    <SafeAreaProvider>
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
+    </SafeAreaProvider>
   );
 }

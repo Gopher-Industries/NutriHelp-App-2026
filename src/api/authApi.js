@@ -1,223 +1,190 @@
-import { post, ApiError } from "./baseApi";
+import { get, post } from "./baseApi";
 
-/**
- * Transforms backend auth response to match UserContext.login() requirements
- */
-function transformAuthResponse(response) {
-  console.log("[authApi] Backend response:", JSON.stringify(response, null, 2));
-  
-  if (!response) {
-    throw new Error("Invalid response from auth server");
-  }
+// For POST /api/auth/login 200 response:
+// { success: true, data: { user: { id, email, name, role }, session: { accessToken, refreshToken } } }
+function transformLoginResponse(response) {
+  const session = response.data?.session;
+  const token = session?.accessToken;
 
-  // Check if MFA is required in the response body
-  if (response.requiresMFA || response.mfaRequired || response.needsMFA) {
-    console.log("[authApi] MFA required flag detected in response");
-    const error = new Error("MFA required");
-    error.code = "MFA_REQUIRED";
-    error.status = 202;
-    throw error;
-  }
-
-  // Handle both camelCase (accessToken) and snake_case (access_token) responses
-  const token = response.accessToken || response.access_token || response.token;
-  
   if (!token) {
-    console.error("[authApi] No token in response:", response);
-    throw new Error("No access token in response from server");
+    throw new Error("No access token in login response");
   }
 
-  const transformed = {
+  const user = response.data?.user;
+  return {
     token,
-    user: response.user
+    refreshToken: session?.refreshToken || null,
+    user: user
       ? {
-          id: response.user.id || response.user.user_id,
-          email: response.user.email,
-          name:
-            response.user.name ||
-            response.user.full_name ||
-            `${response.user.first_name || ''} ${response.user.last_name || ''}`.trim(),
-          role: response.user.role || response.user.role_name,
-          firstName: response.user.first_name,
-          lastName: response.user.last_name,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
         }
       : null,
-    expiresAt: response.expiresIn ? Date.now() + response.expiresIn * 1000 : null,
+    expiresAt: null,
   };
-
-  console.log("[authApi] Transformed response:", JSON.stringify(transformed, null, 2));
-  return transformed;
 }
 
-export async function loginUser(email, password, rememberMe = false) {
+
+// Returns { mfaRequired: true, email } on 202, or transformed auth object on 200
+export async function loginUser(email, password) {
   const response = await post(
-    "/api/login",
+    "/api/auth/login",
+    { email: email.trim(), password },
+    { skipAuth: true }
+  );
+
+  // 202: { success: true, data: { mfaRequired: true, email, message } }
+  if (response?.data?.mfaRequired) {
+    return {
+      mfaRequired: true,
+      email: response.data.email || email.trim(),
+    };
+  }
+
+  // 200: { success: true, data: { user, session: { accessToken, refreshToken } } }
+  return transformLoginResponse(response);
+}
+
+export async function registerUser(firstName, lastName, email, password) {
+  const response = await post(
+    "/api/auth/register",
     {
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
       email: email.trim(),
       password,
+      name: `${firstName.trim()} ${lastName.trim()}`,
+      contact_number: "0000000000",
+      contactNumber: "0000000000",
+      address: "Not provided",
     },
     { skipAuth: true }
   );
 
-  console.log("[authApi] loginUser response:", JSON.stringify(response, null, 2));
-
-  const mfaEnabled = response?.mfa_enabled || response?.user?.mfa_enabled;
-  console.log("[authApi] mfaEnabled check:", mfaEnabled);
-
-  if (mfaEnabled) {
-    console.log("[authApi] MFA required, returning MFA object");
-    return {
-      mfaRequired: true,
-      email: email.trim(),
-      password,
-      response,
-    };
+  if (response && response.success === false) {
+    throw new Error(
+      response.errors?.[0]?.message ||
+        response.error ||
+        "Registration failed"
+    );
   }
 
-  console.log("[authApi] No MFA, transforming response");
-  return transformAuthResponse(response);
+  return response;
 }
 
-export async function registerUser(firstName, lastName, email, password) {
-  console.log("[authApi] Registering user:", { firstName, lastName, email });
-  
-  try {
-    const response = await post(
-      "/api/auth/register",
-      {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email: email.trim(),
-        password,
-        name: `${firstName.trim()} ${lastName.trim()}`,
-        contact_number: "0000000000",
-        contactNumber: "0000000000",
-        address: "Not provided",
-      },
-      { skipAuth: true }
-    );
+// POST /api/login/mfa → { success: true, data: { user, session: { accessToken } } }
+// No axios interceptor exists — post() returns raw JSON, so token is at response.data.session.accessToken
+function transformMFAResponse(response) {
+  console.log("MFA raw response:", JSON.stringify(response?.data));
+  const inner = response?.data;
+  const token = inner?.session?.accessToken;
 
-    console.log("[authApi] Register response:", JSON.stringify(response));
-
-    let parsedResponse = response;
-    if (typeof response === "string") {
-      try {
-        parsedResponse = JSON.parse(response);
-      } catch {
-        parsedResponse = response;
-      }
-    }
-
-    // Register endpoint might not return full auth response, just success
-    if (parsedResponse && parsedResponse.success === false) {
-      console.error("[authApi] Registration failed:", parsedResponse.errors || parsedResponse.error || parsedResponse);
-      throw new Error(
-        parsedResponse.errors?.[0]?.message || 
-        parsedResponse.error || 
-        "Registration failed"
-      );
-    }
-
-    return parsedResponse;
-  } catch (error) {
-    console.error("[authApi] Register error:", error);
-    throw error;
+  if (!token) {
+    throw new Error("No access token in response from server");
   }
+
+  const user = inner?.user;
+  return {
+    token,
+    refreshToken: inner?.session?.refreshToken || null,
+    user: user
+      ? {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        }
+      : null,
+    expiresAt: null,
+  };
 }
 
 export async function verifyMFA(email, password, code) {
   const response = await post(
     "/api/login/mfa",
-    {
-      email: email.trim(),
-      password,
-      mfa_token: code,
-    },
+    { email: email.trim(), password, mfa_token: code },
     { skipAuth: true }
   );
 
-  return transformAuthResponse(response);
+  return transformMFAResponse(response);
 }
 
-export async function resendMFACode(email) {
-  const response = await post(
-    "/api/login/resend-mfa",
-    {
-      email: email.trim(),
-    },
-    { skipAuth: true }
-  );
-
-  return response;
-}
 
 export async function requestPasswordReset(email) {
-  const response = await post(
-    "/api/auth/forgot-password",
-    {
-      email: email.trim(),
-    },
+  return post(
+    "/api/password/request-reset",
+    { email: email.trim() },
     { skipAuth: true }
   );
-
-  return response;
 }
 
+// Returns { success, message, resetToken, expiresIn } on success
 export async function verifyPasswordResetCode(email, code) {
+  return post(
+    "/api/password/verify-code",
+    { email: email.trim(), code },
+    { skipAuth: true }
+  );
+}
+
+export async function resetPassword(email, resetToken, newPassword) {
+  return post(
+    "/api/password/reset",
+    { email: email.trim(), resetToken, newPassword },
+    { skipAuth: true }
+  );
+}
+
+// Spec: POST /api/auth/refresh — body: { refreshToken }
+export async function refreshAccessToken(refreshToken) {
   const response = await post(
-    "/api/auth/verify-reset-code",
-    {
-      email: email.trim(),
-      code,
-    },
+    "/api/auth/refresh",
+    { refreshToken },
     { skipAuth: true }
   );
 
-  return response;
+  return {
+    token: response.accessToken || response.access_token,
+    expiresAt: response.expiresIn
+      ? Date.now() + response.expiresIn * 1000
+      : null,
+  };
 }
 
-export async function resetPassword(email, code, password) {
-  const response = await post(
-    "/api/auth/reset-password",
-    {
-      email: email.trim(),
-      code,
-      password,
-    },
-    { skipAuth: true }
-  );
-
-  return response;
-}
-
-export async function logout() {
+// Spec: POST /api/auth/logout — body: { refreshToken }, no auth header required
+export async function logoutUser(refreshToken) {
   try {
-    const response = await post("/api/auth/logout", {});
-    return response;
+    await post("/api/auth/logout", { refreshToken }, { skipAuth: true });
   } catch {
-    // Logout can fail on network error, but we still clear local data
-    return { success: true };
+    // Always clear local state even if server call fails
   }
 }
 
-export async function refreshToken() {
-  const response = await post("/api/auth/refresh", {});
-  
-  if (response.accessToken) {
-    return transformAuthResponse(response);
+// Spec: POST /api/auth/logout-all — requires Bearer token
+export async function logoutAllDevices() {
+  try {
+    await post("/api/auth/logout-all", {});
+  } catch {
+    // Always clear local state even if server call fails
   }
-  
-  return response;
+}
+
+// Spec: GET /api/auth/profile — requires Bearer token
+export async function getProfile() {
+  return get("/api/auth/profile");
 }
 
 export default {
   loginUser,
   registerUser,
   verifyMFA,
-  resendMFACode,
   requestPasswordReset,
   verifyPasswordResetCode,
   resetPassword,
-  logout,
-  refreshToken,
+  refreshAccessToken,
+  logoutUser,
+  logoutAllDevices,
+  getProfile,
 };

@@ -69,7 +69,6 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
     setLoading(true);
 
     try {
-      console.log("[SignupScreen] Attempting signup");
       await registerUser(
         values.firstName,
         values.lastName,
@@ -82,41 +81,12 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
       console.error("[SignupScreen] Signup error:", error);
       
       if (error instanceof ApiError) {
-        console.error("[SignupScreen] API Error details:", {
-          status: error.status,
-          data: error.data,
-          message: error.message
-        });
-        
         if (error.status === 409) {
-          setErrors({
-            email: "An account with this email already exists.",
-          });
+          setErrors({ email: "An account with this email already exists." });
           return;
         }
-
-        // Extract error messages from validation errors
-        if (error.data?.errors && Array.isArray(error.data.errors)) {
-          const messages = error.data.errors
-            .map(err => {
-              if (typeof err === 'string') return err;
-              if (err.message) return err.message;
-              if (err.msg) return err.msg;
-              return JSON.stringify(err);
-            })
-            .filter(msg => msg)
-            .join(", ");
-          
-          if (messages) {
-            setGeneralError(messages);
-            return;
-          }
-        }
-
-        if (error.data?.error) {
-          setGeneralError(error.data.error);
-          return;
-        }
+        setGeneralError(error.data?.error || "Account creation failed. Please try again.");
+        return;
       }
 
       setGeneralError(error.message || "Account creation failed. Please try again.");
@@ -127,7 +97,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
 
   if (accountCreated) {
     return (
-      <AuthScreen>
+      <AuthScreen onBack={() => goTo("login")}>
         <View style={styles.successWrapper}>
           <View style={styles.successCircle}>
             <Text style={styles.successTick}>✓</Text>
@@ -146,7 +116,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
   }
 
   return (
-    <AuthScreen>
+    <AuthScreen onBack={() => goTo("login")}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -257,8 +227,8 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingTop: 4,
-    paddingBottom: 24,
+    paddingTop: 8,
+    paddingBottom: 48,
   },
 
   titleBlock: {
