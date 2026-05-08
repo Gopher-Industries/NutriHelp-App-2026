@@ -10,9 +10,8 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-import * as AppleAuthentication from "expo-apple-authentication";
 
-import { ApiError } from "../../api/baseApi";
+import { ApiError, post } from "../../api/baseApi";
 import { loginUser } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 import useFormValidation from "../../hooks/useFormValidation";
@@ -43,7 +42,6 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -55,21 +53,26 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
     });
 
   // --- Google OAuth setup ---
-  const googleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
+  const googleConfigured = Boolean(
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+  );
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "placeholder",
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "placeholder",
+    androidClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "placeholder",
+    webClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "placeholder",
     redirectUri: "nutrihelp://auth/callback",
   });
 
   useEffect(() => {
     if (response?.type === "success") {
-      handleGoogleCallback(response.authentication?.accessToken);
+      handleGoogleCallback(response.authentication);
     } else if (
       response?.type === "dismiss" ||
       response?.type === "cancel"
     ) {
+      // User cancelled — stay on login gracefully
       setGoogleLoading(false);
     } else if (response?.type === "error") {
       setGoogleLoading(false);
@@ -77,80 +80,41 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
     }
   }, [response]);
 
-  const handleGoogleCallback = async (accessToken) => {
-    if (!accessToken) {
-      setGoogleLoading(false);
-      setGeneralError("Google sign-in failed. Please try again.");
-      return;
-    }
-    try {
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/google`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accessToken }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Google sign-in failed.");
-      await login(data);
-    } catch (e) {
-      setGeneralError(e.message ?? "Google sign-in failed. Please try again.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+  const handleGoogleCallback = async (authentication) => {
+  if (!authentication?.accessToken) {
+    setGoogleLoading(false);
+    setGeneralError("Google sign-in failed. Please try again.");
+    return;
+  }
+
+  try {
+    // Exchange Google token with NutriHelp backend → Supabase session
+    const data = await post(
+      "/api/auth/google/exchange",
+      { accessToken: authentication.accessToken },
+      { skipAuth: true }
+    );
+
+    await login(data);
+  } catch (e) {
+    setGeneralError(
+      e.message ?? "Google sign-in failed. Please try again."
+    );
+  } finally {
+    setGoogleLoading(false);
+  }
+};
 
   const handleGoogleSignIn = async () => {
     if (!googleConfigured) {
-      setGeneralError("Google sign-in is not configured yet. Contact your team lead.");
+      setGeneralError(
+        "Google sign-in is not configured yet. Contact your team lead."
+      );
       return;
     }
     setGoogleLoading(true);
     setGeneralError("");
     await promptAsync();
-  };
-
-  // --- Apple Sign-In setup ---
-  const handleAppleSignIn = async () => {
-    setAppleLoading(true);
-    setGeneralError("");
-    try {
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/apple`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            identityToken: credential.identityToken,
-            email: credential.email,
-            fullName: credential.fullName,
-            appleUserId: credential.user,
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Apple sign-in failed.");
-      await login(data);
-    } catch (e) {
-      if (e.code === "ERR_REQUEST_CANCELED") {
-        // User cancelled — stay on login silently
-      } else if (e.code === "ERR_NOT_AVAILABLE") {
-        setGeneralError("Apple Sign-In is not available on this device.");
-      } else {
-        setGeneralError(e.message ?? "Apple sign-in failed. Please try again.");
-      }
-    } finally {
-      setAppleLoading(false);
-    }
   };
 
   // --- Email/password login ---
@@ -182,7 +146,9 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
           return;
         }
         if (error.status === 403) {
-          setGeneralError("Your account has been deactivated. Contact support.");
+          setGeneralError(
+            "Your account has been deactivated. Contact support."
+          );
           return;
         }
       }
@@ -253,7 +219,9 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
                   rememberMe && styles.checkboxSelected,
                 ]}
               >
-                {rememberMe ? <Text style={styles.checkmark}>✓</Text> : null}
+                {rememberMe ? (
+                  <Text style={styles.checkmark}>✓</Text>
+                ) : null}
               </View>
 
               <Text style={styles.rememberText}>Remember me</Text>
@@ -271,24 +239,11 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               disabled={googleLoading}
             />
 
-            {/* Apple Sign-In — only renders on iOS */}
-            {Platform.OS === "ios" && (
-              appleLoading ? (
-                <View style={styles.appleLoadingBox}>
-                  <Text style={styles.appleLoadingText}>Signing in with Apple...</Text>
-                </View>
-              ) : (
-                <AppleAuthentication.AppleAuthenticationButton
-                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                  cornerRadius={8}
-                  style={styles.appleButton}
-                  onPress={handleAppleSignIn}
-                />
-              )
-            )}
-
-            <AuthButton title="Login" onPress={handleLogin} loading={loading} />
+            <AuthButton
+              title="Login"
+              onPress={handleLogin}
+              loading={loading}
+            />
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
@@ -412,29 +367,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     fontSize: 12,
     color: "#9CA3AF",
-  },
-
-  appleButton: {
-    marginTop: 12,
-    marginBottom: 8,
-    height: 48,
-    width: "100%",
-  },
-
-  appleLoadingBox: {
-    marginTop: 12,
-    marginBottom: 8,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: "#000000",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  appleLoadingText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
   },
 
   footer: {
