@@ -168,12 +168,8 @@ function AppContent() {
   );
 }
 
+import AppNavigator from "./src/navigation/AppNavigator";
+
 export default function App() {
-  return (
-    <SafeAreaProvider>
-      <UserProvider>
-        <AppContent />
-      </UserProvider>
-    </SafeAreaProvider>
-  );
+  return <AppNavigator />;
 }
