@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 import { ApiError } from "../../api/baseApi";
 import { loginUser } from "../../api/authApi";
@@ -42,6 +43,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -55,13 +57,11 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   // --- Google OAuth setup ---
   const googleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
 
-const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "placeholder",
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "placeholder",
-  redirectUri: "nutrihelp://auth/callback",
-});
-
-
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "placeholder",
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "placeholder",
+    redirectUri: "nutrihelp://auth/callback",
+  });
 
   useEffect(() => {
     if (response?.type === "success") {
@@ -70,7 +70,6 @@ const [request, response, promptAsync] = Google.useAuthRequest({
       response?.type === "dismiss" ||
       response?.type === "cancel"
     ) {
-      // User cancelled — stay on login gracefully
       setGoogleLoading(false);
     } else if (response?.type === "error") {
       setGoogleLoading(false);
@@ -85,8 +84,7 @@ const [request, response, promptAsync] = Google.useAuthRequest({
       return;
     }
     try {
-      // Send Google access token to your backend
-      const response = await fetch(
+      const res = await fetch(
         `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/google`,
         {
           method: "POST",
@@ -94,9 +92,9 @@ const [request, response, promptAsync] = Google.useAuthRequest({
           body: JSON.stringify({ accessToken }),
         }
       );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Google sign-in failed.");
-      await login(data); // data should contain token + user
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Google sign-in failed.");
+      await login(data);
     } catch (e) {
       setGeneralError(e.message ?? "Google sign-in failed. Please try again.");
     } finally {
@@ -105,14 +103,55 @@ const [request, response, promptAsync] = Google.useAuthRequest({
   };
 
   const handleGoogleSignIn = async () => {
-  if (!googleConfigured) {
-    setGeneralError("Google sign-in is not configured yet. Contact your team lead.");
-    return;
-  }
-  setGoogleLoading(true);
-  setGeneralError("");
-  await promptAsync();
-};
+    if (!googleConfigured) {
+      setGeneralError("Google sign-in is not configured yet. Contact your team lead.");
+      return;
+    }
+    setGoogleLoading(true);
+    setGeneralError("");
+    await promptAsync();
+  };
+
+  // --- Apple Sign-In setup ---
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    setGeneralError("");
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/apple`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identityToken: credential.identityToken,
+            email: credential.email,
+            fullName: credential.fullName,
+            appleUserId: credential.user,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Apple sign-in failed.");
+      await login(data);
+    } catch (e) {
+      if (e.code === "ERR_REQUEST_CANCELED") {
+        // User cancelled — stay on login silently
+      } else if (e.code === "ERR_NOT_AVAILABLE") {
+        setGeneralError("Apple Sign-In is not available on this device.");
+      } else {
+        setGeneralError(e.message ?? "Apple sign-in failed. Please try again.");
+      }
+    } finally {
+      setAppleLoading(false);
+    }
+  };
 
   // --- Email/password login ---
   const handleLogin = async () => {
@@ -227,10 +266,27 @@ const [request, response, promptAsync] = Google.useAuthRequest({
             </View>
 
             <GoogleButton
-  onPress={handleGoogleSignIn}
-  loading={googleLoading}
-  disabled={googleLoading}
-/>
+              onPress={handleGoogleSignIn}
+              loading={googleLoading}
+              disabled={googleLoading}
+            />
+
+            {/* Apple Sign-In — only renders on iOS */}
+            {Platform.OS === "ios" && (
+              appleLoading ? (
+                <View style={styles.appleLoadingBox}>
+                  <Text style={styles.appleLoadingText}>Signing in with Apple...</Text>
+                </View>
+              ) : (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={8}
+                  style={styles.appleButton}
+                  onPress={handleAppleSignIn}
+                />
+              )
+            )}
 
             <AuthButton title="Login" onPress={handleLogin} loading={loading} />
 
@@ -356,6 +412,29 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     fontSize: 12,
     color: "#9CA3AF",
+  },
+
+  appleButton: {
+    marginTop: 12,
+    marginBottom: 8,
+    height: 48,
+    width: "100%",
+  },
+
+  appleLoadingBox: {
+    marginTop: 12,
+    marginBottom: 8,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: "#000000",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  appleLoadingText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 
   footer: {
