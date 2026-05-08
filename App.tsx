@@ -11,6 +11,9 @@ import ForgotPasswordStep1Screen from "./src/screens/auth/ForgotPasswordStep1Scr
 import ForgotPasswordStep2Screen from "./src/screens/auth/ForgotPasswordStep2Screen";
 import ForgotPasswordStep3Screen from "./src/screens/auth/ForgotPasswordStep3Screen";
 import MFAScreen from "./src/screens/auth/MFAScreen";
+import BarcodeScannerScreen from "./src/screens/scan/BarcodeScannerScreen";
+import ProductScanScreen from "./src/screens/scan/ProductScanScreen";
+
 
 type AuthScreenName =
   | "login"
@@ -18,7 +21,9 @@ type AuthScreenName =
   | "forgot1"
   | "forgot2"
   | "forgot3"
-  | "mfa";
+  | "mfa"
+  | "barcodeScanner";
+  
 
 type AuthParams = {
   email?: string;
@@ -30,6 +35,13 @@ function AppContent() {
   const { loading, isAuthenticated, logout } = useUser();
   const [screen, setScreen] = useState<AuthScreenName>("login");
   const [authParams, setAuthParams] = useState<AuthParams>({});
+
+  return (
+  <>
+    <BarcodeScannerScreen />
+    <StatusBar style="auto" />
+  </>
+);
 
   const goTo = (nextScreen: AuthScreenName, params: AuthParams = {}) => {
     setScreen(nextScreen);
@@ -113,6 +125,15 @@ function AppContent() {
       </>
     );
   }
+
+  if (screen === "barcodeScanner") {
+  return (
+    <>
+      <BarcodeScannerScreen />
+      <StatusBar style="auto" />
+    </>
+  );
+}
 
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
