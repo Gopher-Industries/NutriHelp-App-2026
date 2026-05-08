@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { resetPassword } from "../../api/authApi";
+import { toErrorMessage } from "../../api/baseApi";
 import useFormValidation from "../../hooks/useFormValidation";
 
 import {
@@ -63,7 +64,7 @@ export default function ForgotPasswordStep3Screen({
       await resetPassword(email, resetToken, values.password);
       setPasswordReset(true);
     } catch (error) {
-      setGeneralError(error.data?.error || error.message || "Password reset failed. Please try again.");
+      setGeneralError(toErrorMessage(error, "Password reset failed. Please try again."));
     } finally {
       setLoading(false);
     }

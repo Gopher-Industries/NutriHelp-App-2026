@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { ApiError } from "../../api/baseApi";
+import { ApiError, toErrorMessage } from "../../api/baseApi";
 import { registerUser } from "../../api/authApi";
 import useFormValidation from "../../hooks/useFormValidation";
 
@@ -85,11 +85,11 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
           setErrors({ email: "An account with this email already exists." });
           return;
         }
-        setGeneralError(error.data?.error || "Account creation failed. Please try again.");
+        setGeneralError(toErrorMessage(error, "Account creation failed. Please try again."));
         return;
       }
 
-      setGeneralError(error.message || "Account creation failed. Please try again.");
+      setGeneralError(toErrorMessage(error, "Account creation failed. Please try again."));
     } finally {
       setLoading(false);
     }

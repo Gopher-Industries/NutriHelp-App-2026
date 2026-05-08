@@ -16,11 +16,40 @@ let unauthorizedInProgress = false;
 
 export class ApiError extends Error {
   constructor(message, status, data) {
-    super(message);
+    super(toErrorMessage(data, toErrorMessage(message)));
     this.name = "ApiError";
     this.status = status;
     this.data = data;
   }
+}
+
+export function toErrorMessage(error, fallback = "Something went wrong. Please try again.") {
+  if (!error) {
+    return fallback;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error instanceof ApiError) {
+    return toErrorMessage(error.data, error.message || fallback);
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  if (typeof error === "object") {
+    return (
+      toErrorMessage(error.message, "") ||
+      toErrorMessage(error.error, "") ||
+      toErrorMessage(error.errors?.[0], "") ||
+      fallback
+    );
+  }
+
+  return String(error);
 }
 
 export function setUnauthorizedHandler(handler) {
