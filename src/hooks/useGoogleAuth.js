@@ -7,10 +7,12 @@ import { exchangeGoogleToken } from "../api/authApi";
 
 WebBrowser.maybeCompleteAuthSession();
 
+// Hardcoded to avoid Linking.createURL() failing when scheme isn't embedded in the native build
+const REDIRECT_URL = "nutrihelp://auth-callback";
+
 const getRedirectUrl = () => {
-  const url = Linking.createURL("auth-callback");
-  console.log("[OAuth] Redirect URL:", url);
-  return url;
+  console.log("[OAuth] Redirect URL:", REDIRECT_URL);
+  return REDIRECT_URL;
 };
 
 
