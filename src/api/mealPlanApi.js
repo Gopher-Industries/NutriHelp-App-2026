@@ -3,9 +3,9 @@ import baseApi from "./baseApi";
 const { get, post } = baseApi;
 
 const MEAL_PLAN_ENDPOINTS = {
-  weeklyPlan: "/mealplan",
-  aiGenerate: "/meal-plan/ai-generate",
-  feedback: "/meal-plan/feedback/:planId",
+  weeklyPlan: "/api/mealplan",
+  aiGenerate: "/api/meal-plan/ai-generate",
+  feedback: "/api/meal-plan/feedback/:planId",
 };
 
 function buildPath(template, params = {}) {

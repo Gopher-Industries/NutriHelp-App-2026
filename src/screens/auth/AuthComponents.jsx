@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  BackHandler,
   Image,
   Pressable,
   StyleSheet,
@@ -8,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Line, Path } from "react-native-svg";
 
 const nutriHelpLogo = require("../../../assets/nutrihelp-logo.png");
@@ -15,7 +17,7 @@ const googleLogo = require("../../../assets/google-logo.png");
 
 function EyeIcon({ crossed = false }) {
   return (
-    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
       <Path
         d="M2.5 12C4.6 7.8 8 5.5 12 5.5C16 5.5 19.4 7.8 21.5 12C19.4 16.2 16 18.5 12 18.5C8 18.5 4.6 16.2 2.5 12Z"
         stroke="#6B7280"
@@ -24,13 +26,7 @@ function EyeIcon({ crossed = false }) {
         strokeLinejoin="round"
       />
 
-      <Circle
-        cx={12}
-        cy={12}
-        r={3.2}
-        stroke="#6B7280"
-        strokeWidth={1.8}
-      />
+      <Circle cx={12} cy={12} r={3.2} stroke="#6B7280" strokeWidth={1.8} />
 
       {crossed ? (
         <Line
@@ -47,11 +43,56 @@ function EyeIcon({ crossed = false }) {
   );
 }
 
-export function AuthScreen({ children }) {
+function ChevronLeftIcon() {
   return (
-    <View style={styles.screen}>
+    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 18L9 12L15 6"
+        stroke="#18233D"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function AuthScreen({ children, onBack }) {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    if (!onBack) return;
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        onBack();
+        return true;
+      }
+    );
+
+    return () => subscription.remove();
+  }, [onBack]);
+
+  return (
+    <View
+      style={[
+        styles.screen,
+        { paddingTop: Math.max(insets.top + 12, 48), paddingBottom: Math.max(insets.bottom, 32) },
+      ]}
+    >
       <View style={styles.header}>
-        <Text style={styles.backArrow}>‹</Text>
+        {onBack ? (
+          <Pressable
+            style={styles.backButton}
+            onPress={onBack}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ChevronLeftIcon />
+          </Pressable>
+        ) : (
+          <View style={styles.backPlaceholder} />
+        )}
 
         <Image
           source={nutriHelpLogo}
@@ -106,7 +147,7 @@ export function AuthInput({
   const [focused, setFocused] = useState(false);
   const hasValue = Boolean(value && String(value).length > 0);
 
-  let borderColor = "#CBD5E1";
+  let borderColor = "#D1D5DB";
   let borderWidth = 1;
 
   if (error) {
@@ -131,13 +172,19 @@ export function AuthInput({
         {label}
       </FieldLabel>
 
-      <View style={[styles.inputBox, { borderColor, borderWidth }]}>
+      <View
+        style={[
+          styles.inputBox,
+          { borderColor, borderWidth },
+          !editable && styles.inputBoxDisabled,
+        ]}
+      >
         <TextInput
           style={[styles.textInput, !editable && styles.disabledInput]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={editable ? "#9CA3AF" : "#E5E7EB"}
+          placeholderTextColor={editable ? "#9CA3AF" : "#D1D5DB"}
           secureTextEntry={secureTextEntry && !passwordVisible}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
@@ -148,7 +195,11 @@ export function AuthInput({
         />
 
         {showPasswordToggle ? (
-          <Pressable style={styles.eyeButton} onPress={onTogglePassword}>
+          <Pressable
+            style={styles.eyeButton}
+            onPress={onTogglePassword}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
             <EyeIcon crossed={passwordVisible} />
           </Pressable>
         ) : null}
@@ -170,6 +221,7 @@ export function AuthButton({
       style={[styles.primaryButton, disabled && styles.disabledButton]}
       onPress={onPress}
       disabled={disabled || loading}
+      android_ripple={{ color: "rgba(255,255,255,0.25)", borderless: false }}
     >
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
@@ -189,8 +241,16 @@ export function AuthButton({
 
 export function GoogleButton({ onPress }) {
   return (
-    <Pressable style={styles.googleButton} onPress={onPress}>
-      <Image source={googleLogo} style={styles.googleLogo} resizeMode="contain" />
+    <Pressable
+      style={styles.googleButton}
+      onPress={onPress}
+      android_ripple={{ color: "rgba(0,0,0,0.05)", borderless: false }}
+    >
+      <Image
+        source={googleLogo}
+        style={styles.googleLogo}
+        resizeMode="contain"
+      />
 
       <Text style={styles.googleButtonText}>Sign in with Google</Text>
     </Pressable>
@@ -210,7 +270,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 24,
-    paddingTop: 48,
     paddingBottom: 32,
   },
 
@@ -221,9 +280,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  backArrow: {
-    fontSize: 32,
-    color: "#18233D",
+  backButton: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  backPlaceholder: {
+    width: 36,
+    height: 36,
   },
 
   nutriLogo: {
@@ -243,6 +309,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 14,
     fontWeight: "500",
+    color: "#18233D",
   },
 
   inputGroup: {
@@ -257,6 +324,10 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     flexDirection: "row",
     alignItems: "center",
+  },
+
+  inputBoxDisabled: {
+    backgroundColor: "#F9FAFB",
   },
 
   textInput: {
@@ -286,6 +357,7 @@ const styles = StyleSheet.create({
 
   primaryButton: {
     marginTop: 12,
+    marginBottom: 8,
     height: 48,
     borderRadius: 8,
     backgroundColor: "#1F73B7",
@@ -309,6 +381,7 @@ const styles = StyleSheet.create({
 
   googleButton: {
     marginTop: 12,
+    marginBottom: 8,
     height: 48,
     borderRadius: 8,
     borderWidth: 1,
@@ -333,10 +406,10 @@ const styles = StyleSheet.create({
 
   linkWrapper: {
     paddingVertical: 4,
+    alignItems: "center",
   },
 
   linkText: {
-    textAlign: "center",
     fontSize: 12,
     fontWeight: "600",
     color: "#1F73B7",

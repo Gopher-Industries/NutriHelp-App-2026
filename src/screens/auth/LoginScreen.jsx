@@ -36,7 +36,6 @@ const loginSchema = {
 
 export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
-
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -58,53 +57,28 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
     setLoading(true);
 
     try {
-      console.log("[LoginScreen] Attempting login with email:", values.email);
-      const response = await loginUser(values.email, values.password, rememberMe);
-      console.log("[LoginScreen] Login response received:", JSON.stringify(response, null, 2));
+      const response = await loginUser(values.email, values.password);
 
-      if (
-        response?.mfaRequired ||
-        response?.mfa_enabled ||
-        response?.user?.mfa_enabled ||
-        response?.response?.user?.mfa_enabled
-      ) {
-        console.log("[LoginScreen] MFA required, navigating to MFA screen");
+      if (response.mfaRequired) {
         goTo("mfa", {
-          email: values.email.trim(),
+          email: response.email,
           password: values.password,
         });
         return;
       }
 
-      const loginResult = await login(response);
-      console.log("[LoginScreen] Login to UserContext result:", loginResult);
+      await login(response);
     } catch (error) {
-      console.error("[LoginScreen] Login error:", error);
-      
-      // Check for MFA required error (thrown from authApi)
-      if (error.code === "MFA_REQUIRED" || error.status === 202) {
-        console.log("[LoginScreen] MFA required, navigating to MFA screen");
-        goTo("mfa", {
-          email: values.email.trim(),
-          password: values.password,
-        });
-        return;
-      }
-      
       if (error instanceof ApiError) {
         if (error.status === 401) {
-          setErrors({
-            password: "Email or password incorrect.",
-          });
+          setErrors({ password: "Email or password incorrect." });
           return;
         }
-
         if (error.status === 403) {
           setGeneralError("Your account has been deactivated. Contact support.");
           return;
         }
       }
-
       setGeneralError(error.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -222,7 +196,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
 
   titleBlock: {

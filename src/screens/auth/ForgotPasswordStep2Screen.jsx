@@ -56,21 +56,14 @@ export default function ForgotPasswordStep2Screen({
     setLoading(true);
 
     try {
-      await verifyPasswordResetCode(email, code);
+      const response = await verifyPasswordResetCode(email, code);
 
       goTo("forgot3", {
         email,
-        code,
+        resetToken: response?.resetToken,
       });
     } catch (error) {
-      setError(error.message || "Invalid code. You can continue for UI testing.");
-
-      setTimeout(() => {
-        goTo("forgot3", {
-          email,
-          code,
-        });
-      }, 900);
+      setError(error.data?.error || error.message || "Invalid or expired code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +85,7 @@ export default function ForgotPasswordStep2Screen({
   };
 
   return (
-    <AuthScreen>
+    <AuthScreen onBack={() => goTo("forgot1")}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -166,7 +159,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 24,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
 
   iconCircle: {
