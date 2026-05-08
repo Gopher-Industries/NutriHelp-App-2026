@@ -176,6 +176,46 @@ export async function getProfile() {
   return get("/api/auth/profile");
 }
 
+// Exchange Supabase access token for backend JWT
+// POST /api/auth/google/exchange — body: { supabaseAccessToken, provider }
+export async function exchangeGoogleToken(supabaseAccessToken) {
+  try {
+    const response = await post(
+      "/api/auth/google/exchange",
+      {
+        supabaseAccessToken,
+        provider: "google",
+      },
+      { skipAuth: true }
+    );
+
+    // Backend returns: { success, accessToken, refreshToken, user, session: { accessToken, refreshToken } }
+    const token = response.accessToken || response.session?.accessToken;
+    const user = response.user;
+
+    if (!token) {
+      throw new Error("No access token in exchange response");
+    }
+
+    return {
+      token,
+      refreshToken: response.refreshToken || response.session?.refreshToken || null,
+      user: user
+        ? {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        : null,
+      expiresAt: null,
+    };
+  } catch (error) {
+    console.error("Google token exchange error:", error);
+    throw error;
+  }
+}
+
 export default {
   loginUser,
   registerUser,
@@ -187,4 +227,5 @@ export default {
   logoutUser,
   logoutAllDevices,
   getProfile,
+  exchangeGoogleToken,
 };

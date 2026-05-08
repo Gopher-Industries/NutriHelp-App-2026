@@ -1,7 +1,7 @@
 import "./src/styles/global.css";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { useState, useEffect } from "react";
+import { ActivityIndicator, Text, View, Linking } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { UserProvider, useUser } from "./src/context/UserContext";
@@ -28,6 +28,7 @@ type AuthParams = {
 
 function AppContent() {
   const { loading, isAuthenticated, logout } = useUser();
+  const { handleOAuthCallback } = require("./src/hooks/useGoogleAuth").useGoogleAuth();
   const [screen, setScreen] = useState<AuthScreenName>("login");
   const [authParams, setAuthParams] = useState<AuthParams>({});
 
@@ -38,6 +39,37 @@ function AppContent() {
       ...params,
     }));
   };
+
+  // Deep link handler for OAuth callback
+  useEffect(() => {
+    const handleDeepLink = ({ url }: { url: string }) => {
+      try {
+        if (url && url.includes("auth-callback")) {
+          // Delegate to hook's callback handler
+          handleOAuthCallback(url).catch((err: any) =>
+            console.error("[App] OAuth callback handler error:", err)
+          );
+        }
+      } catch (err) {
+        console.error("[App] Error handling deep link:", err);
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    // Handle initial URL if app was launched from a deep link
+    Linking.getInitialURL()
+      .then((url) => {
+        if (url != null && url.includes("auth-callback")) {
+          handleDeepLink({ url });
+        }
+      })
+      .catch((err) => console.error("[App] getInitialURL error:", err));
+
+    return () => {
+      subscription.remove();
+    };
+  }, [handleOAuthCallback]);
 
   if (loading) {
     return (
