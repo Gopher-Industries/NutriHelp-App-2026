@@ -1,6 +1,4 @@
 import { useState } from "react";
-import * as AuthSession from "expo-auth-session";
-import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import {
   KeyboardAvoidingView,
@@ -100,9 +98,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
     setGoogleLoading(true);
 
     try {
-      const redirectTo = AuthSession.makeRedirectUri({
-        path: "auth/callback",
-      });
+      const redirectTo = "nutrihelp://auth-callback";
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -113,37 +109,22 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
         },
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.url) {
-        throw new Error("Google sign-in URL was not returned.");
-      }
+      if (error) throw error;
+      if (!data?.url) throw new Error("Google sign-in URL was not returned.");
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
       if (result.type !== "success" || !result.url) {
-        if (result.type === "cancel" || result.type === "dismiss") {
-          return;
-        }
+        if (result.type === "cancel" || result.type === "dismiss") return;
         throw new Error("Google sign-in was not completed.");
       }
 
-      const { queryParams } = Linking.parse(result.url);
-      const code = typeof queryParams?.code === "string" ? queryParams.code : null;
-      if (!code) {
-        throw new Error("Missing Google authorization code.");
-      }
+      // Implicit flow: access_token is in the URL hash fragment
+      // nutrihelp://auth-callback#access_token=xxx&refresh_token=xxx
+      const fragment = result.url.includes("#") ? result.url.split("#")[1] : "";
+      const params = new URLSearchParams(fragment);
+      const supabaseAccessToken = params.get("access_token");
 
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.exchangeCodeForSession(code);
-
-      if (sessionError) {
-        throw sessionError;
-      }
-
-      const supabaseAccessToken = sessionData?.session?.access_token;
       if (!supabaseAccessToken) {
         throw new Error("Missing Google session token.");
       }
