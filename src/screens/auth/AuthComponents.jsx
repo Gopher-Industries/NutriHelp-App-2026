@@ -239,20 +239,26 @@ export function AuthButton({
   );
 }
 
-export function GoogleButton({ onPress }) {
+export function GoogleButton({ onPress, loading = false, disabled = false }) {
   return (
     <Pressable
-      style={styles.googleButton}
+      style={[styles.googleButton, disabled && styles.disabledButton]}
       onPress={onPress}
+      disabled={disabled || loading}
       android_ripple={{ color: "rgba(0,0,0,0.05)", borderless: false }}
     >
-      <Image
-        source={googleLogo}
-        style={styles.googleLogo}
-        resizeMode="contain"
-      />
-
-      <Text style={styles.googleButtonText}>Sign in with Google</Text>
+      {loading ? (
+        <ActivityIndicator color="#18233D" />
+      ) : (
+        <>
+          <Image
+            source={googleLogo}
+            style={styles.googleLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.googleButtonText}>Sign in with Google</Text>
+        </>
+      )}
     </Pressable>
   );
 }
