@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -8,6 +8,8 @@ import {
   Text,
   View,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
 
 import { ApiError } from "../../api/baseApi";
 import { loginUser } from "../../api/authApi";
@@ -23,6 +25,8 @@ import {
   HelperLink,
 } from "./AuthComponents";
 
+WebBrowser.maybeCompleteAuthSession();
+
 const loginSchema = {
   email: {
     required: true,
@@ -37,6 +41,7 @@ const loginSchema = {
 export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -47,6 +52,69 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
       password: "",
     });
 
+  // --- Google OAuth setup ---
+  const googleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
+
+const [request, response, promptAsync] = Google.useAuthRequest({
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "placeholder",
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "placeholder",
+  redirectUri: "nutrihelp://auth/callback",
+});
+
+
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      handleGoogleCallback(response.authentication?.accessToken);
+    } else if (
+      response?.type === "dismiss" ||
+      response?.type === "cancel"
+    ) {
+      // User cancelled — stay on login gracefully
+      setGoogleLoading(false);
+    } else if (response?.type === "error") {
+      setGoogleLoading(false);
+      setGeneralError("Google sign-in failed. Please try again.");
+    }
+  }, [response]);
+
+  const handleGoogleCallback = async (accessToken) => {
+    if (!accessToken) {
+      setGoogleLoading(false);
+      setGeneralError("Google sign-in failed. Please try again.");
+      return;
+    }
+    try {
+      // Send Google access token to your backend
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/google`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accessToken }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Google sign-in failed.");
+      await login(data); // data should contain token + user
+    } catch (e) {
+      setGeneralError(e.message ?? "Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+  if (!googleConfigured) {
+    setGeneralError("Google sign-in is not configured yet. Contact your team lead.");
+    return;
+  }
+  setGoogleLoading(true);
+  setGeneralError("");
+  await promptAsync();
+};
+
+  // --- Email/password login ---
   const handleLogin = async () => {
     setGeneralError("");
 
@@ -159,10 +227,10 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
             </View>
 
             <GoogleButton
-              onPress={() =>
-                setGeneralError("Google sign-in will be connected later.")
-              }
-            />
+  onPress={handleGoogleSignIn}
+  loading={googleLoading}
+  disabled={googleLoading}
+/>
 
             <AuthButton title="Login" onPress={handleLogin} loading={loading} />
 
