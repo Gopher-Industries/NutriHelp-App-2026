@@ -3,7 +3,7 @@ import baseApi from "./baseApi";
 const { get, put } = baseApi;
 
 const NOTIFICATION_ENDPOINTS = {
-  preferences: "/api/notifications",
+  preferences: "/user/preferences/extended/notifications",
 };
 
 function ensureTokenArray(value) {
@@ -35,7 +35,7 @@ export async function registerDeviceToken(deviceToken) {
   }
 
   const current = await getPreferences();
-  const currentPreferences = current?.data?.data?.notification_preferences || current?.data?.notification_preferences || {};
+  const currentPreferences = current?.data?.notification_preferences || current?.notification_preferences || {};
   const tokens = ensureTokenArray(currentPreferences.deviceTokens);
 
   if (!tokens.includes(deviceToken)) {
@@ -54,7 +54,7 @@ export async function deregisterDeviceToken(deviceToken) {
   }
 
   const current = await getPreferences();
-  const currentPreferences = current?.data?.data?.notification_preferences || current?.data?.notification_preferences || {};
+  const currentPreferences = current?.data?.notification_preferences || current?.notification_preferences || {};
   const tokens = ensureTokenArray(currentPreferences.deviceTokens).filter(
     (token) => token !== deviceToken
   );
