@@ -1,15 +1,10 @@
 import "./src/styles/global.css";
-import React from 'react';
-import { View } from "react-native";
-import { UserProvider } from "./src/context/UserContext";
-import HealthToolsScreen from "./src/screens/health/HealthToolsScreen";
+import * as WebBrowser from "expo-web-browser";
+import AppNavigator from "./src/navigation/AppNavigator";
+
+// Required for expo-web-browser OAuth sessions to close correctly on Android
+WebBrowser.maybeCompleteAuthSession();
 
 export default function App() {
-  return (
-    <UserProvider>
-      <View className="flex-1 bg-white">
-        <HealthToolsScreen />
-      </View>
-    </UserProvider>
-  );
+  return <AppNavigator />;
 }

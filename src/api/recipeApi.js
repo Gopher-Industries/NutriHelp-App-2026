@@ -3,11 +3,11 @@ import baseApi, { ApiError } from "./baseApi";
 const { get, post } = baseApi;
 
 const RECIPE_ENDPOINTS = {
-  list: "/recipe",
-  detailCandidates: ["/recipe/:id", "/recipe/details/:id"],
-  create: "/recipe/createRecipe",
-  searchCandidates: ["/filter", "/recipe/search"],
-  rateCandidates: ["/recipe/:id/rate", "/recipe/rate"],
+  list: "/api/recipe",
+  detailCandidates: ["/api/recipe/:id", "/api/recipe/details/:id"],
+  create: "/api/recipe/createRecipe",
+  searchCandidates: ["/api/filter", "/api/recipe/search"],
+  rateCandidates: ["/api/recipe/:id/rate", "/api/recipe/rate"],
 };
 
 function buildPath(template, params = {}) {

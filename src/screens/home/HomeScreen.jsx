@@ -1,25 +1,92 @@
-import React from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import { useState } from "react";
+import { View, Text, ScrollView } from "react-native";
+import { useUser } from "../../context/UserContext";
 import WaterTracker from '../../components/WaterTracker';
 
-export default function HomeScreen({ userId = null }) {
+import BottomSheet from "../../components/common/BottomSheet";
+import NavigationHeader from "../../components/common/NavigationHeader";
+import Input from "../../components/common/input"; 
+import Button from "../../components/common/Button";
+import ScreenLayout from "../../components/common/ScreenLayout";
+import Card from "../../components/common/Card";
+import Badge from "../../components/common/Badge";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+
+export default function HomeScreen() {
+  const { user } = useUser();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false); 
+
+  const handleSubmit = () => {
+    if (!email) {
+      setError("Email is required");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+  };
+
   return (
-    <ScrollView className="flex-1 bg-slate-50">
-      <View className="p-4 pt-12">
-        <Text className="text-3xl font-black text-slate-900 mb-6">Home</Text>
+    <ScreenLayout scrollable>
+
+      {/* Header */}
+      <NavigationHeader title="Home" showBackButton={true} />
+
+      <View style={{ padding: 16 }}>
         
-        {/* MOB-FE05: WaterTracker on HomeScreen */}
+        {/* MOB-FE05: Integrated WaterTracker */}
         <View className="mb-6">
-          <WaterTracker userId={userId} dailyGoal={8} />
+          <WaterTracker userId={user?.id} dailyGoal={8} />
         </View>
-        
-        <View className="bg-white p-6 rounded-2xl border border-slate-200">
-          <Text className="text-xl font-bold text-slate-800">Welcome to NutriHelp!</Text>
-          <Text className="text-slate-500 mt-2">
-            Your journey to better health starts here. Log your water intake above and explore your daily plan in the tabs.
-          </Text>
-        </View>
+
+        <Input
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          error={error}
+          placeholder="Enter email"
+        />
+
+        <Button
+          label="Submit"
+          onPress={handleSubmit}
+          loading={loading}
+        />
+
+        {/* Bottom Sheet Button */}
+        <View style={{ marginTop: 12 }}></View>
+        <Button
+          label="Open Sheet"
+          onPress={() => setOpen(true)}
+        />
+        <View style={{ marginTop: 12 }}></View>
+        <Card>
+          <Badge label="Health" />
+        </Card>
+        <View style={{ marginTop: 12 }}></View>
+        <Card>
+          <Badge label="Recipe" variant="tag" />
+        </Card>
+
+        <EmptyState message="No data available yet" />
+
+        {loading && <LoadingSpinner message="Loading..." />}
+
       </View>
-    </ScrollView>
+
+      {/* Bottom Sheet */}
+      <BottomSheet visible={open} onClose={() => setOpen(false)}>
+        <Text>This is Bottom Sheet content</Text>
+      </BottomSheet>
+
+    </ScreenLayout>
   );
 }

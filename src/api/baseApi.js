@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
 export const AUTH_TOKEN_KEY = "nutrihelp.auth.token";
+export const REFRESH_TOKEN_KEY = "nutrihelp.auth.refreshToken";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -15,11 +16,40 @@ let unauthorizedInProgress = false;
 
 export class ApiError extends Error {
   constructor(message, status, data) {
-    super(message);
+    super(toErrorMessage(data, toErrorMessage(message)));
     this.name = "ApiError";
     this.status = status;
     this.data = data;
   }
+}
+
+export function toErrorMessage(error, fallback = "Something went wrong. Please try again.") {
+  if (!error) {
+    return fallback;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error instanceof ApiError) {
+    return toErrorMessage(error.data, error.message || fallback);
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  if (typeof error === "object") {
+    return (
+      toErrorMessage(error.message, "") ||
+      toErrorMessage(error.error, "") ||
+      toErrorMessage(error.errors?.[0], "") ||
+      fallback
+    );
+  }
+
+  return String(error);
 }
 
 export function setUnauthorizedHandler(handler) {
@@ -58,9 +88,11 @@ async function parseResponseBody(response) {
 
 async function triggerUnauthorizedHandler() {
   if (!onUnauthorized || unauthorizedInProgress) {
+    console.log("[baseApi] Unauthorized handler not set or already in progress");
     return;
   }
 
+  console.log("[baseApi] Triggering unauthorized handler");
   unauthorizedInProgress = true;
   try {
     await onUnauthorized();
@@ -95,7 +127,10 @@ export async function request(method, path, options = {}) {
     }
   }
 
-  const response = await fetch(toAbsoluteUrl(path, query), {
+  const url = toAbsoluteUrl(path, query);
+  console.log(`[baseApi] ${method} ${url}`, { body });
+
+  const response = await fetch(url, {
     method,
     headers: requestHeaders,
     body: requestBody,
@@ -103,6 +138,10 @@ export async function request(method, path, options = {}) {
   });
 
   const data = await parseResponseBody(response);
+
+  console.log(`[baseApi] Response status: ${response.status}`, { 
+    data: data ? JSON.stringify(data) : null 
+  });
 
   if (response.status === 401) {
     await triggerUnauthorizedHandler();
