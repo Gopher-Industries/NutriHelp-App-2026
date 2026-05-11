@@ -3,7 +3,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import WeeklyPlanScreen from "../screens/meal/WeeklyPlanScreen";
 import DailyPlanScreen from "../screens/meal/DailyPlanScreen";
 import NutritionCalculatorScreen from "../screens/health/NutritionCalculatorScreen";
-import PlaceholderScreen from "./_PlaceholderScreen";
 
 const Stack = createStackNavigator();
 export default function MealStack() {

@@ -1,7 +1,6 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import TimerScreen from "../screens/tools/TimerScreen";
 import { useUser } from "../context/UserContext";
 import PlaceholderScreen from "./_PlaceholderScreen";
 
@@ -83,8 +82,8 @@ export default function AccountStack() {
       />
       <Stack.Screen
         name="TimerScreen"
-        component={TimerScreen}
-        options={{ headerShown: false }}
+        component={PlaceholderScreen}
+        options={{ title: "Timer" }}
       />
       <Stack.Screen
         name="HealthToolsScreen"

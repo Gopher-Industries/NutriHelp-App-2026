@@ -124,7 +124,7 @@ export default function BarcodeScannerScreen() {
     setLoading(true);
     scanLocked.current = true;
     try {
-      const data = await post("/api/barcode/scan", { barcode });
+      const data = await post("/api/barcode", { barcode });
       setResult(data);
     } catch (e) {
       setError(e.message ?? "Failed to look up barcode. Please try again.");

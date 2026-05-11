@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 import { ApiError, toErrorMessage } from "../../api/baseApi";
 import { exchangeGoogleToken, loginUser } from "../../api/authApi";
@@ -42,6 +43,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -136,6 +138,51 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
     }
   };
 
+  // --- Apple Sign-In ---
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    setGeneralError("");
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/apple`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identityToken: credential.identityToken,
+            email: credential.email,
+            fullName: credential.fullName,
+            appleUserId: credential.user,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(toErrorMessage(data, "Apple sign-in failed."));
+      }
+      await login(data);
+    } catch (error) {
+      if (error.code === "ERR_REQUEST_CANCELED") {
+        return;
+      }
+      if (error.code === "ERR_NOT_AVAILABLE") {
+        setGeneralError("Apple Sign-In is not available on this device.");
+        return;
+      }
+      setGeneralError(toErrorMessage(error, "Apple sign-in failed. Please try again."));
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
   return (
     <AuthScreen>
       <KeyboardAvoidingView
@@ -214,6 +261,22 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               loading={googleLoading}
               disabled={googleLoading}
             />
+
+            {Platform.OS === "ios" && (
+              appleLoading ? (
+                <View style={styles.appleLoadingBox}>
+                  <Text style={styles.appleLoadingText}>Signing in with Apple...</Text>
+                </View>
+              ) : (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={8}
+                  style={styles.appleButton}
+                  onPress={handleAppleSignIn}
+                />
+              )
+            )}
 
             <AuthButton
               title="Login"
@@ -343,6 +406,29 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     fontSize: 12,
     color: "#9CA3AF",
+  },
+
+  appleButton: {
+    marginTop: 12,
+    marginBottom: 8,
+    height: 48,
+    width: "100%",
+  },
+
+  appleLoadingBox: {
+    marginTop: 12,
+    marginBottom: 8,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: "#000000",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  appleLoadingText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 
   footer: {
