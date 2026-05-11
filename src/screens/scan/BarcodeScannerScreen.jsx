@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { post } from "../../api/baseApi";
+import { saveScannedMeal } from "../../api/mealLogApi";
+import { useUser } from "../../context/UserContext";
 
 function normalizeBarcodeResult(response) {
   const payload = response?.data || response;
@@ -44,7 +46,7 @@ function LoadingOverlay() {
 }
 
 // --- Bottom Sheet Result ---
-function ResultSheet({ result, onClose }) {
+function ResultSheet({ result, onClose, onSave, saveState }) {
   return (
     <View style={styles.resultSheet}>
       <View style={styles.resultHandle} />
@@ -99,6 +101,23 @@ function ResultSheet({ result, onClose }) {
         </Text>
       </View>
 
+      <Pressable
+        style={[
+          styles.secondaryButton,
+          saveState === "saved" ? styles.secondaryButtonSaved : null,
+        ]}
+        onPress={onSave}
+        disabled={saveState === "saving" || saveState === "saved"}
+      >
+        <Text style={styles.secondaryButtonText}>
+          {saveState === "saving"
+            ? "Saving..."
+            : saveState === "saved"
+              ? "Saved to History"
+              : "Save to History"}
+        </Text>
+      </Pressable>
+
       <Pressable style={styles.closeButton} onPress={onClose}>
         <Text style={styles.closeButtonText}>Scan another product</Text>
       </Pressable>
@@ -143,6 +162,7 @@ function PermissionDeniedScreen() {
 
 // --- Main Screen ---
 export default function BarcodeScannerScreen() {
+  const { user } = useUser();
   const [permission, requestPermission] = useCameraPermissions();
   const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -150,6 +170,7 @@ export default function BarcodeScannerScreen() {
   const [error, setError] = useState("");
   const [torchOn, setTorchOn] = useState(false);
   const [manualBarcode, setManualBarcode] = useState("");
+  const [saveState, setSaveState] = useState("idle");
   const scanLocked = useRef(false);
 
   // Step 1 — show custom explanation screen before system dialog
@@ -182,6 +203,7 @@ export default function BarcodeScannerScreen() {
     try {
       const data = await post("/api/barcode/scan", { barcode: normalizedBarcode });
       setResult(normalizeBarcodeResult(data));
+      setSaveState("idle");
     } catch (e) {
       setError(e.message ?? "Failed to look up barcode. Please try again.");
       scanLocked.current = false;
@@ -208,7 +230,32 @@ export default function BarcodeScannerScreen() {
   const handleCloseResult = () => {
     setResult(null);
     setManualBarcode("");
+    setSaveState("idle");
     scanLocked.current = false; // unlock scanner
+  };
+
+  const handleSaveToHistory = async () => {
+    if (!result) return;
+
+    try {
+      setSaveState("saving");
+      await saveScannedMeal({
+        user_id: user?.id || user?.user_id || user?.email || "anonymous",
+        date: new Date().toISOString().slice(0, 10),
+        meal_type: "Snacks",
+        label: result.name,
+        confidence: 1,
+        estimated_calories: null,
+        serving_description: result.barcode || null,
+        recommendation: "Saved from barcode scan.",
+        is_unclear: false,
+        source: "mobile_barcode_scan",
+      });
+      setSaveState("saved");
+    } catch (saveError) {
+      setSaveState("idle");
+      setError(saveError.message || "Failed to save scan history.");
+    }
   };
 
   return (
@@ -271,7 +318,12 @@ export default function BarcodeScannerScreen() {
 
       {/* Result bottom sheet */}
       {result && (
-        <ResultSheet result={result} onClose={handleCloseResult} />
+        <ResultSheet
+          result={result}
+          onClose={handleCloseResult}
+          onSave={handleSaveToHistory}
+          saveState={saveState}
+        />
       )}
     </View>
   );
@@ -520,6 +572,28 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "800",
+  },
+
+  secondaryButton: {
+    marginTop: 6,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  secondaryButtonText: {
+    color: "#18233D",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  secondaryButtonSaved: {
+    borderColor: "#22C55E",
+    backgroundColor: "#F0FDF4",
   },
 
   permissionScreen: {

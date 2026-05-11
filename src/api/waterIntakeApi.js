@@ -3,13 +3,15 @@ import baseApi from "./baseApi";
 
 const WATER_LOCAL_KEY = "nutrihelp.water_intake.today";
 
-function getTodayKey() {
-  return `${WATER_LOCAL_KEY}_${new Date().toISOString().split('T')[0]}`;
+function buildWaterStorageKey(userId) {
+  const date = new Date().toISOString().split('T')[0];
+  const scope = userId ? `user_${userId}` : "guest";
+  return `${WATER_LOCAL_KEY}_${scope}_${date}`;
 }
 
-export async function getTodayIntakeLocal() {
+export async function getTodayIntakeLocal(userId) {
   try {
-    const val = await AsyncStorage.getItem(getTodayKey());
+    const val = await AsyncStorage.getItem(buildWaterStorageKey(userId));
     return val ? parseInt(val, 10) : 0;
   } catch (error) {
     console.error("Local water storage error:", error);
@@ -17,9 +19,9 @@ export async function getTodayIntakeLocal() {
   }
 }
 
-export async function saveTodayIntakeLocal(glasses) {
+export async function saveTodayIntakeLocal(userId, glasses) {
   try {
-    await AsyncStorage.setItem(getTodayKey(), String(glasses));
+    await AsyncStorage.setItem(buildWaterStorageKey(userId), String(glasses));
   } catch (error) {
     console.error("Local water storage error:", error);
   }
@@ -30,7 +32,6 @@ export async function logWaterIntake(userId, glassesConsumed) {
   if (!userId) return; 
   
   return baseApi.post("/api/water-intake", {
-    user_id: userId,
     amount_ml: glassesConsumed * 250,
     date: new Date().toISOString().split('T')[0],
   });
@@ -42,10 +43,15 @@ export async function getTodayIntake(userId) {
   try {
     const date = new Date().toISOString().split('T')[0];
     const records = await baseApi.get("/api/water-intake", {
-      query: { user_id: userId, date },
+      query: { date },
     });
-    if (records && records.length > 0) {
-      return Math.round((records[0].amount_ml || 0) / 250);
+    const rows = Array.isArray(records) ? records : [];
+    if (rows.length > 0) {
+      const amountMl = rows.reduce((maxValue, row) => {
+        const currentValue = Number(row?.amount_ml || 0);
+        return currentValue > maxValue ? currentValue : maxValue;
+      }, 0);
+      return Math.round(amountMl / 250);
     }
     return 0;
   } catch (error) {
