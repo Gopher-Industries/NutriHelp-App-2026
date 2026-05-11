@@ -52,19 +52,27 @@ function LabeledInput({
   );
 }
 
-export default function EditProfileScreen({ navigation }) {
-  const { logout } = useUser();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    fullName: "",
-    contactNumber: "",
-    email: "",
-    address: "",
+function toFormValues(profile = {}, fallbackUser = null) {
+  const fallbackName = fallbackUser?.name || "";
+  const fallbackEmail = fallbackUser?.email || "";
+
+  return {
+    fullName: profile?.fullName || profile?.name || fallbackName,
+    contactNumber: profile?.contactNumber || "",
+    email: profile?.email || fallbackEmail,
+    address: profile?.address || "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-  });
+  };
+}
+
+export default function EditProfileScreen({ navigation, route }) {
+  const { logout, user } = useUser();
+  const initialProfile = route?.params?.initialProfile || null;
+  const [loading, setLoading] = useState(!initialProfile);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(() => toFormValues(initialProfile, user));
 
   useEffect(() => {
     let cancelled = false;
@@ -74,15 +82,14 @@ export default function EditProfileScreen({ navigation }) {
         const profile = await profileApi.getProfile();
         if (!cancelled) {
           setForm((previous) => ({
-            ...previous,
-            fullName: profile?.fullName || "",
-            contactNumber: profile?.contactNumber || "",
-            email: profile?.email || "",
-            address: profile?.address || "",
+            ...toFormValues(profile, user),
+            currentPassword: previous.currentPassword,
+            newPassword: previous.newPassword,
+            confirmPassword: previous.confirmPassword,
           }));
         }
       } catch (error) {
-        if (!cancelled) {
+        if (!cancelled && !initialProfile) {
           Alert.alert("Edit Profile", error.message || "Failed to load profile.");
         }
       } finally {
@@ -96,7 +103,7 @@ export default function EditProfileScreen({ navigation }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialProfile, user]);
 
   const initials = useMemo(() => buildInitials(form.fullName), [form.fullName]);
 

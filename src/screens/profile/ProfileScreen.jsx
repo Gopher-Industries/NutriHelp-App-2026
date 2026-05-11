@@ -158,7 +158,11 @@ export default function ProfileScreen({ navigation }) {
 
         <Pressable
           style={styles.primaryButton}
-          onPress={() => navigation.navigate("EditProfileScreen")}
+          onPress={() =>
+            navigation.navigate("EditProfileScreen", {
+              initialProfile: profile,
+            })
+          }
         >
           <Ionicons name="create-outline" size={16} color="#FFFFFF" />
           <Text style={styles.primaryButtonText}>Edit Profile</Text>

@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import notificationApi from "../../api/notificationApi";
 import useBiometric from "../../hooks/useBiometric";
+import profileApi from "../../api/profileApi";
 import { useUser } from "../../context/UserContext";
 
 const SETTINGS_FALLBACK_KEY = "nutrihelp.settings.local";
@@ -61,6 +62,7 @@ export default function SettingsScreen({ navigation }) {
   const { logout, user } = useUser();
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [profile, setProfile] = useState(null);
   const [preferences, setPreferences] = useState({
     mealReminders: true,
     waterReminders: true,
@@ -75,6 +77,7 @@ export default function SettingsScreen({ navigation }) {
         notificationApi.getPreferences().catch(() => null),
         AsyncStorage.getItem(SETTINGS_FALLBACK_KEY),
       ]);
+      const loadedProfile = await profileApi.getProfile().catch(() => null);
 
       const remotePreferences =
         remoteResponse?.data?.data ||
@@ -83,6 +86,7 @@ export default function SettingsScreen({ navigation }) {
         null;
 
       const localPreferences = localFallback ? JSON.parse(localFallback) : {};
+      setProfile(loadedProfile);
 
       setPreferences({
         mealReminders:
@@ -207,7 +211,11 @@ export default function SettingsScreen({ navigation }) {
           <SettingRow
             label="Change Password"
             right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
-            onPress={() => navigation.navigate("EditProfileScreen")}
+            onPress={() =>
+              navigation.navigate("EditProfileScreen", {
+                initialProfile: profile,
+              })
+            }
             last
           />
         </View>
@@ -217,7 +225,11 @@ export default function SettingsScreen({ navigation }) {
           <SettingRow
             label="Edit Profile"
             right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
-            onPress={() => navigation.navigate("EditProfileScreen")}
+            onPress={() =>
+              navigation.navigate("EditProfileScreen", {
+                initialProfile: profile,
+              })
+            }
           />
           <SettingRow
             label="Delete Account"
