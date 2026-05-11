@@ -12,6 +12,27 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { post } from "../../api/baseApi";
 
+function normalizeBarcodeResult(response) {
+  const payload = response?.data || response;
+  const scan = payload?.scan || {};
+  const item = scan?.item || {};
+  const allergens = scan?.allergens || {};
+  const detection = payload?.detectionResult || {};
+
+  return {
+    name: item?.name || payload?.productName || "Product",
+    barcode: item?.barcode || scan?.query?.barcode || null,
+    hasUserAllergen:
+      detection?.hasUserAllergen ?? allergens?.hasMatch ?? false,
+    matchingAllergens:
+      detection?.matchingAllergens ||
+      allergens?.matchingIngredients ||
+      [],
+    detectedIngredients:
+      payload?.barcodeIngredients || allergens?.detectedIngredients || [],
+  };
+}
+
 // --- Loading Overlay ---
 function LoadingOverlay() {
   return (
@@ -26,30 +47,60 @@ function LoadingOverlay() {
 function ResultSheet({ result, onClose }) {
   return (
     <View style={styles.resultSheet}>
+      <View style={styles.resultHandle} />
+      <Text style={styles.resultEyebrow}>Barcode Result</Text>
       <Text style={styles.resultTitle}>{result.name ?? "Product"}</Text>
 
-      <View style={styles.resultRow}>
-        <Text style={styles.resultLabel}>Calories</Text>
-        <Text style={styles.resultValue}>{result.calories ?? "--"} kcal</Text>
+      <View style={styles.heroCard}>
+        <View style={styles.heroHeader}>
+          <Text style={styles.heroTitle}>Allergen Check</Text>
+          <View
+            style={[
+              styles.statusChip,
+              result.hasUserAllergen ? styles.statusChipDanger : styles.statusChipSafe,
+            ]}
+          >
+            <Text style={styles.statusChipText}>
+              {result.hasUserAllergen ? "Match found" : "Safe for profile"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.metricGrid}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Barcode</Text>
+            <Text style={styles.metricValue}>{result.barcode ?? "--"}</Text>
+          </View>
+
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Ingredients found</Text>
+            <Text style={styles.metricValue}>
+              {result.detectedIngredients?.length || 0}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      <View style={styles.resultRow}>
-        <Text style={styles.resultLabel}>Protein</Text>
-        <Text style={styles.resultValue}>{result.protein ?? "--"} g</Text>
+      <View style={styles.notesCard}>
+        <Text style={styles.notesTitle}>Matched allergens</Text>
+        <Text style={styles.notesText}>
+          {result.matchingAllergens?.length
+            ? result.matchingAllergens.join(", ")
+            : "No allergen conflicts detected for this barcode."}
+        </Text>
       </View>
 
-      <View style={styles.resultRow}>
-        <Text style={styles.resultLabel}>Carbs</Text>
-        <Text style={styles.resultValue}>{result.carbs ?? "--"} g</Text>
-      </View>
-
-      <View style={styles.resultRow}>
-        <Text style={styles.resultLabel}>Fat</Text>
-        <Text style={styles.resultValue}>{result.fat ?? "--"} g</Text>
+      <View style={styles.notesCard}>
+        <Text style={styles.notesTitle}>Detected ingredients</Text>
+        <Text style={styles.notesText}>
+          {result.detectedIngredients?.length
+            ? result.detectedIngredients.join(", ")
+            : "No ingredient list was returned by the scan service."}
+        </Text>
       </View>
 
       <Pressable style={styles.closeButton} onPress={onClose}>
-        <Text style={styles.closeButtonText}>Close</Text>
+        <Text style={styles.closeButtonText}>Scan another product</Text>
       </Pressable>
     </View>
   );
@@ -120,12 +171,17 @@ export default function BarcodeScannerScreen() {
 
   const lookupBarcode = async (barcode) => {
     if (!barcode || loading) return;
+    const normalizedBarcode = String(barcode).trim();
+    if (!/^\d{8,14}$/.test(normalizedBarcode)) {
+      setError("Please scan or enter a valid barcode with 8 to 14 digits.");
+      return;
+    }
     setError("");
     setLoading(true);
     scanLocked.current = true;
     try {
-      const data = await post("/api/barcode/scan", { barcode });
-      setResult(data);
+      const data = await post("/api/barcode/scan", { barcode: normalizedBarcode });
+      setResult(normalizeBarcodeResult(data));
     } catch (e) {
       setError(e.message ?? "Failed to look up barcode. Please try again.");
       scanLocked.current = false;
@@ -134,8 +190,12 @@ export default function BarcodeScannerScreen() {
     }
   };
 
-  const handleBarcodeScanned = ({ data }) => {
+  const handleBarcodeScanned = ({ data, type }) => {
     if (scanLocked.current) return; // prevent duplicate requests
+    if (type === "qr") {
+      setError("QR codes are ignored here. Please scan a product barcode.");
+      return;
+    }
     lookupBarcode(data);
   };
 
@@ -159,7 +219,7 @@ export default function BarcodeScannerScreen() {
         facing="back"
         enableTorch={torchOn}
         barcodeScannerSettings={{
-          barcodeTypes: ["ean13", "upc_a", "qr"],
+          barcodeTypes: ["ean13", "upc_a", "ean8", "code128", "code39"],
         }}
         onBarcodeScanned={result ? undefined : handleBarcodeScanned}
       />
@@ -328,52 +388,138 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 40,
   },
 
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#18233D",
+  resultHandle: {
+    width: 58,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#D1D5DB",
+    alignSelf: "center",
     marginBottom: 16,
   },
 
-  resultRow: {
+  resultEyebrow: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: "#1877F2",
+    marginBottom: 8,
+  },
+
+  resultTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 18,
+  },
+
+  heroCard: {
+    borderRadius: 28,
+    backgroundColor: "#0F172A",
+    padding: 18,
+    marginBottom: 16,
+  },
+
+  heroHeader: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    marginBottom: 16,
   },
 
-  resultLabel: {
-    fontSize: 14,
-    color: "#6B7280",
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 
-  resultValue: {
-    fontSize: 14,
+  statusChip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+
+  statusChipSafe: {
+    backgroundColor: "#1D4ED8",
+  },
+
+  statusChipDanger: {
+    backgroundColor: "#DC2626",
+  },
+
+  statusChipText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+
+  metricGrid: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  metricCard: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: "#1E293B",
+    padding: 14,
+  },
+
+  metricLabel: {
+    fontSize: 12,
     fontWeight: "600",
-    color: "#18233D",
+    color: "#93C5FD",
+    marginBottom: 8,
+  },
+
+  metricValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+
+  notesCard: {
+    borderRadius: 22,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    padding: 16,
+    marginBottom: 12,
+  },
+
+  notesTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 8,
+  },
+
+  notesText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#475569",
   },
 
   closeButton: {
-    marginTop: 20,
-    height: 48,
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
+    marginTop: 10,
+    height: 52,
+    backgroundColor: "#1877F2",
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
 
   closeButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
   },
 
   permissionScreen: {
