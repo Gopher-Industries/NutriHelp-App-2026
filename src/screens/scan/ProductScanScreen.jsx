@@ -20,6 +20,25 @@ const SCREENS = {
   ERROR: "error",
 };
 
+function normalizeImageResult(response) {
+  const payload = response?.data || response;
+  const scan = payload?.scan || {};
+  const classification = scan?.classification || payload?.classification || {};
+
+  return {
+    foodName:
+      classification?.label ||
+      classification?.rawLabel ||
+      scan?.item?.name ||
+      "Unknown Food",
+    confidence: classification?.confidence,
+    calories: classification?.calories ?? "--",
+    source: classification?.source || payload?.explainability?.source || "image",
+    uncertain: Boolean(classification?.uncertain),
+    alternatives: classification?.alternatives || [],
+  };
+}
+
 export default function ProductScanScreen() {
   const [screen, setScreen] = useState(SCREENS.INITIAL);
   const [imageUri, setImageUri] = useState(null);
@@ -71,7 +90,7 @@ export default function ProductScanScreen() {
         body: formData,
       });
 
-      setResult(data);
+      setResult(normalizeImageResult(data));
       setScreen(SCREENS.RESULT);
     } catch (e) {
       setError(e.message ?? "Failed to analyse image. Please try again.");
@@ -164,11 +183,12 @@ export default function ProductScanScreen() {
         )}
 
         <View style={styles.resultCard}>
+          <Text style={styles.resultEyebrow}>Image Result</Text>
           <Text style={styles.foodName}>
             {result.foodName ?? result.name ?? "Unknown Food"}
           </Text>
 
-          <Text style={styles.perServing}>Per serving</Text>
+          <Text style={styles.perServing}>AI classification summary</Text>
 
           <View style={styles.nutriRow}>
             <View style={styles.nutriItem}>
@@ -180,25 +200,34 @@ export default function ProductScanScreen() {
 
             <View style={styles.nutriItem}>
               <Text style={styles.nutriValue}>
-                {result.protein ?? "--"}g
+                {result.confidence ? `${Math.round(result.confidence * 100)}%` : "--"}
               </Text>
-              <Text style={styles.nutriLabel}>Protein</Text>
+              <Text style={styles.nutriLabel}>Confidence</Text>
             </View>
 
             <View style={styles.nutriItem}>
               <Text style={styles.nutriValue}>
-                {result.carbs ?? "--"}g
+                {result.source ?? "--"}
               </Text>
-              <Text style={styles.nutriLabel}>Carbs</Text>
+              <Text style={styles.nutriLabel}>Source</Text>
             </View>
 
             <View style={styles.nutriItem}>
               <Text style={styles.nutriValue}>
-                {result.fat ?? "--"}g
+                {result.uncertain ? "Yes" : "No"}
               </Text>
-              <Text style={styles.nutriLabel}>Fat</Text>
+              <Text style={styles.nutriLabel}>Uncertain</Text>
             </View>
           </View>
+
+          {result.alternatives?.length ? (
+            <View style={styles.alternativesBox}>
+              <Text style={styles.alternativesTitle}>Possible alternatives</Text>
+              <Text style={styles.alternativesText}>
+                {result.alternatives.map((item) => item.label || item).join(", ")}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <Pressable style={styles.primaryButton} onPress={handleReset}>
@@ -276,44 +305,80 @@ const styles = StyleSheet.create({
   },
 
   resultCard: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
+    backgroundColor: "#0F172A",
+    borderRadius: 28,
     padding: 20,
     marginBottom: 24,
   },
 
-  foodName: {
-    fontSize: 20,
+  resultEyebrow: {
+    fontSize: 12,
     fontWeight: "700",
-    color: "#18233D",
-    marginBottom: 4,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: "#93C5FD",
+    marginBottom: 10,
+  },
+
+  foodName: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginBottom: 6,
   },
 
   perServing: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    marginBottom: 16,
+    fontSize: 13,
+    color: "#CBD5E1",
+    marginBottom: 18,
   },
 
   nutriRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: 10,
   },
 
   nutriItem: {
     alignItems: "center",
+    flex: 1,
+    backgroundColor: "#1E293B",
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
   },
 
   nutriValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#4CAF50",
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    textAlign: "center",
   },
 
   nutriLabel: {
     fontSize: 11,
-    color: "#6B7280",
+    color: "#93C5FD",
     marginTop: 4,
+  },
+
+  alternativesBox: {
+    marginTop: 18,
+    padding: 16,
+    borderRadius: 22,
+    backgroundColor: "#F8FAFC",
+  },
+
+  alternativesTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 6,
+  },
+
+  alternativesText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#475569",
   },
 
   loadingText: {
@@ -330,9 +395,9 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    height: 48,
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
+    height: 52,
+    backgroundColor: "#1877F2",
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -340,8 +405,8 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
   },
 
   secondaryButton: {

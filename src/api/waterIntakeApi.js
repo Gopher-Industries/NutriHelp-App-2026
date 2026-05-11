@@ -31,7 +31,8 @@ export async function logWaterIntake(userId, glassesConsumed) {
   
   return baseApi.post("/api/water-intake", {
     user_id: userId,
-    glasses_consumed: glassesConsumed
+    amount_ml: glassesConsumed * 250,
+    date: new Date().toISOString().split('T')[0],
   });
 }
 
@@ -40,13 +41,11 @@ export async function getTodayIntake(userId) {
 
   try {
     const date = new Date().toISOString().split('T')[0];
-    const response = await baseApi.get(`/api/water-intake?user_id=${userId}&date=${date}`);
-    // The backend returns an array of records
-    const records = response.data;
+    const records = await baseApi.get("/api/water-intake", {
+      query: { user_id: userId, date },
+    });
     if (records && records.length > 0) {
-      // Assuming we sum them or take the latest? 
-      // The updateWaterIntake controller uses upsert on user_id + date, so there should be 1.
-      return records[0].glasses_consumed || 0;
+      return Math.round((records[0].amount_ml || 0) / 250);
     }
     return 0;
   } catch (error) {

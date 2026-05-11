@@ -3,7 +3,7 @@ import baseApi from "./baseApi";
 const { get, put } = baseApi;
 
 const NOTIFICATION_ENDPOINTS = {
-  preferences: "/api/notifications",
+  preferences: "/api/user/preferences/extended/notifications",
 };
 
 function ensureTokenArray(value) {
