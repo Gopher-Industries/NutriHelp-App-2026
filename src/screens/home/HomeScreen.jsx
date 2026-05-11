@@ -1,6 +1,7 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useMemo, useState } from "react";
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,42 +10,209 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import mealPlanApi from "../../api/mealPlanApi";
+import {
+  getTodayIntake,
+  getTodayIntakeLocal,
+  logWaterIntake,
+  saveTodayIntakeLocal,
+} from "../../api/waterIntakeApi";
 import { useUser } from "../../context/UserContext";
+import { groupMealsByType, normalizeMealItems } from "../meal/mealPlanUiHelpers";
 
-const SUMMARY_ROWS = [
-  { label: "Protein", value: "56 g", progress: 0.66, color: "#1877F2" },
-  { label: "Fiber", value: "18 g", progress: 0.56, color: "#39D353" },
-  { label: "Sugar", value: "24 g", progress: 0.45, color: "#FF4D00" },
-  { label: "Sodium", value: "2.5 g", progress: 0.34, color: "#FFC400" },
-];
+const CALORIE_TARGET = 2000;
+const WATER_TARGET = 8;
+const MEAL_TARGET = 3;
+const TODAY = new Date();
 
-const MEALS = [
-  { label: "Breakfast", done: true, accent: "#31D26A", icon: "checkmark-circle-outline" },
-  { label: "Lunch", done: false, accent: "#F5B400", icon: "timer-outline" },
-  { label: "Dinner", done: false, accent: "#7A7A7A", icon: "ellipse-outline" },
-];
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
-function CircularGoal() {
+function getTodayLabel() {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(TODAY);
+}
+
+function clampProgress(value, max) {
+  if (!max) return 0;
+  return Math.min(Math.max(value / max, 0), 1);
+}
+
+function toNumber(value) {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : 0;
+}
+
+function flattenTodayMeals(items = []) {
+  return groupMealsByType(items, TODAY)
+    .map((group, index) => {
+      const liveRecipe = group.recipes.find((recipe) => recipe.title && !recipe.id?.includes("fallback"));
+      if (!group.hasLiveData || !liveRecipe) {
+        return null;
+      }
+
+      return {
+        id: `${group.mealType}-${liveRecipe.id}-${index}`,
+        title: liveRecipe.title,
+        mealType: group.title,
+        calories: toNumber(liveRecipe.calories),
+        accent:
+          group.mealType === "breakfast"
+            ? "#F59E0B"
+            : group.mealType === "lunch"
+              ? "#22C55E"
+              : "#3B82F6",
+      };
+    })
+    .filter(Boolean);
+}
+
+function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
+  const progress = clampProgress(value, maxValue);
+
   return (
-    <View style={styles.goalWrap}>
-      <View style={styles.goalRing}>
-        <View style={styles.goalRingBlue} />
-        <View style={styles.goalRingGray} />
-        <View style={styles.goalInner}>
-          <Text style={styles.goalValue}>3350/</Text>
-          <Text style={styles.goalValue}>4000</Text>
-        </View>
+    <Pressable style={styles.statCard} onPress={onPress}>
+      <Text style={styles.statIcon}>{icon}</Text>
+      <Text style={styles.statValue}>
+        <Text style={[styles.statValueAccent, { color: accent }]}>{value}</Text>
+        <Text style={styles.statValueMuted}>/{maxValue}</Text>
+      </Text>
+      <Text style={styles.statLabel}>{unit}</Text>
+      <View style={styles.progressTrack}>
+        <View
+          style={[
+            styles.progressFill,
+            { width: `${progress * 100}%`, backgroundColor: accent },
+          ]}
+        />
       </View>
+      <Text style={styles.statFooter}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function ActionButton({ icon, label, onPress, isLast = false, disabled = false }) {
+  return (
+    <Pressable
+      style={[
+        styles.actionButton,
+        isLast ? styles.actionButtonLast : null,
+        disabled ? styles.actionButtonDisabled : null,
+      ]}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <MaterialCommunityIcons name={icon} size={20} color="#FFFFFF" />
+      <Text style={styles.actionLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function MealItem({ item, onPress }) {
+  return (
+    <Pressable style={styles.mealItem} onPress={onPress}>
+      <View style={[styles.mealAccent, { backgroundColor: item.accent }]} />
+      <View style={styles.mealTextWrap}>
+        <Text style={styles.mealTitle}>{item.title}</Text>
+        <Text style={[styles.mealType, { color: item.accent }]}>{item.mealType}</Text>
+      </View>
+      <Text style={styles.mealCalories}>{item.calories} cal</Text>
+    </Pressable>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <View style={styles.skeletonStatCard}>
+      <View style={styles.skeletonIcon} />
+      <View style={styles.skeletonValue} />
+      <View style={styles.skeletonLabel} />
+      <View style={styles.skeletonTrack} />
     </View>
   );
 }
 
 export default function HomeScreen({ navigation }) {
   const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [waterLogging, setWaterLogging] = useState(false);
+  const [summary, setSummary] = useState({
+    calories: 0,
+    water: 0,
+    mealsCompleted: 0,
+    meals: [],
+  });
 
-  const displayName = user?.full_name
-    || user?.name
-    || (user?.email ? user.email.split("@")[0] : "NutriHelp User");
+  const displayName = useMemo(
+    () =>
+      user?.full_name ||
+      user?.name ||
+      (user?.email ? user.email.split("@")[0] : "there"),
+    [user]
+  );
+
+  const refreshHome = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const [mealResponse, remoteWater, localWater] = await Promise.all([
+        mealPlanApi.getWeeklyPlan({ userId: user?.id }).catch(() => null),
+        getTodayIntake(user?.id).catch(() => null),
+        getTodayIntakeLocal(user?.id),
+      ]);
+
+      const items = normalizeMealItems(mealResponse);
+      const meals = flattenTodayMeals(items);
+      const calories = meals.reduce((total, meal) => total + toNumber(meal.calories), 0);
+      const water = remoteWater ?? localWater ?? 0;
+
+      setSummary({
+        calories,
+        water,
+        mealsCompleted: meals.length,
+        meals,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshHome();
+    }, [refreshHome])
+  );
+
+  const handleAddWater = async () => {
+    const nextWater = Math.min(summary.water + 1, WATER_TARGET);
+    setSummary((previous) => ({
+      ...previous,
+      water: nextWater,
+    }));
+
+    await saveTodayIntakeLocal(user?.id, nextWater);
+
+    if (!user?.id) {
+      return;
+    }
+
+    try {
+      setWaterLogging(true);
+      await logWaterIntake(user.id, nextWater);
+    } finally {
+      setWaterLogging(false);
+    }
+  };
+
+  const hasMeals = summary.meals.length > 0;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -53,103 +221,134 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.welcome}>Hi, Welcome to NutriHelp 👋</Text>
-            <Text style={styles.name}>{displayName}</Text>
+        <View style={styles.topRow}>
+          <View style={styles.statusSpacer} />
+          <View style={styles.logoBlock}>
+            <Text style={styles.logoText}>NutriHelp</Text>
           </View>
-
-          <View style={styles.headerIcons}>
-            <Ionicons name="heart-outline" size={30} color="#FF4B44" />
-            <Ionicons name="timer-outline" size={32} color="#FF4D00" />
-            <Ionicons name="notifications-outline" size={31} color="#1877F2" />
+          <View style={styles.batteryBadge}>
+            <Ionicons name="battery-charging-outline" size={18} color="#22C55E" />
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Today Nutrition</Text>
-
-        <View style={styles.topCardRow}>
-          <Pressable
-            style={[styles.panelCard, styles.goalCard]}
-            onPress={() => navigation.navigate("GoalDetailsScreen")}
-          >
-            <View style={styles.cardHeaderRow}>
-              <Ionicons name="locate-outline" size={28} color="#111111" />
-              <Text style={styles.cardTitle}>Goal</Text>
-            </View>
-            <CircularGoal />
-          </Pressable>
-
-          <View style={[styles.panelCard, styles.alertCard]}>
-            <View style={styles.cardHeaderRow}>
-              <Ionicons name="heart-dislike-outline" size={28} color="#E6402C" />
-              <Text style={styles.alertTitle}>Allergen Alert</Text>
-            </View>
-            <Text style={styles.alertHeadline}>Avoid nuts today</Text>
-            <Text style={styles.alertBody}>
-              Based on your health profile and recent scans, nuts may cause an
-              allergic reaction.
+        <View style={styles.heroRow}>
+          <View style={styles.heroTextWrap}>
+            <Text style={styles.heroGreeting}>
+              <Text style={styles.heroSun}>☼ </Text>
+              {getGreeting()}, {displayName}
             </Text>
+            <Text style={styles.heroDate}>{getTodayLabel()}</Text>
           </View>
+
+          <Pressable
+            style={styles.notificationButton}
+            onPress={() => navigation.navigate("HealthNewsScreen")}
+          >
+            <Ionicons name="notifications-outline" size={24} color="#4B5563" />
+            <View style={styles.notificationDot} />
+          </Pressable>
         </View>
 
-        <Pressable
-          style={styles.summaryCard}
-          onPress={() => navigation.navigate("NutritionSummaryScreen")}
-        >
-          <Text style={styles.summaryTitle}>Nutrition Summary</Text>
-          {SUMMARY_ROWS.map((item) => (
-            <View key={item.label} style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: item.color }]}>
-                {item.label}
-              </Text>
-              <View style={styles.summaryTrack}>
-                <View
-                  style={[
-                    styles.summaryFill,
-                    { width: `${item.progress * 100}%`, backgroundColor: item.color },
-                  ]}
-                />
-              </View>
-              <Text style={styles.summaryValue}>{item.value}</Text>
-            </View>
-          ))}
-        </Pressable>
-
-        <View style={styles.bottomCardRow}>
-          <Pressable
-            style={[styles.panelCard, styles.bottomInfoCard]}
-            onPress={() => navigation.navigate("MealPlanOverviewScreen")}
-          >
-            <Text style={styles.bottomCardTitle}>Meals Today</Text>
-            {MEALS.map((meal) => (
-              <View key={meal.label} style={styles.mealRow}>
-                <View style={styles.mealLabelRow}>
-                  <Ionicons name={meal.icon} size={26} color={meal.accent} />
-                  <Text style={styles.mealText}>{meal.label}</Text>
-                </View>
-                <Ionicons
-                  name={meal.done ? "checkmark" : "timer-outline"}
-                  size={22}
-                  color={meal.done ? "#444444" : "#6B6B6B"}
-                />
-              </View>
-            ))}
-          </Pressable>
-
-          <Pressable
-            style={[styles.panelCard, styles.bottomInfoCard]}
-            onPress={() => navigation.navigate("RecommendedDetailsScreen")}
-          >
-            <Text style={styles.bottomCardTitle}>Recommended for you</Text>
-            <Image
-              source={{
-                uri: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=600&q=80",
-              }}
-              style={styles.recommendImage}
+        {loading ? (
+          <View style={styles.statsRow}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        ) : (
+          <View style={styles.statsRow}>
+            <StatCard
+              icon="🔥"
+              value={summary.calories}
+              maxValue={CALORIE_TARGET}
+              unit="kcal"
+              label="Energy"
+              accent="#2B78C5"
+              onPress={() => navigation.navigate("GoalDetailsScreen")}
             />
-            <Text style={styles.recommendLabel}>High in protein</Text>
-          </Pressable>
+            <StatCard
+              icon="💧"
+              value={summary.water}
+              maxValue={WATER_TARGET}
+              unit="cups water"
+              label="Hydration"
+              accent="#2B78C5"
+              onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+            />
+            <StatCard
+              icon="🍽️"
+              value={summary.mealsCompleted}
+              maxValue={MEAL_TARGET}
+              unit="Meals"
+              label="Completed"
+              accent="#2B78C5"
+              onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+            />
+          </View>
+        )}
+
+        <View style={styles.actionsRow}>
+          <ActionButton
+            icon="silverware-fork-knife"
+            label="Log Meal"
+            onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+          />
+          <ActionButton
+            icon="cup-outline"
+            label={waterLogging ? "Saving..." : "Add Water"}
+            onPress={handleAddWater}
+            disabled={waterLogging}
+          />
+          <ActionButton
+            icon="chat-processing-outline"
+            label="Ask AI"
+            onPress={() => navigation.navigate("RecommendedDetailsScreen")}
+            isLast
+          />
+        </View>
+
+        <View style={styles.mealsCard}>
+          <Text style={styles.mealsCardTitle}>Today's Meals</Text>
+
+          {loading ? (
+            <View style={styles.loadingBlock}>
+              <View style={styles.loadingLineLong} />
+              <View style={styles.loadingLineMid} />
+              <View style={styles.loadingLineLong} />
+              <View style={styles.loadingLineShort} />
+            </View>
+          ) : hasMeals ? (
+            <>
+              {summary.meals.map((meal) => (
+                <MealItem
+                  key={meal.id}
+                  item={meal}
+                  onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+                />
+              ))}
+
+              <Pressable
+                style={styles.linkButton}
+                onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+              >
+                <Text style={styles.linkButtonText}>View Full Meal Plan →</Text>
+              </Pressable>
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>🍽️</Text>
+              <Text style={styles.emptyStateTitle}>No meals planned yet</Text>
+              <Text style={styles.emptyStateBody}>
+                Get started by setting up your meals for today.
+              </Text>
+              <Pressable
+                style={styles.emptyCta}
+                onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+              >
+                <Text style={styles.emptyCtaText}>Set Up Today's Meals</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -161,219 +360,376 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+
   screen: {
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+
   content: {
     paddingHorizontal: 18,
-    paddingTop: 10,
+    paddingTop: 8,
     paddingBottom: 32,
   },
-  headerRow: {
+
+  topRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 28,
-  },
-  welcome: {
-    fontSize: 15,
-    color: "#222222",
-    marginBottom: 4,
-  },
-  name: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#111111",
-  },
-  headerIcons: {
-    flexDirection: "row",
-    gap: 12,
-    paddingTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#111111",
-    marginBottom: 18,
-  },
-  topCardRow: {
-    flexDirection: "row",
-    gap: 14,
-    marginBottom: 16,
-  },
-  panelCard: {
-    borderWidth: 1.5,
-    borderColor: "#111111",
-    borderRadius: 30,
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-  },
-  goalCard: {
-    flex: 1,
-    minHeight: 238,
-  },
-  alertCard: {
-    flex: 1,
-    minHeight: 238,
-  },
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 18,
-  },
-  cardTitle: {
-    fontSize: 27,
-    fontWeight: "800",
-    color: "#111111",
-  },
-  goalWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-  },
-  goalRing: {
-    width: 138,
-    height: 138,
-    borderRadius: 69,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  goalRingBlue: {
-    position: "absolute",
-    width: 138,
-    height: 138,
-    borderRadius: 69,
-    borderWidth: 13,
-    borderColor: "#1877F2",
-    borderRightColor: "#B7B7B7",
-    borderTopColor: "#1877F2",
-    transform: [{ rotate: "-35deg" }],
-  },
-  goalRingGray: {
-    position: "absolute",
-    width: 138,
-    height: 138,
-    borderRadius: 69,
-    borderWidth: 13,
-    borderColor: "transparent",
-    borderTopColor: "#B7B7B7",
-    borderRightColor: "#B7B7B7",
-    transform: [{ rotate: "50deg" }],
-  },
-  goalInner: {
-    width: 106,
-    height: 106,
-    borderRadius: 53,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  goalValue: {
-    fontSize: 24,
-    lineHeight: 26,
-    fontWeight: "800",
-    color: "#111111",
-  },
-  alertTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#111111",
-  },
-  alertHeadline: {
-    fontSize: 22,
-    fontWeight: "400",
-    color: "#111111",
-    marginBottom: 12,
-  },
-  alertBody: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: "#111111",
-  },
-  summaryCard: {
-    borderWidth: 1.5,
-    borderColor: "#111111",
-    borderRadius: 34,
-    paddingHorizontal: 22,
-    paddingVertical: 20,
-    marginBottom: 18,
-  },
-  summaryTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#111111",
-    marginBottom: 16,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    width: 66,
-    fontSize: 17,
-    fontWeight: "500",
-  },
-  summaryTrack: {
-    flex: 1,
-    height: 10,
-    borderRadius: 99,
-    backgroundColor: "#D9D9D9",
-    marginHorizontal: 14,
-    overflow: "hidden",
-  },
-  summaryFill: {
-    height: "100%",
-    borderRadius: 99,
-  },
-  summaryValue: {
-    width: 52,
-    textAlign: "right",
-    fontSize: 16,
-    color: "#111111",
-  },
-  bottomCardRow: {
-    flexDirection: "row",
-    gap: 14,
-  },
-  bottomInfoCard: {
-    flex: 1,
-    minHeight: 215,
-  },
-  bottomCardTitle: {
-    fontSize: 21,
-    fontWeight: "800",
-    color: "#111111",
     marginBottom: 14,
   },
-  mealRow: {
+
+  statusSpacer: {
+    width: 40,
+  },
+
+  logoBlock: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  logoText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#18233D",
+  },
+
+  batteryBadge: {
+    width: 40,
+    alignItems: "flex-end",
+  },
+
+  heroRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 18,
+  },
+
+  heroTextWrap: {
+    flex: 1,
+    paddingRight: 14,
+  },
+
+  heroGreeting: {
+    fontSize: 23,
+    lineHeight: 30,
+    fontWeight: "800",
+    color: "#22365D",
+  },
+
+  heroSun: {
+    color: "#F4B000",
+  },
+
+  heroDate: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#7A7F8E",
+  },
+
+  notificationButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+
+  notificationDot: {
+    position: "absolute",
+    top: 8,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FF4D4F",
+  },
+
+  statsRow: {
+    flexDirection: "row",
+    marginBottom: 14,
+  },
+
+  statCard: {
+    flex: 1,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
+  },
+
+  statIcon: {
+    fontSize: 22,
+    marginBottom: 6,
+  },
+
+  statValue: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  statValueAccent: {
+    fontSize: 21,
+    fontWeight: "800",
+  },
+
+  statValueMuted: {
+    fontSize: 15,
+    color: "#A0A8B6",
+  },
+
+  statLabel: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#7A7F8E",
+  },
+
+  progressTrack: {
+    marginTop: 10,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#E5E7EB",
+    overflow: "hidden",
+  },
+
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+
+  statFooter: {
+    marginTop: 8,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#7A7F8E",
+  },
+
+  actionsRow: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+
+  actionButton: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: 12,
+    backgroundColor: "#2B78C5",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    paddingHorizontal: 6,
+  },
+
+  actionButtonLast: {
+    marginRight: 0,
+  },
+
+  actionButtonDisabled: {
+    opacity: 0.72,
+  },
+
+  actionLabel: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  mealsCard: {
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+
+  mealsCardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#202633",
     marginBottom: 12,
   },
-  mealLabelRow: {
+
+  mealItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    marginBottom: 12,
+    overflow: "hidden",
   },
-  mealText: {
-    fontSize: 20,
-    color: "#111111",
+
+  mealAccent: {
+    width: 4,
+    alignSelf: "stretch",
   },
-  recommendImage: {
-    width: "100%",
-    height: 80,
-    borderRadius: 8,
+
+  mealTextWrap: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+
+  mealTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#22365D",
+  },
+
+  mealType: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  mealCalories: {
+    paddingRight: 12,
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+
+  linkButton: {
+    paddingTop: 4,
+    paddingBottom: 2,
+    alignItems: "center",
+  },
+
+  linkButtonText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2B78C5",
+  },
+
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 28,
+  },
+
+  emptyStateIcon: {
+    fontSize: 34,
     marginBottom: 10,
   },
-  recommendLabel: {
-    fontSize: 17,
-    color: "#111111",
+
+  emptyStateTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#4B5563",
+    marginBottom: 8,
+  },
+
+  emptyStateBody: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginBottom: 18,
+  },
+
+  emptyCta: {
+    width: "100%",
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#2B78C5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyCtaText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  skeletonStatCard: {
+    flex: 1,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
+  },
+
+  skeletonIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: "#EEF2F7",
+    marginBottom: 10,
+  },
+
+  skeletonValue: {
+    width: "68%",
+    height: 20,
+    borderRadius: 8,
+    backgroundColor: "#EEF2F7",
+    marginBottom: 8,
+  },
+
+  skeletonLabel: {
+    width: "46%",
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#F3F5F9",
+    marginBottom: 12,
+  },
+
+  skeletonTrack: {
+    width: "100%",
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#EEF2F7",
+  },
+
+  loadingBlock: {
+    paddingVertical: 8,
+  },
+
+  loadingLineLong: {
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#EEF2F7",
+    marginBottom: 14,
+  },
+
+  loadingLineMid: {
+    width: "72%",
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#F3F5F9",
+    marginBottom: 14,
+  },
+
+  loadingLineShort: {
+    width: "54%",
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#EEF2F7",
   },
 });

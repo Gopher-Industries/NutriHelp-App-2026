@@ -1,251 +1,422 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
-  withSpring,
-  withSequence,
-  Easing 
-} from 'react-native-reanimated';
-import { getTodayIntakeLocal, getTodayIntake, logWaterIntake, saveTodayIntakeLocal } from '../api/waterIntakeApi';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import Svg, { Circle } from "react-native-svg";
+
+import {
+  getTodayIntake,
+  getTodayIntakeLocal,
+  logWaterIntake,
+  saveTodayIntakeLocal,
+} from "../api/waterIntakeApi";
 
 const DAILY_GOAL_CUPS = 8;
+const REMINDERS_KEY = "nutrihelp.water.dailyReminders";
 
-const STAGES = {
-  SAD: 'sad',
-  NEUTRAL: 'neutral',
-  EXCITED: 'excited',
-  MEDAL: 'medal',
-};
+function buildReminderKey(userId) {
+  const scope = userId ? `user_${userId}` : "guest";
+  return `${REMINDERS_KEY}.${scope}`;
+}
 
-const STAGE_CONFIG = {
-  sad:     { emoji: '😟', bg: '#fef2f2', darkBg: '#1c1917', accent: '#ef4444' },
-  neutral: { emoji: '🙂', bg: '#fffbeb', darkBg: '#1c1917', accent: '#f59e0b' },
-  excited: { emoji: '🌟', bg: '#f0fdf4', darkBg: '#052e16', accent: '#22c55e' },
-  medal:   { emoji: '🏅', bg: '#fefce8', darkBg: '#1a2e05', accent: '#eab308' },
-};
-
-const MESSAGES = {
-  sad: "You need water, start sipping!",
-  neutral: "Doing okay, keep going!",
-  excited: "Almost there, finish strong!",
-  medal: "Goal achieved, amazing job!",
-};
-
-const getStage = (cups) => {
-  if (cups <= 2) return STAGES.SAD;
-  if (cups <= 5) return STAGES.NEUTRAL;
-  if (cups <= 7) return STAGES.EXCITED;
-  return STAGES.MEDAL;
-};
-
-export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
-  const [glasses, setGlasses] = useState(0);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  const fillHeight = useSharedValue(0);
-  const buttonScale = useSharedValue(1);
-  const orbGlow = useSharedValue(0);
-
-  useEffect(() => {
-    const fetchIntake = async () => {
-      let todayIntake = 0;
-      
-      if (userId) {
-        // Try backend first if authenticated
-        todayIntake = await getTodayIntake(userId);
-      } else {
-        // Fallback to local
-        todayIntake = await getTodayIntakeLocal();
-      }
-
-      setGlasses(todayIntake);
-      const pct = Math.min(todayIntake / dailyGoal, 1) * 100;
-      fillHeight.value = withTiming(pct, { duration: 1200, easing: Easing.out(Easing.cubic) });
-    };
-    fetchIntake();
-  }, [userId, dailyGoal]);
-
-  const updateIntake = async (newGlasses) => {
-    setGlasses(newGlasses);
-    const pct = Math.min(newGlasses / dailyGoal, 1) * 100;
-    fillHeight.value = withTiming(pct, { duration: 800, easing: Easing.out(Easing.cubic) });
-    
-    // Pulse the orb glow on update
-    orbGlow.value = withSequence(
-      withTiming(1, { duration: 200 }),
-      withTiming(0, { duration: 600 })
-    );
-
-    await saveTodayIntakeLocal(newGlasses);
-    logWaterIntake(userId, newGlasses).catch(console.error);
-  };
-
-  const handleAdd = () => {
-    if (glasses < dailyGoal) {
-      buttonScale.value = withSequence(
-        withSpring(0.85, { damping: 4 }),
-        withSpring(1, { damping: 6 })
-      );
-      updateIntake(glasses + 1);
-    }
-  };
-
-  const stage = getStage(glasses);
-  const config = STAGE_CONFIG[stage];
-  const hydrationPct = Math.round((glasses / dailyGoal) * 100);
-  const currentL = (glasses * 0.25).toFixed(1);
-  const goalL = (dailyGoal * 0.25).toFixed(1);
-
-  const fillStyle = useAnimatedStyle(() => ({
-    height: `${fillHeight.value}%`,
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: orbGlow.value * 0.6,
-    transform: [{ scale: 1 + orbGlow.value * 0.08 }],
-  }));
-
-  const addBtnStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
+function ProgressRing({ progress, current, goal }) {
+  const size = 230;
+  const strokeWidth = 20;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progressLength = circumference * progress;
+  const segmentLength = circumference / 4;
+  const visibleSegment = Math.max(segmentLength - 28, 8);
 
   return (
-    <View 
-      className={`rounded-2xl overflow-hidden ${isDark ? 'border border-slate-700' : 'border border-slate-200'}`}
-      style={{ backgroundColor: isDark ? config.darkBg : config.bg }}
-    >
-      {/* Header */}
-      <View className="px-5 pt-5 pb-3">
-        <View className="flex-row items-center justify-between">
-          <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-            💧 Daily Water Intake
-          </Text>
-          <View className="flex-row items-center" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
-            <Text className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              {currentL}L / {goalL}L
-            </Text>
-          </View>
-        </View>
-      </View>
+    <View style={styles.ringWrap}>
+      <Svg width={size} height={size}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#DDDAD7"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
 
-      {/* Orb + Fill Area */}
-      <View className="items-center py-4">
-        <View style={{ width: 140, height: 140, position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Glow ring */}
-          <Animated.View 
-            style={[
-              glowStyle,
-              { 
-                position: 'absolute', width: 152, height: 152, borderRadius: 76,
-                backgroundColor: config.accent,
-              }
-            ]}
-          />
-          
-          {/* Orb container */}
-          <View 
-            style={{ 
-              width: 140, height: 140, borderRadius: 70, overflow: 'hidden', 
-              borderWidth: 3, borderColor: isDark ? '#475569' : '#cbd5e1',
-              backgroundColor: isDark ? '#0f172a' : '#e2e8f0',
-            }}
-          >
-            {/* Water fill */}
-            <Animated.View 
-              style={[
-                fillStyle, 
-                { 
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  backgroundColor: '#3b82f6',
-                  borderTopLeftRadius: 4, borderTopRightRadius: 4,
-                }
-              ]}
-            >
-              {/* Wave overlay */}
-              <View style={{ 
-                position: 'absolute', top: -6, left: -10, right: -10, height: 16, 
-                backgroundColor: '#60a5fa', borderRadius: 999, opacity: 0.5 
-              }} />
-            </Animated.View>
+        {[0, 1, 2, 3].map((index) => {
+          const dashOffset = index * segmentLength;
+          const activeLength = Math.max(
+            Math.min(progressLength - dashOffset, visibleSegment),
+            0
+          );
 
-            {/* Center text */}
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 28, fontWeight: '900', color: '#ffffff', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }}>
-                {hydrationPct}%
-              </Text>
-            </View>
-          </View>
-        </View>
+          if (activeLength <= 0) {
+            return null;
+          }
 
-        {/* Stage message */}
-        <View className="flex-row items-center mt-4 px-4">
-          <Text style={{ fontSize: 22, marginRight: 6 }}>{config.emoji}</Text>
-          <Text className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-            {MESSAGES[stage]}
-          </Text>
-        </View>
-      </View>
+          return (
+            <Circle
+              key={`segment-${index}`}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="#57E1D4"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              fill="none"
+              strokeDasharray={`${activeLength} ${circumference}`}
+              strokeDashoffset={circumference * 0.25 - dashOffset}
+              rotation="-90"
+              origin={`${size / 2}, ${size / 2}`}
+            />
+          );
+        })}
+      </Svg>
 
-      {/* Controls Section */}
-      <View 
-        className="px-5 pt-4 pb-5"
-        style={{ backgroundColor: isDark ? 'rgba(15,23,42,0.5)' : 'rgba(255,255,255,0.7)' }}
-      >
-        {/* Glass count display */}
-        <View className="flex-row items-center justify-center mb-4">
-          <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-            {glasses}
-          </Text>
-          <Text className={`text-lg font-medium ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            / {dailyGoal} glasses
-          </Text>
-        </View>
-
-        {/* Glass grid */}
-        <View className="flex-row justify-center mb-5">
-          {[...Array(dailyGoal)].map((_, i) => (
-            <View 
-              key={i}
-              style={{
-                width: 28, height: 38, marginHorizontal: 3,
-                borderWidth: 2, borderColor: isDark ? '#475569' : '#94a3b8',
-                borderTopLeftRadius: 4, borderTopRightRadius: 4,
-                borderBottomLeftRadius: 2, borderBottomRightRadius: 2,
-                overflow: 'hidden', backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-              }}
-            >
-              <View style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                height: i < glasses ? '80%' : 0,
-                backgroundColor: config.accent,
-                opacity: i < glasses ? 1 : 0,
-              }} />
-            </View>
-          ))}
-        </View>
-
-        {/* Add Glass Button */}
-        <Animated.View style={addBtnStyle}>
-          <TouchableOpacity 
-            onPress={handleAdd}
-            disabled={glasses >= dailyGoal}
-            activeOpacity={0.8}
-            style={{
-              backgroundColor: glasses >= dailyGoal ? (isDark ? '#334155' : '#cbd5e1') : '#16a34a',
-              paddingVertical: 14, borderRadius: 14, alignItems: 'center',
-              shadowColor: '#000', shadowOpacity: glasses >= dailyGoal ? 0 : 0.15,
-              shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 3,
-            }}
-          >
-            <Text style={{ color: glasses >= dailyGoal ? (isDark ? '#64748b' : '#94a3b8') : '#ffffff', fontSize: 16, fontWeight: '700' }}>
-              {glasses >= dailyGoal ? '✓ Goal Complete!' : '+ Log Glass (250ml)'}
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
+      <View style={styles.ringCenter}>
+        <Text style={styles.ringCurrent}>{current}</Text>
+        <Text style={styles.ringDivider}> / </Text>
+        <Text style={styles.ringGoal}>{goal}</Text>
       </View>
     </View>
   );
 }
+
+function QuickAction({ label, onPress }) {
+  return (
+    <Pressable style={styles.quickActionButton} onPress={onPress}>
+      <Text style={styles.quickActionText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
+  const [glasses, setGlasses] = useState(0);
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [customVisible, setCustomVisible] = useState(false);
+  const [customValue, setCustomValue] = useState("1");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      const [remoteGlasses, localGlasses, storedReminder] = await Promise.all([
+        userId ? getTodayIntake(userId).catch(() => null) : Promise.resolve(null),
+        getTodayIntakeLocal(userId),
+        AsyncStorage.getItem(buildReminderKey(userId)),
+      ]);
+
+      if (cancelled) {
+        return;
+      }
+
+      setGlasses(remoteGlasses ?? localGlasses ?? 0);
+      setRemindersEnabled(storedReminder === "true");
+    }
+
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const progress = useMemo(
+    () => Math.min(Math.max(glasses / dailyGoal, 0), 1),
+    [glasses, dailyGoal]
+  );
+
+  const persistIntake = async (nextGlasses) => {
+    const safeValue = Math.max(0, Math.min(nextGlasses, dailyGoal));
+    setGlasses(safeValue);
+    await saveTodayIntakeLocal(userId, safeValue);
+
+    if (userId) {
+      logWaterIntake(userId, safeValue).catch(console.error);
+    }
+  };
+
+  const adjustGlasses = async (delta) => {
+    await persistIntake(glasses + delta);
+  };
+
+  const handleToggleReminders = async (value) => {
+    setRemindersEnabled(value);
+    await AsyncStorage.setItem(buildReminderKey(userId), value ? "true" : "false");
+  };
+
+  const applyCustomAmount = async () => {
+    const parsed = Number.parseInt(customValue, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      Alert.alert("Custom intake", "Please enter a valid number of cups.");
+      return;
+    }
+
+    await persistIntake(glasses + parsed);
+    setCustomVisible(false);
+  };
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.topRow}>
+        <View style={styles.modeIconButton}>
+          <Ionicons name="water-outline" size={26} color="#56E0D3" />
+        </View>
+        <Text style={styles.logoText}>NutriHelp</Text>
+        <View style={styles.modeIconButtonDark}>
+          <Ionicons name="moon-outline" size={24} color="#B9B1A8" />
+        </View>
+      </View>
+
+      <ProgressRing progress={progress} current={glasses} goal={dailyGoal} />
+
+      <Text style={styles.message}>
+        Let's start building healthy hydration habits together
+      </Text>
+
+      <View style={styles.counterRow}>
+        <Pressable style={styles.circleControl} onPress={() => adjustGlasses(-1)}>
+          <Ionicons name="remove" size={26} color="#56E0D3" />
+        </Pressable>
+        <Text style={styles.counterValue}>{glasses}</Text>
+        <Pressable style={styles.circleControl} onPress={() => adjustGlasses(1)}>
+          <Ionicons name="add" size={26} color="#56E0D3" />
+        </Pressable>
+      </View>
+
+      <View style={styles.quickActionsRow}>
+        <QuickAction label="+1 cup" onPress={() => adjustGlasses(1)} />
+        <QuickAction label="+2 cups" onPress={() => adjustGlasses(2)} />
+        <QuickAction label="Custom" onPress={() => setCustomVisible(true)} />
+      </View>
+
+      <View style={styles.remindersRow}>
+        <Text style={styles.remindersText}>Daily reminders</Text>
+        <Switch
+          value={remindersEnabled}
+          onValueChange={handleToggleReminders}
+          trackColor={{ false: "#4B5563", true: "#4B5563" }}
+          thumbColor="#1F2328"
+        />
+      </View>
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={customVisible}
+        onRequestClose={() => setCustomVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Custom water amount</Text>
+            <Text style={styles.modalSubtitle}>Enter the number of cups to add</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              value={customValue}
+              onChangeText={setCustomValue}
+              keyboardType="number-pad"
+              placeholder="1"
+              placeholderTextColor="#A8A29E"
+            />
+
+            <Pressable style={styles.modalPrimaryButton} onPress={applyCustomAmount}>
+              <Text style={styles.modalPrimaryText}>Add cups</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.modalSecondaryButton}
+              onPress={() => setCustomVisible(false)}
+            >
+              <Text style={styles.modalSecondaryText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 26,
+    paddingTop: 18,
+    paddingBottom: 28,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 34,
+  },
+  modeIconButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#083F38",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modeIconButtonDark: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#202227",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111111",
+  },
+  ringWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 26,
+  },
+  ringCenter: {
+    position: "absolute",
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  ringCurrent: {
+    fontSize: 54,
+    fontWeight: "800",
+    color: "#57E1D4",
+  },
+  ringDivider: {
+    fontSize: 24,
+    color: "#9F968D",
+  },
+  ringGoal: {
+    fontSize: 24,
+    color: "#9F968D",
+  },
+  message: {
+    textAlign: "center",
+    fontSize: 22,
+    lineHeight: 34,
+    color: "#B8AEA3",
+    marginBottom: 34,
+    paddingHorizontal: 12,
+  },
+  counterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 26,
+  },
+  circleControl: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    borderWidth: 3,
+    borderColor: "#11CFC1",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  counterValue: {
+    width: 86,
+    textAlign: "center",
+    fontSize: 38,
+    fontWeight: "700",
+    color: "#D1CCC5",
+  },
+  quickActionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 78,
+  },
+  quickActionButton: {
+    flex: 1,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 2,
+    borderColor: "#3B3B3B",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  quickActionText: {
+    fontSize: 17,
+    fontWeight: "500",
+    color: "#C2BCB4",
+  },
+  remindersRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  remindersText: {
+    fontSize: 22,
+    color: "#D2CCC4",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15,23,42,0.22)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: "100%",
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 6,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#78716C",
+    marginBottom: 16,
+  },
+  modalInput: {
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#D6D3D1",
+    paddingHorizontal: 16,
+    fontSize: 20,
+    color: "#111827",
+    marginBottom: 14,
+  },
+  modalPrimaryButton: {
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: "#11CFC1",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  modalPrimaryText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#083F38",
+  },
+  modalSecondaryButton: {
+    height: 48,
+    borderRadius: 18,
+    backgroundColor: "#F5F5F4",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalSecondaryText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#57534E",
+  },
+});

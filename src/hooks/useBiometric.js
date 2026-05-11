@@ -7,7 +7,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const BIOMETRIC_KEY = "biometricEnabled";
 const BACKGROUND_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
-export default function useBiometric({ onAuthFail } = {}) {
+function buildBiometricKey(storageScopeKey) {
+  return storageScopeKey ? `${BIOMETRIC_KEY}.${storageScopeKey}` : BIOMETRIC_KEY;
+}
+
+export default function useBiometric({ onAuthFail, storageScopeKey } = {}) {
   const [isAvailable, setIsAvailable] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const [isPrompting, setIsPrompting] = useState(false);
@@ -29,17 +33,20 @@ export default function useBiometric({ onAuthFail } = {}) {
   // Load persisted preference
   useEffect(() => {
     async function loadPreference() {
-      const stored = await AsyncStorage.getItem(BIOMETRIC_KEY);
+      const stored = await AsyncStorage.getItem(buildBiometricKey(storageScopeKey));
       setIsEnabled(stored === "true");
     }
 
     loadPreference();
-  }, []);
+  }, [storageScopeKey]);
 
   const setEnabled = useCallback(async (value) => {
     setIsEnabled(value);
-    await AsyncStorage.setItem(BIOMETRIC_KEY, value ? "true" : "false");
-  }, []);
+    await AsyncStorage.setItem(
+      buildBiometricKey(storageScopeKey),
+      value ? "true" : "false"
+    );
+  }, [storageScopeKey]);
 
   const authenticate = useCallback(async () => {
     if (!isAvailable || isPrompting) return;

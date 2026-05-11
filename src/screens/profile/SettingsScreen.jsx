@@ -21,6 +21,11 @@ import { useUser } from "../../context/UserContext";
 
 const SETTINGS_FALLBACK_KEY = "nutrihelp.settings.local";
 
+function buildSettingsFallbackKey(userId) {
+  const scope = userId ? `user_${userId}` : "guest";
+  return `${SETTINGS_FALLBACK_KEY}.${scope}`;
+}
+
 function SectionTitle({ children }) {
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
@@ -68,14 +73,17 @@ export default function SettingsScreen({ navigation }) {
     waterReminders: true,
   });
 
-  const { isAvailable, isEnabled, setEnabled } = useBiometric({ onAuthFail: logout });
+  const { isAvailable, isEnabled, setEnabled } = useBiometric({
+    onAuthFail: logout,
+    storageScopeKey: user?.id ? `user_${user.id}` : "guest",
+  });
 
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
       const [remoteResponse, localFallback] = await Promise.all([
         notificationApi.getPreferences().catch(() => null),
-        AsyncStorage.getItem(SETTINGS_FALLBACK_KEY),
+        AsyncStorage.getItem(buildSettingsFallbackKey(user?.id)),
       ]);
       const loadedProfile = await profileApi.getProfile().catch(() => null);
 
@@ -97,7 +105,7 @@ export default function SettingsScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,7 +116,7 @@ export default function SettingsScreen({ navigation }) {
   const persistPreferences = async (nextPreferences) => {
     setPreferences(nextPreferences);
     await AsyncStorage.setItem(
-      SETTINGS_FALLBACK_KEY,
+      buildSettingsFallbackKey(user?.id),
       JSON.stringify(nextPreferences)
     );
 

@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { request } from "../../api/baseApi";
+import { saveScannedMeal } from "../../api/mealLogApi";
+import { useUser } from "../../context/UserContext";
 
 const SCREENS = {
   INITIAL: "initial",
@@ -24,6 +26,8 @@ function normalizeImageResult(response) {
   const payload = response?.data || response;
   const scan = payload?.scan || {};
   const classification = scan?.classification || payload?.classification || {};
+  const caloriesValue = classification?.calories?.value ?? null;
+  const caloriesUnit = classification?.calories?.unit || null;
 
   return {
     foodName:
@@ -32,7 +36,8 @@ function normalizeImageResult(response) {
       scan?.item?.name ||
       "Unknown Food",
     confidence: classification?.confidence,
-    calories: classification?.calories ?? "--",
+    caloriesValue,
+    caloriesUnit,
     source: classification?.source || payload?.explainability?.source || "image",
     uncertain: Boolean(classification?.uncertain),
     alternatives: classification?.alternatives || [],
@@ -40,10 +45,12 @@ function normalizeImageResult(response) {
 }
 
 export default function ProductScanScreen() {
+  const { user } = useUser();
   const [screen, setScreen] = useState(SCREENS.INITIAL);
   const [imageUri, setImageUri] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [saveState, setSaveState] = useState("idle");
 
   const pickImage = async (fromCamera) => {
     try {
@@ -103,6 +110,35 @@ export default function ProductScanScreen() {
     setImageUri(null);
     setResult(null);
     setError("");
+    setSaveState("idle");
+  };
+
+  const handleSaveToHistory = async () => {
+    if (!result) return;
+
+    try {
+      setSaveState("saving");
+      await saveScannedMeal({
+        user_id: user?.id || user?.user_id || user?.email || "anonymous",
+        date: new Date().toISOString().slice(0, 10),
+        meal_type: "Snacks",
+        label: result.foodName,
+        confidence: Number(result.confidence || 0),
+        estimated_calories:
+          result.caloriesValue != null ? Math.round(Number(result.caloriesValue)) : null,
+        serving_description: result.caloriesUnit || null,
+        recommendation: result.uncertain
+          ? "Saved from image scan after review."
+          : "Saved from image scan.",
+        is_unclear: Boolean(result.uncertain),
+        source: "mobile_image_scan",
+      });
+      setSaveState("saved");
+    } catch (saveError) {
+      setSaveState("idle");
+      setError(saveError.message || "Failed to save scan history.");
+      setScreen(SCREENS.ERROR);
+    }
   };
 
   // --- Initial screen ---
@@ -193,7 +229,7 @@ export default function ProductScanScreen() {
           <View style={styles.nutriRow}>
             <View style={styles.nutriItem}>
               <Text style={styles.nutriValue}>
-                {result.calories ?? "--"}
+                {result.caloriesValue != null ? result.caloriesValue : "--"}
               </Text>
               <Text style={styles.nutriLabel}>Calories</Text>
             </View>
@@ -229,6 +265,23 @@ export default function ProductScanScreen() {
             </View>
           ) : null}
         </View>
+
+        <Pressable
+          style={[
+            styles.secondaryButton,
+            saveState === "saved" ? styles.secondaryButtonSaved : null,
+          ]}
+          onPress={handleSaveToHistory}
+          disabled={saveState === "saving" || saveState === "saved"}
+        >
+          <Text style={styles.secondaryButtonText}>
+            {saveState === "saving"
+              ? "Saving..."
+              : saveState === "saved"
+                ? "Saved to History"
+                : "Save to History"}
+          </Text>
+        </Pressable>
 
         <Pressable style={styles.primaryButton} onPress={handleReset}>
           <Text style={styles.primaryButtonText}>Try Again</Text>
@@ -423,5 +476,10 @@ const styles = StyleSheet.create({
     color: "#18233D",
     fontSize: 14,
     fontWeight: "600",
+  },
+
+  secondaryButtonSaved: {
+    borderColor: "#22C55E",
+    backgroundColor: "#F0FDF4",
   },
 });

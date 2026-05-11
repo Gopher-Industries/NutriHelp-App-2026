@@ -10,6 +10,10 @@ export const CACHE_KEYS = {
 
 const MAX_CACHED_RECIPES = 20;
 
+export function buildScopedCacheKey(baseKey, scopeKey) {
+  return scopeKey ? `${baseKey}.${scopeKey}` : baseKey;
+}
+
 export function useNetworkBanner() {
   const [isConnected, setIsConnected] = useState(true);
   const [showBanner, setShowBanner] = useState(false);
@@ -34,35 +38,45 @@ export function useNetworkBanner() {
   return { isConnected, showBanner };
 }
 
-export async function cacheWeeklyPlan(data) {
+export async function cacheWeeklyPlan(data, scopeKey) {
   try {
-    await AsyncStorage.setItem(CACHE_KEYS.weeklyPlan, JSON.stringify(data));
+    await AsyncStorage.setItem(
+      buildScopedCacheKey(CACHE_KEYS.weeklyPlan, scopeKey),
+      JSON.stringify(data)
+    );
   } catch (e) {
     console.log("[Cache] Failed to cache weekly plan:", e.message);
   }
 }
 
-export async function getCachedWeeklyPlan() {
+export async function getCachedWeeklyPlan(scopeKey) {
   try {
-    const stored = await AsyncStorage.getItem(CACHE_KEYS.weeklyPlan);
+    const stored = await AsyncStorage.getItem(
+      buildScopedCacheKey(CACHE_KEYS.weeklyPlan, scopeKey)
+    );
     return stored ? JSON.parse(stored) : null;
   } catch (e) {
     return null;
   }
 }
 
-export async function cacheRecipes(recipes) {
+export async function cacheRecipes(recipes, scopeKey) {
   try {
     const trimmed = recipes.slice(0, MAX_CACHED_RECIPES);
-    await AsyncStorage.setItem(CACHE_KEYS.recipes, JSON.stringify(trimmed));
+    await AsyncStorage.setItem(
+      buildScopedCacheKey(CACHE_KEYS.recipes, scopeKey),
+      JSON.stringify(trimmed)
+    );
   } catch (e) {
     console.log("[Cache] Failed to cache recipes:", e.message);
   }
 }
 
-export async function getCachedRecipes() {
+export async function getCachedRecipes(scopeKey) {
   try {
-    const stored = await AsyncStorage.getItem(CACHE_KEYS.recipes);
+    const stored = await AsyncStorage.getItem(
+      buildScopedCacheKey(CACHE_KEYS.recipes, scopeKey)
+    );
     return stored ? JSON.parse(stored) : null;
   } catch (e) {
     return null;
