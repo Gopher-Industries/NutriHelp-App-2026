@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { View, Text } from "react-native";
+import { View, Text, ScrollView } from "react-native";
+import { useUser } from "../../context/UserContext";
+import WaterTracker from '../../components/WaterTracker';
 
 import BottomSheet from "../../components/common/BottomSheet";
 import NavigationHeader from "../../components/common/NavigationHeader";
@@ -12,6 +14,7 @@ import EmptyState from "../../components/common/EmptyState";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 export default function HomeScreen() {
+  const { user } = useUser();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,6 +41,11 @@ export default function HomeScreen() {
       <NavigationHeader title="Home" showBackButton={true} />
 
       <View style={{ padding: 16 }}>
+        
+        {/* MOB-FE05: Integrated WaterTracker */}
+        <View className="mb-6">
+          <WaterTracker userId={user?.id} dailyGoal={8} />
+        </View>
 
         <Input
           label="Email"

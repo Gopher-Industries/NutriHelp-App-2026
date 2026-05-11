@@ -1,5 +1,4 @@
 import "./src/styles/global.css";
-
 import * as WebBrowser from "expo-web-browser";
 import AppNavigator from "./src/navigation/AppNavigator";
 

@@ -1,6 +1,7 @@
 import { createStackNavigator } from "@react-navigation/stack";
 
-import PlaceholderScreen from "./_PlaceholderScreen";
+import HomeScreen from "../screens/home/HomeScreen";
+import HealthToolsScreen from "../screens/health/HealthToolsScreen";
 
 const Stack = createStackNavigator();
 export default function HomeStack() {
@@ -8,7 +9,7 @@ export default function HomeStack() {
     <Stack.Navigator initialRouteName="HomeScreen">
       <Stack.Screen
         name="HomeScreen"
-        component={PlaceholderScreen}
+        component={HomeScreen}
         options={{ title: "Home" }}
       />
       <Stack.Screen
@@ -23,7 +24,7 @@ export default function HomeStack() {
       />
       <Stack.Screen
         name="HealthToolsScreen"
-        component={PlaceholderScreen}
+        component={HealthToolsScreen}
         options={{ title: "Health Tools" }}
       />
       <Stack.Screen
