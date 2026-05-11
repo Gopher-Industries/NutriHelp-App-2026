@@ -7,13 +7,21 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "nutrihelp",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "This app uses local network to communicate with your devices",
+        "NSBonjourServices": [
+          "_http._tcp",
+          "_ws._tcp"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,14 +29,56 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "nutrihelp",
+              "host": "auth-callback"
+            },
+            {
+              "scheme": "https",
+              "host": "*.exp.direct"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "nutrihelp",
+              "host": "auth-callback"
+            },
+            {
+              "scheme": "https",
+              "host": "*.exp.direct"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.CAMERA"
+      ],
+      "package": "com.anonymous.NutriHelpApp2026"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-secure-store",
-      "expo-barcode-scanner",
       "expo-font"
     ]
   }

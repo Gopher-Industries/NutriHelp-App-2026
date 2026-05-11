@@ -91,10 +91,10 @@ function transformMFAResponse(response) {
     refreshToken: inner?.session?.refreshToken || null,
     user: user
       ? {
-          id: user.id,
+          id: user.user_id || user.id,
           email: user.email,
-          name: user.name,
-          role: user.role,
+          name: user.name || user.email,
+          role: user.user_roles?.role_name || user.role,
         }
       : null,
     expiresAt: null,
@@ -122,11 +122,13 @@ export async function requestPasswordReset(email) {
 
 // Returns { success, message, resetToken, expiresIn } on success
 export async function verifyPasswordResetCode(email, code) {
-  return post(
+  const response = await post(
     "/api/password/verify-code",
     { email: email.trim(), code },
     { skipAuth: true }
   );
+
+  return response?.data || response;
 }
 
 export async function resetPassword(email, resetToken, newPassword) {
@@ -135,6 +137,37 @@ export async function resetPassword(email, resetToken, newPassword) {
     { email: email.trim(), resetToken, newPassword },
     { skipAuth: true }
   );
+}
+
+export async function exchangeGoogleToken(supabaseAccessToken) {
+  const response = await post(
+    "/api/auth/google/exchange",
+    { supabaseAccessToken, provider: "google" },
+    { skipAuth: true }
+  );
+
+  const payload = response?.data || response;
+  const session = payload?.session || {};
+  const user = payload?.user || null;
+  const token = payload?.accessToken || payload?.token || session.accessToken;
+
+  if (!token || !user?.id) {
+    throw new Error("Unable to complete Google sign-in.");
+  }
+
+  return {
+    token,
+    refreshToken: payload?.refreshToken || session.refreshToken || null,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    expiresAt: session.expiresIn
+      ? Date.now() + session.expiresIn * 1000
+      : null,
+  };
 }
 
 // Spec: POST /api/auth/refresh — body: { refreshToken }
@@ -176,6 +209,7 @@ export async function getProfile() {
   return get("/api/auth/profile");
 }
 
+
 export default {
   loginUser,
   registerUser,
@@ -187,4 +221,5 @@ export default {
   logoutUser,
   logoutAllDevices,
   getProfile,
+  exchangeGoogleToken,
 };

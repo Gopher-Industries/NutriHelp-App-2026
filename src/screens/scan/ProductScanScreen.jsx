@@ -1,310 +1,362 @@
-import React, { useState } from "react";
+// src/screens/scan/ProductScanScreen.jsx
+import { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
   ActivityIndicator,
-  Alert,
+  Image,
+  Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import baseApi from "../../api/baseApi";
+import { request } from "../../api/baseApi";
+
+const SCREENS = {
+  INITIAL: "initial",
+  PREVIEW: "preview",
+  LOADING: "loading",
+  RESULT: "result",
+  ERROR: "error",
+};
 
 export default function ProductScanScreen() {
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [screen, setScreen] = useState(SCREENS.INITIAL);
+  const [imageUri, setImageUri] = useState(null);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
+  const pickImage = async (fromCamera) => {
+    try {
+      let pickerResult;
 
-    if (!permission.granted) {
-      Alert.alert(
-        "Camera permission needed",
-        "Please allow camera access to take a food photo."
-      );
-      return;
-    }
+      if (fromCamera) {
+        pickerResult = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.8,
+          allowsEditing: false,
+        });
+      } else {
+        pickerResult = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.8,
+          allowsEditing: false,
+        });
+      }
 
-    const response = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!response.canceled) {
-      setSelectedImage(response.assets[0]);
-      setResult(null);
-    }
-  };
-
-  const chooseFromLibrary = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        "Photo library permission needed",
-        "Please allow photo access to choose a food image."
-      );
-      return;
-    }
-
-    const response = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!response.canceled) {
-      setSelectedImage(response.assets[0]);
-      setResult(null);
+      if (!pickerResult.canceled && pickerResult.assets?.[0]?.uri) {
+        setImageUri(pickerResult.assets[0].uri);
+        setScreen(SCREENS.PREVIEW);
+      }
+    } catch (e) {
+      setError(e.message ?? "Failed to select image.");
+      setScreen(SCREENS.ERROR);
     }
   };
 
   const analyseImage = async () => {
-    if (!selectedImage) {
-      Alert.alert("No image selected", "Please take or choose a photo first.");
-      return;
-    }
-
-    setLoading(true);
+    if (!imageUri) return;
+    setScreen(SCREENS.LOADING);
+    setError("");
 
     try {
       const formData = new FormData();
-
       formData.append("image", {
-        uri: selectedImage.uri,
-        name: "food-photo.jpg",
+        uri: imageUri,
+        name: "food.jpg",
         type: "image/jpeg",
       });
 
-      const data = await baseApi.post("/api/imageClassification", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const data = await request("POST", "/api/imageClassification", {
+        body: formData,
       });
 
-      console.log("IMAGE CLASSIFICATION RESULT:", data);
-
       setResult(data);
-    } catch (error) {
-      console.log(
-        "IMAGE CLASSIFICATION ERROR:",
-        error?.data || error.message || error
-      );
-
-      Alert.alert(
-        "Analysis failed",
-        "We could not analyse this image. Please try another photo."
-      );
-    } finally {
-      setLoading(false);
+      setScreen(SCREENS.RESULT);
+    } catch (e) {
+      setError(e.message ?? "Failed to analyse image. Please try again.");
+      setScreen(SCREENS.ERROR);
     }
   };
 
-  const resetScreen = () => {
-    setSelectedImage(null);
+  const handleReset = () => {
+    setScreen(SCREENS.INITIAL);
+    setImageUri(null);
     setResult(null);
-    setLoading(false);
+    setError("");
   };
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Food photo analysis</Text>
+  // --- Initial screen ---
+  if (screen === SCREENS.INITIAL) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Scan Food</Text>
+        <Text style={styles.subtitle}>
+          Take a photo or choose from your library to identify your food and get
+          nutritional information.
+        </Text>
 
-      <Text style={styles.subtitle}>
-        Take or choose a food photo to estimate nutrition details.
-      </Text>
-
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.secondaryButton} onPress={takePhoto}>
-          <Text style={styles.secondaryButtonText}>Take Photo</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={chooseFromLibrary}
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => pickImage(true)}
         >
-          <Text style={styles.secondaryButtonText}>Choose from Library</Text>
-        </TouchableOpacity>
+          <Text style={styles.primaryButtonText}>📷 Take Photo</Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => pickImage(false)}
+        >
+          <Text style={styles.secondaryButtonText}>🖼 Choose from Library</Text>
+        </Pressable>
       </View>
+    );
+  }
 
-      {selectedImage && (
-        <View style={styles.previewCard}>
-          <Image source={{ uri: selectedImage.uri }} style={styles.preview} />
+  // --- Preview screen ---
+  if (screen === SCREENS.PREVIEW) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Preview</Text>
 
-          {!result && !loading && (
-            <TouchableOpacity style={styles.primaryButton} onPress={analyseImage}>
-              <Text style={styles.primaryButtonText}>Analyse</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.previewImage}
+          resizeMode="cover"
+        />
 
-      {loading && (
-        <View style={styles.loadingBox}>
-          <ActivityIndicator size="large" />
-          <Text style={styles.loadingText}>Analysing your food...</Text>
-        </View>
-      )}
+        <Pressable style={styles.primaryButton} onPress={analyseImage}>
+          <Text style={styles.primaryButtonText}>Analyse Food</Text>
+        </Pressable>
 
-      {result && (
+        <Pressable style={styles.secondaryButton} onPress={handleReset}>
+          <Text style={styles.secondaryButtonText}>Choose Different Image</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  // --- Loading screen ---
+  if (screen === SCREENS.LOADING) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Analysing your food…</Text>
+      </View>
+    );
+  }
+
+  // --- Result screen ---
+  if (screen === SCREENS.RESULT && result) {
+    return (
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Text style={styles.title}>Results</Text>
+
+        {imageUri && (
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.resultImage}
+            resizeMode="cover"
+          />
+        )}
+
         <View style={styles.resultCard}>
-          <Text style={styles.resultTitle}>Analysis result</Text>
-
           <Text style={styles.foodName}>
-            {result?.foodName ||
-              result?.name ||
-              result?.prediction ||
-              "Food identified"}
+            {result.foodName ?? result.name ?? "Unknown Food"}
           </Text>
 
-          <InfoRow
-            label="Calories"
-            value={result?.calories || result?.nutrition?.calories || "N/A"}
-          />
+          <Text style={styles.perServing}>Per serving</Text>
 
-          <InfoRow
-            label="Protein"
-            value={result?.protein || result?.nutrition?.protein || "N/A"}
-          />
+          <View style={styles.nutriRow}>
+            <View style={styles.nutriItem}>
+              <Text style={styles.nutriValue}>
+                {result.calories ?? "--"}
+              </Text>
+              <Text style={styles.nutriLabel}>Calories</Text>
+            </View>
 
-          <InfoRow
-            label="Carbs"
-            value={result?.carbs || result?.nutrition?.carbs || "N/A"}
-          />
+            <View style={styles.nutriItem}>
+              <Text style={styles.nutriValue}>
+                {result.protein ?? "--"}g
+              </Text>
+              <Text style={styles.nutriLabel}>Protein</Text>
+            </View>
 
-          <InfoRow
-            label="Fat"
-            value={result?.fat || result?.nutrition?.fat || "N/A"}
-          />
+            <View style={styles.nutriItem}>
+              <Text style={styles.nutriValue}>
+                {result.carbs ?? "--"}g
+              </Text>
+              <Text style={styles.nutriLabel}>Carbs</Text>
+            </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={resetScreen}>
-            <Text style={styles.primaryButtonText}>Try Again</Text>
-          </TouchableOpacity>
+            <View style={styles.nutriItem}>
+              <Text style={styles.nutriValue}>
+                {result.fat ?? "--"}g
+              </Text>
+              <Text style={styles.nutriLabel}>Fat</Text>
+            </View>
+          </View>
         </View>
-      )}
-    </ScrollView>
-  );
-}
 
-function InfoRow({ label, value }) {
+        <Pressable style={styles.primaryButton} onPress={handleReset}>
+          <Text style={styles.primaryButtonText}>Try Again</Text>
+        </Pressable>
+      </ScrollView>
+    );
+  }
+
+  // --- Error screen ---
   return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Something went wrong</Text>
+      <Text style={styles.errorText}>{error}</Text>
+      <Pressable style={styles.primaryButton} onPress={handleReset}>
+        <Text style={styles.primaryButtonText}>Try Again</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: "#f9fafb",
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 24,
+    paddingTop: 60,
   },
+
+  centerContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+
   title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#111827",
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#18233D",
     marginBottom: 8,
   },
+
   subtitle: {
-    fontSize: 15,
-    color: "#6b7280",
+    fontSize: 14,
+    color: "#6B7280",
     lineHeight: 22,
+    marginBottom: 40,
+  },
+
+  previewImage: {
+    width: "100%",
+    height: 280,
+    borderRadius: 12,
     marginBottom: 24,
   },
-  buttonRow: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  secondaryButton: {
-    minHeight: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#16a34a",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-  },
-  secondaryButtonText: {
-    color: "#16a34a",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  primaryButton: {
-    minHeight: 44,
-    borderRadius: 12,
-    backgroundColor: "#16a34a",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    marginTop: 16,
-  },
-  primaryButtonText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  previewCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-  },
-  preview: {
+
+  resultImage: {
     width: "100%",
-    height: 260,
-    borderRadius: 14,
-    backgroundColor: "#e5e7eb",
-  },
-  loadingBox: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
+    height: 200,
+    borderRadius: 12,
     marginBottom: 20,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#374151",
-    fontWeight: "600",
-  },
+
   resultCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
     padding: 20,
+    marginBottom: 24,
   },
-  resultTitle: {
+
+  foodName: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#111827",
-    marginBottom: 12,
+    color: "#18233D",
+    marginBottom: 4,
   },
-  foodName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#16a34a",
+
+  perServing: {
+    fontSize: 12,
+    color: "#9CA3AF",
     marginBottom: 16,
   },
-  infoRow: {
+
+  nutriRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
-  infoLabel: {
-    fontSize: 15,
-    color: "#6b7280",
+
+  nutriItem: {
+    alignItems: "center",
   },
-  infoValue: {
-    fontSize: 15,
-    color: "#111827",
+
+  nutriValue: {
+    fontSize: 20,
     fontWeight: "700",
+    color: "#4CAF50",
+  },
+
+  nutriLabel: {
+    fontSize: 11,
+    color: "#6B7280",
+    marginTop: 4,
+  },
+
+  loadingText: {
+    fontSize: 16,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+
+  errorText: {
+    fontSize: 14,
+    color: "#EF4444",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+
+  primaryButton: {
+    height: 48,
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  secondaryButton: {
+    height: 48,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  secondaryButtonText: {
+    color: "#18233D",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

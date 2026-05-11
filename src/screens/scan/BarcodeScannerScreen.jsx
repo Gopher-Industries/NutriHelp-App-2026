@@ -1,253 +1,218 @@
-import React, { useState } from "react";
+// src/screens/scan/BarcodeScannerScreen.jsx
+import { useState, useRef } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
-  TextInput,
-  Alert,
   Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import baseApi from "../../api/baseApi";
+import { post } from "../../api/baseApi";
 
+// --- Loading Overlay ---
+function LoadingOverlay() {
+  return (
+    <View style={styles.loadingOverlay}>
+      <ActivityIndicator size="large" color="#FFFFFF" />
+      <Text style={styles.loadingText}>Looking up barcode...</Text>
+    </View>
+  );
+}
+
+// --- Bottom Sheet Result ---
+function ResultSheet({ result, onClose }) {
+  return (
+    <View style={styles.resultSheet}>
+      <Text style={styles.resultTitle}>{result.name ?? "Product"}</Text>
+
+      <View style={styles.resultRow}>
+        <Text style={styles.resultLabel}>Calories</Text>
+        <Text style={styles.resultValue}>{result.calories ?? "--"} kcal</Text>
+      </View>
+
+      <View style={styles.resultRow}>
+        <Text style={styles.resultLabel}>Protein</Text>
+        <Text style={styles.resultValue}>{result.protein ?? "--"} g</Text>
+      </View>
+
+      <View style={styles.resultRow}>
+        <Text style={styles.resultLabel}>Carbs</Text>
+        <Text style={styles.resultValue}>{result.carbs ?? "--"} g</Text>
+      </View>
+
+      <View style={styles.resultRow}>
+        <Text style={styles.resultLabel}>Fat</Text>
+        <Text style={styles.resultValue}>{result.fat ?? "--"} g</Text>
+      </View>
+
+      <Pressable style={styles.closeButton} onPress={onClose}>
+        <Text style={styles.closeButtonText}>Close</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// --- Permission Explanation Screen ---
+function PermissionExplanationScreen({ onRequest }) {
+  return (
+    <View style={styles.permissionScreen}>
+      <Text style={styles.permissionTitle}>Camera Access Needed</Text>
+      <Text style={styles.permissionText}>
+        NutriHelp needs access to your camera to scan barcodes and look up
+        nutritional information for your food products.
+      </Text>
+      <Pressable style={styles.primaryButton} onPress={onRequest}>
+        <Text style={styles.primaryButtonText}>Allow Camera Access</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// --- Permission Denied Fallback ---
+function PermissionDeniedScreen() {
+  return (
+    <View style={styles.permissionScreen}>
+      <Text style={styles.permissionTitle}>Camera Access Denied</Text>
+      <Text style={styles.permissionText}>
+        You've denied camera access. To use the barcode scanner, please enable
+        camera permissions in your device settings.
+      </Text>
+      <Pressable
+        style={styles.primaryButton}
+        onPress={() => Linking.openSettings()}
+      >
+        <Text style={styles.primaryButtonText}>Open Settings</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// --- Main Screen ---
 export default function BarcodeScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-
-  const [hasSeenIntro, setHasSeenIntro] = useState(false);
-  const [scanned, setScanned] = useState(false);
+  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
   const [torchOn, setTorchOn] = useState(false);
-  const [manualCode, setManualCode] = useState("");
-  const [nutritionResult, setNutritionResult] = useState(null);
-  const [showResult, setShowResult] = useState(false);
-  const [lastBarcode, setLastBarcode] = useState("");
+  const [manualBarcode, setManualBarcode] = useState("");
+  const scanLocked = useRef(false);
 
-  const askForCamera = async () => {
-    setHasSeenIntro(true);
-    await requestPermission();
-  };
+  // Step 1 — show custom explanation screen before system dialog
+  if (!hasRequestedPermission) {
+    return (
+      <PermissionExplanationScreen
+        onRequest={async () => {
+          setHasRequestedPermission(true);
+          await requestPermission();
+        }}
+      />
+    );
+  }
 
-  const scanBarcode = async (barcode) => {
-    const cleanBarcode = barcode.trim();
+  // Step 2 — permission denied fallback
+  if (permission && !permission.granted) {
+    return <PermissionDeniedScreen />;
+  }
 
-    if (!cleanBarcode || loading) return;
-    if (scanned && cleanBarcode === lastBarcode) return;
-
-    setScanned(true);
+  const lookupBarcode = async (barcode) => {
+    if (!barcode || loading) return;
+    setError("");
     setLoading(true);
-    setLastBarcode(cleanBarcode);
-
+    scanLocked.current = true;
     try {
-      console.log("SENDING BARCODE:", cleanBarcode);
-
-      const data = await baseApi.get(`/api/barcode/${cleanBarcode}`);
-
-      console.log("SUCCESS RESPONSE:", data);
-
-      setNutritionResult(data);
-      setShowResult(true);
-    } catch (error) {
-      console.log("BARCODE ERROR:", error?.data || error.message || error);
-
-      Alert.alert(
-        "Barcode not found",
-        "We could not find nutrition information for this barcode. You can try again or enter it manually."
-      );
-
-      setScanned(false);
-      setLastBarcode("");
+      const data = await post("/api/barcode", { barcode });
+      setResult(data);
+    } catch (e) {
+      setError(e.message ?? "Failed to look up barcode. Please try again.");
+      scanLocked.current = false;
     } finally {
       setLoading(false);
     }
   };
 
+  const handleBarcodeScanned = ({ data }) => {
+    if (scanLocked.current) return; // prevent duplicate requests
+    lookupBarcode(data);
+  };
+
   const handleManualSubmit = () => {
-    if (!manualCode.trim()) {
-      Alert.alert("Missing barcode", "Please enter a barcode first.");
-      return;
-    }
-
-    scanBarcode(manualCode);
+    const trimmed = manualBarcode.trim();
+    if (!trimmed) return;
+    lookupBarcode(trimmed);
   };
 
-  const closeResultSheet = () => {
-    setShowResult(false);
-    setNutritionResult(null);
-    setScanned(false);
-    setLastBarcode("");
-    setManualCode("");
+  const handleCloseResult = () => {
+    setResult(null);
+    setManualBarcode("");
+    scanLocked.current = false; // unlock scanner
   };
-
-  if (!hasSeenIntro) {
-    return (
-      <View style={styles.permissionContainer}>
-        <Text style={styles.title}>Scan food barcodes</Text>
-
-        <Text style={styles.bodyText}>
-          NutriHelp uses your camera to scan barcode numbers and show nutrition
-          information. You can also enter the barcode manually.
-        </Text>
-
-        <TouchableOpacity style={styles.primaryButton} onPress={askForCamera}>
-          <Text style={styles.primaryButtonText}>Continue</Text>
-        </TouchableOpacity>
-
-        <ManualInput
-          manualCode={manualCode}
-          setManualCode={setManualCode}
-          handleManualSubmit={handleManualSubmit}
-        />
-      </View>
-    );
-  }
-
-  if (!permission) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator />
-        <Text style={styles.helperText}>Checking camera permission...</Text>
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
-    return (
-      <View style={styles.permissionContainer}>
-        <Text style={styles.title}>Camera access denied</Text>
-
-        <Text style={styles.bodyText}>
-          No worries. You can still enter the barcode manually below.
-        </Text>
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => Linking.openSettings()}
-        >
-          <Text style={styles.secondaryButtonText}>Open Settings</Text>
-        </TouchableOpacity>
-
-        <ManualInput
-          manualCode={manualCode}
-          setManualCode={setManualCode}
-          handleManualSubmit={handleManualSubmit}
-        />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
+      {/* Camera */}
       <CameraView
         style={styles.camera}
         facing="back"
         enableTorch={torchOn}
         barcodeScannerSettings={{
-          barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "qr"],
+          barcodeTypes: ["ean13", "upc_a", "qr"],
         }}
-        onBarcodeScanned={
-          loading || scanned ? undefined : ({ data }) => scanBarcode(data)
-        }
-      >
-        <View style={styles.overlay}>
-          <Text style={styles.scanTitle}>Scan barcode</Text>
-
-          <Text style={styles.scanHelper}>
-            Place the barcode inside the frame
-          </Text>
-
-          <View style={styles.scanBox} />
-
-          <TouchableOpacity
-            style={styles.torchButton}
-            onPress={() => setTorchOn((current) => !current)}
-          >
-            <Text style={styles.torchText}>
-              {torchOn ? "Turn flash off" : "Turn flash on"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </CameraView>
-
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" />
-          <Text style={styles.loadingText}>Checking nutrition info...</Text>
-        </View>
-      )}
-
-      <View style={styles.manualContainer}>
-        <ManualInput
-          manualCode={manualCode}
-          setManualCode={setManualCode}
-          handleManualSubmit={handleManualSubmit}
-        />
-      </View>
-
-      {showResult && (
-        <View style={styles.bottomSheet}>
-          <Text style={styles.sheetTitle}>Nutrition result</Text>
-
-          <Text style={styles.resultText}>
-            {nutritionResult?.name ||
-              nutritionResult?.productName ||
-              nutritionResult?.product?.name ||
-              "Product found"}
-          </Text>
-
-          <Text style={styles.resultText}>
-            Calories:{" "}
-            {nutritionResult?.calories ||
-              nutritionResult?.product?.calories ||
-              "N/A"}
-          </Text>
-
-          <Text style={styles.resultText}>
-            Protein:{" "}
-            {nutritionResult?.protein ||
-              nutritionResult?.product?.protein ||
-              "N/A"}
-          </Text>
-
-          <Text style={styles.resultText}>
-            Carbs:{" "}
-            {nutritionResult?.carbs || nutritionResult?.product?.carbs || "N/A"}
-          </Text>
-
-          <Text style={styles.resultText}>
-            Fat:{" "}
-            {nutritionResult?.fat || nutritionResult?.product?.fat || "N/A"}
-          </Text>
-
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={closeResultSheet}
-          >
-            <Text style={styles.primaryButtonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function ManualInput({ manualCode, setManualCode, handleManualSubmit }) {
-  return (
-    <View style={styles.manualInputBox}>
-      <Text style={styles.manualLabel}>Enter barcode manually</Text>
-
-      <TextInput
-        style={styles.input}
-        value={manualCode}
-        onChangeText={setManualCode}
-        placeholder="Enter barcode number"
-        keyboardType="number-pad"
+        onBarcodeScanned={result ? undefined : handleBarcodeScanned}
       />
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleManualSubmit}>
-        <Text style={styles.primaryButtonText}>Submit barcode</Text>
-      </TouchableOpacity>
+      {/* Torch toggle */}
+      <Pressable
+        style={styles.torchButton}
+        onPress={() => setTorchOn((prev) => !prev)}
+      >
+        <Text style={styles.torchButtonText}>
+          {torchOn ? "⚡ Flash On" : "⚡ Flash Off"}
+        </Text>
+      </Pressable>
+
+      {/* Scan frame hint */}
+      <View style={styles.scanHint}>
+        <Text style={styles.scanHintText}>
+          Point camera at a barcode to scan
+        </Text>
+      </View>
+
+      {/* Manual input fallback */}
+      <View style={styles.manualContainer}>
+        <Text style={styles.manualLabel}>Or enter barcode manually:</Text>
+        <View style={styles.manualRow}>
+          <TextInput
+            style={styles.manualInput}
+            value={manualBarcode}
+            onChangeText={setManualBarcode}
+            placeholder="e.g. 9300675023228"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="numeric"
+            editable={!loading}
+          />
+          <Pressable
+            style={styles.manualButton}
+            onPress={handleManualSubmit}
+            disabled={loading}
+          >
+            <Text style={styles.manualButtonText}>Search</Text>
+          </Pressable>
+        </View>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
+
+      {/* Loading overlay */}
+      {loading && <LoadingOverlay />}
+
+      {/* Result bottom sheet */}
+      {result && (
+        <ResultSheet result={result} onClose={handleCloseResult} />
+      )}
     </View>
   );
 }
@@ -255,156 +220,198 @@ function ManualInput({ manualCode, setManualCode, handleManualSubmit }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "#000000",
   },
+
   camera: {
     flex: 1,
   },
-  overlay: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  scanTitle: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  scanHelper: {
-    color: "#fff",
-    fontSize: 15,
-    marginBottom: 32,
-    textAlign: "center",
-  },
-  scanBox: {
-    width: 260,
-    height: 160,
-    borderWidth: 3,
-    borderColor: "#22c55e",
-    borderRadius: 16,
-  },
+
   torchButton: {
-    marginTop: 32,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  torchText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.65)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingText: {
-    color: "#fff",
-    marginTop: 12,
-    fontSize: 16,
-  },
-  manualContainer: {
-    backgroundColor: "#fff",
-    padding: 16,
-  },
-  manualInputBox: {
-    width: "100%",
-    marginTop: 20,
-  },
-  manualLabel: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#111827",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-  bottomSheet: {
     position: "absolute",
+    top: 56,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+
+  torchButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  scanHint: {
+    position: "absolute",
+    top: "45%",
+    alignSelf: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+
+  scanHintText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+  },
+
+  manualContainer: {
+    position: "absolute",
+    bottom: 160,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: "#fff",
-    padding: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
   },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 12,
+
+  manualLabel: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    marginBottom: 8,
   },
-  resultText: {
-    fontSize: 16,
-    marginBottom: 6,
-    color: "#374151",
+
+  manualRow: {
+    flexDirection: "row",
+    gap: 8,
   },
-  permissionContainer: {
+
+  manualInput: {
     flex: 1,
-    padding: 24,
-    justifyContent: "center",
-    backgroundColor: "#fff",
+    height: 44,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: "#18233D",
   },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: "#111827",
-  },
-  bodyText: {
-    fontSize: 16,
-    color: "#4b5563",
-    marginBottom: 20,
-    lineHeight: 22,
-  },
-  helperText: {
-    marginTop: 12,
-    color: "#6b7280",
-  },
-  primaryButton: {
-    minHeight: 44,
-    borderRadius: 12,
-    backgroundColor: "#16a34a",
-    alignItems: "center",
-    justifyContent: "center",
+
+  manualButton: {
+    height: 44,
     paddingHorizontal: 16,
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  secondaryButton: {
-    minHeight: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 24,
   },
-  secondaryButtonText: {
-    color: "#111827",
+
+  manualButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
     fontWeight: "600",
-    fontSize: 15,
+  },
+
+  errorText: {
+    marginTop: 8,
+    color: "#FCA5A5",
+    fontSize: 12,
+  },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+
+  loadingText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  resultSheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#18233D",
+    marginBottom: 16,
+  },
+
+  resultRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+
+  resultLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+
+  resultValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#18233D",
+  },
+
+  closeButton: {
+    marginTop: 20,
+    height: 48,
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  closeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  permissionScreen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+
+  permissionTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#18233D",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+
+  permissionText: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+
+  primaryButton: {
+    height: 48,
+    width: "100%",
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
