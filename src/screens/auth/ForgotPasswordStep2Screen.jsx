@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { verifyPasswordResetCode, requestPasswordReset } from "../../api/authApi";
+import { toErrorMessage } from "../../api/baseApi";
 
 import {
   AuthButton,
@@ -63,7 +64,7 @@ export default function ForgotPasswordStep2Screen({
         resetToken: response?.resetToken,
       });
     } catch (error) {
-      setError(error.data?.error || error.message || "Invalid or expired code. Please try again.");
+      setError(toErrorMessage(error, "Invalid or expired code. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function ForgotPasswordStep2Screen({
     try {
       await requestPasswordReset(email);
     } catch (error) {
-      setError(error.message || "Unable to resend code right now. Please try again later.");
+      setError(toErrorMessage(error, "Unable to resend code right now. Please try again later."));
     }
   };
 

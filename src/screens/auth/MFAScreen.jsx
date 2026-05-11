@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { verifyMFA } from "../../api/authApi";
+import { toErrorMessage } from "../../api/baseApi";
 import { useUser } from "../../context/UserContext";
 
 import {
@@ -61,7 +62,7 @@ export default function MFAScreen({
       const response = await verifyMFA(email, password, code);
       await login(response);
     } catch (error) {
-      setError(error?.message || "Invalid MFA code. Please try again.");
+      setError(toErrorMessage(error, "Invalid MFA code. Please try again."));
       setCode("");
     } finally {
       setLoading(false);

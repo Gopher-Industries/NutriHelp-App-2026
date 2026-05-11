@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import * as WebBrowser from "expo-web-browser";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -8,14 +9,15 @@ import {
   Text,
   View,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
 import * as AppleAuthentication from "expo-apple-authentication";
 
-import { ApiError } from "../../api/baseApi";
-import { loginUser } from "../../api/authApi";
+import { ApiError, toErrorMessage } from "../../api/baseApi";
+import { exchangeGoogleToken, loginUser } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 import useFormValidation from "../../hooks/useFormValidation";
+import supabase from "../../utils/supabase";
+
+WebBrowser.maybeCompleteAuthSession();
 
 import {
   AuthButton,
@@ -25,8 +27,6 @@ import {
   GoogleButton,
   HelperLink,
 } from "./AuthComponents";
-
-WebBrowser.maybeCompleteAuthSession();
 
 const loginSchema = {
   email: {
@@ -53,105 +53,6 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
       email: "",
       password: "",
     });
-
-  // --- Google OAuth setup ---
-  const googleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "placeholder",
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "placeholder",
-    redirectUri: "nutrihelp://auth/callback",
-  });
-
-  useEffect(() => {
-    if (response?.type === "success") {
-      handleGoogleCallback(response.authentication?.accessToken);
-    } else if (
-      response?.type === "dismiss" ||
-      response?.type === "cancel"
-    ) {
-      setGoogleLoading(false);
-    } else if (response?.type === "error") {
-      setGoogleLoading(false);
-      setGeneralError("Google sign-in failed. Please try again.");
-    }
-  }, [response]);
-
-  const handleGoogleCallback = async (accessToken) => {
-    if (!accessToken) {
-      setGoogleLoading(false);
-      setGeneralError("Google sign-in failed. Please try again.");
-      return;
-    }
-    try {
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/google`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accessToken }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Google sign-in failed.");
-      await login(data);
-    } catch (e) {
-      setGeneralError(e.message ?? "Google sign-in failed. Please try again.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (!googleConfigured) {
-      setGeneralError("Google sign-in is not configured yet. Contact your team lead.");
-      return;
-    }
-    setGoogleLoading(true);
-    setGeneralError("");
-    await promptAsync();
-  };
-
-  // --- Apple Sign-In setup ---
-  const handleAppleSignIn = async () => {
-    setAppleLoading(true);
-    setGeneralError("");
-    try {
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/apple`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            identityToken: credential.identityToken,
-            email: credential.email,
-            fullName: credential.fullName,
-            appleUserId: credential.user,
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Apple sign-in failed.");
-      await login(data);
-    } catch (e) {
-      if (e.code === "ERR_REQUEST_CANCELED") {
-        // User cancelled — stay on login silently
-      } else if (e.code === "ERR_NOT_AVAILABLE") {
-        setGeneralError("Apple Sign-In is not available on this device.");
-      } else {
-        setGeneralError(e.message ?? "Apple sign-in failed. Please try again.");
-      }
-    } finally {
-      setAppleLoading(false);
-    }
-  };
 
   // --- Email/password login ---
   const handleLogin = async () => {
@@ -186,9 +87,99 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
           return;
         }
       }
-      setGeneralError(error.message || "Login failed. Please try again.");
+      setGeneralError(toErrorMessage(error, "Login failed. Please try again."));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGeneralError("");
+    setGoogleLoading(true);
+
+    try {
+      const redirectTo = "nutrihelp://auth-callback";
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+          queryParams: { access_type: "offline", prompt: "consent" },
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.url) throw new Error("Google sign-in URL was not returned.");
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+      if (result.type !== "success" || !result.url) {
+        if (result.type === "cancel" || result.type === "dismiss") return;
+        throw new Error("Google sign-in was not completed.");
+      }
+
+      // Implicit flow: access_token is in the URL hash fragment
+      // nutrihelp://auth-callback#access_token=xxx&refresh_token=xxx
+      const fragment = result.url.includes("#") ? result.url.split("#")[1] : "";
+      const params = new URLSearchParams(fragment);
+      const supabaseAccessToken = params.get("access_token");
+
+      if (!supabaseAccessToken) {
+        throw new Error("Missing Google session token.");
+      }
+
+      const backendSession = await exchangeGoogleToken(supabaseAccessToken);
+      await login(backendSession);
+    } catch (error) {
+      setGeneralError(toErrorMessage(error, "Google sign-in failed. Please try again."));
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  // --- Apple Sign-In ---
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    setGeneralError("");
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/apple`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identityToken: credential.identityToken,
+            email: credential.email,
+            fullName: credential.fullName,
+            appleUserId: credential.user,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(toErrorMessage(data, "Apple sign-in failed."));
+      }
+      await login(data);
+    } catch (error) {
+      if (error.code === "ERR_REQUEST_CANCELED") {
+        return;
+      }
+      if (error.code === "ERR_NOT_AVAILABLE") {
+        setGeneralError("Apple Sign-In is not available on this device.");
+        return;
+      }
+      setGeneralError(toErrorMessage(error, "Apple sign-in failed. Please try again."));
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -271,7 +262,6 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               disabled={googleLoading}
             />
 
-            {/* Apple Sign-In — only renders on iOS */}
             {Platform.OS === "ios" && (
               appleLoading ? (
                 <View style={styles.appleLoadingBox}>
@@ -288,7 +278,11 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               )
             )}
 
-            <AuthButton title="Login" onPress={handleLogin} loading={loading} />
+            <AuthButton
+              title="Login"
+              onPress={handleLogin}
+              loading={loading || googleLoading}
+            />
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
