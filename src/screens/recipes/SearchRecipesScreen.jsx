@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import recipeApi from "../../api/recipeApi";
 import {
   COLUMN_GAP,
@@ -21,6 +22,7 @@ import {
   useRecipeCardWidth,
 } from "./RecipeListScreen";
 import { useUser } from "../../context/UserContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const C = {
   primary: "#1A6DB5",
@@ -32,6 +34,21 @@ const C = {
   gray300: "#d1d5db",
   gray500: "#6b7280",
   white: "#fff",
+};
+
+const SURFACE_SHADOW = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 2,
+};
+const SURFACE_SHADOW_SUBTLE = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 1,
 };
 
 const flatListScrollProps = {
@@ -366,9 +383,20 @@ export default function SearchRecipesScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.screenRoot}>
-      <Text style={styles.pageTitle}>Search recipes</Text>
-
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <View style={styles.pageChrome}>
+      <View style={styles.header}>
+        <Pressable
+          onPress={() => navigation?.goBack?.()}
+          style={styles.backBtn}
+          hitSlop={8}
+        >
+          <Ionicons name="arrow-back" size={22} color="#253B63" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Search recipes</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+      <View style={styles.screenBody}>
       <DebouncedSearchBar
         value={query}
         onChangeText={setQuery}
@@ -441,20 +469,53 @@ export default function SearchRecipesScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={isLoading ? null : renderEmptyState}
       />
-    </View>
+      </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screenRoot: { flex: 1, backgroundColor: C.stone100, paddingHorizontal: 16, paddingTop: 16 },
-  pageTitle: { marginBottom: 16, fontSize: 24, fontWeight: "600", color: C.slate900 },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  pageChrome: { flex: 1 },
+  /** AI Meal Plan (`PersonalisedPlanForm`) header */
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#253B63",
+  },
+  headerSpacer: { width: 44 },
+  screenBody: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    backgroundColor: "#F8FAFC",
+  },
   searchBarWrap: { marginBottom: 16 },
   searchRow: {
+    ...SURFACE_SHADOW_SUBTLE,
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: C.gray300,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
     paddingRight: 8,
   },
@@ -476,10 +537,11 @@ const styles = StyleSheet.create({
   },
   clearBtnText: { fontSize: 18, fontWeight: "600", color: C.white },
   suggestionsPanel: {
+    ...SURFACE_SHADOW,
     marginBottom: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: C.gray200,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
   },
   suggestionsHeading: {
@@ -510,7 +572,16 @@ const styles = StyleSheet.create({
   loadingText: { marginTop: 8, fontSize: 16, color: C.primary },
   list: { flex: 1, minHeight: 0 },
   listContent: { paddingBottom: 24 },
-  emptyState: { alignItems: "center", borderRadius: 16, backgroundColor: C.white, paddingHorizontal: 16, paddingVertical: 32 },
+  emptyState: {
+    ...SURFACE_SHADOW,
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    backgroundColor: C.white,
+    paddingHorizontal: 16,
+    paddingVertical: 32,
+  },
   emptyMessage: { textAlign: "center", fontSize: 18, color: C.slate800 },
   emptyClearBtn: {
     marginTop: 16,

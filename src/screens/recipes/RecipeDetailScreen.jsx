@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { ScrollView } from "react-native-gesture-handler";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import baseApi from "../../api/baseApi";
 import RecipeRating from "../../components/RecipeRating";
@@ -20,8 +21,6 @@ import recipeApi from "../../api/recipeApi";
 const C = {
   primary: "#1A6DB5",
   navy: "#0f2454",
-  stone100: "#f5f5f4",
-  stone200: "#e7e5e4",
   slate900: "#0f172a",
   slate800: "#1e293b",
   slate700: "#334155",
@@ -31,6 +30,23 @@ const C = {
   gray300: "#d1d5db",
   gray500: "#6b7280",
   white: "#fff",
+};
+
+/** Home mealsCard-style */
+const SURFACE_SHADOW = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 2,
+};
+/** Home statCard-style (compact metrics) */
+const STAT_SHADOW = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 1,
 };
 
 const SERVING_SCALE_OPTIONS = [
@@ -425,10 +441,15 @@ export default function RecipeDetailScreen({ navigation, route }) {
   };
 
   return (
-    <View style={styles.screenRoot}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <View style={styles.pageChrome}>
       <ScrollView
         ref={scrollRef}
-        style={[styles.flex1, Platform.OS === "web" ? { overscrollBehavior: "none" } : null]}
+        style={[
+          styles.flex1,
+          styles.scrollViewport,
+          Platform.OS === "web" ? { overscrollBehavior: "none" } : null,
+        ]}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         {...verticalScrollProps}
@@ -456,9 +477,10 @@ export default function RecipeDetailScreen({ navigation, route }) {
             )}
             <Pressable
               onPress={() => navigation?.goBack?.()}
-              style={styles.backBtn}
+              style={styles.heroBackBtn}
               accessibilityRole="button"
               accessibilityLabel="Go back"
+              hitSlop={8}
             >
               <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
             </Pressable>
@@ -580,26 +602,37 @@ export default function RecipeDetailScreen({ navigation, route }) {
           </View>
         </View>
       </ScrollView>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screenRoot: { flex: 1, backgroundColor: C.stone100 },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  pageChrome: { flex: 1 },
+  scrollViewport: { backgroundColor: "#FFFFFF" },
   flex1: { flex: 1 },
   scrollContent: { paddingBottom: 24 },
-  heroPad: { paddingHorizontal: 16, paddingTop: 16 },
+  heroPad: { paddingHorizontal: 18, paddingTop: 8 },
   heroRelative: { position: "relative" },
-  heroImage: { height: 256, width: "100%", borderRadius: 16 },
+  heroImage: {
+    height: 256,
+    width: "100%",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+  },
   heroPlaceholder: {
     height: 256,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 16,
-    backgroundColor: C.stone200,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    backgroundColor: "#E5E7EB",
   },
-  backBtn: {
+  heroBackBtn: {
     position: "absolute",
     left: 12,
     top: 12,
@@ -608,7 +641,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
   bookmarkBtn: {
     position: "absolute",
@@ -627,10 +660,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
   },
   loadingText: { marginLeft: 8, fontSize: 16, color: C.primary },
-  bodyPad: { paddingHorizontal: 16 },
+  bodyPad: { paddingHorizontal: 18 },
   titleRow: {
     marginTop: 12,
     flexDirection: "row",
@@ -643,7 +676,7 @@ const styles = StyleSheet.create({
     paddingRight: 4,
     fontSize: 30,
     fontWeight: "600",
-    color: C.slate900,
+    color: "#253B63",
   },
   shareBtn: {
     marginTop: 4,
@@ -651,10 +684,15 @@ const styles = StyleSheet.create({
     minWidth: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   desc: {
     marginTop: 8,
@@ -664,20 +702,24 @@ const styles = StyleSheet.create({
   },
   metaRow: { marginTop: 12, flexDirection: "row", gap: 8 },
   metaItem: {
+    ...STAT_SHADOW,
     minWidth: 0,
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
     paddingHorizontal: 8,
     paddingVertical: 8,
   },
   metaLabel: { fontSize: 12, color: C.slate500 },
   metaValue: { fontSize: 16, fontWeight: "600", color: C.slate800 },
-  sectionPad: { paddingHorizontal: 16, marginTop: 12 },
+  sectionPad: { paddingHorizontal: 18, marginTop: 12 },
   scaleCard: {
-    borderRadius: 12,
+    ...SURFACE_SHADOW,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: C.gray300,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -694,7 +736,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: C.gray300,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
   },
   servingsBlock: { marginTop: 12, alignItems: "center" },
@@ -702,12 +744,19 @@ const styles = StyleSheet.create({
   servingsLabel: { fontSize: 16, color: C.gray500 },
   scalingRow: { marginTop: 8, flexDirection: "row", alignItems: "center", justifyContent: "center" },
   scalingText: { marginLeft: 8, fontSize: 14, color: C.primary },
-  tabsOuter: { borderRadius: 16, backgroundColor: C.white, padding: 12 },
+  tabsOuter: {
+    ...SURFACE_SHADOW,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    backgroundColor: C.white,
+    padding: 12,
+  },
   tabBar: {
     flexDirection: "row",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: C.gray300,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
     padding: 4,
   },
@@ -742,7 +791,7 @@ const styles = StyleSheet.create({
   stepLabel: { fontSize: 16, fontWeight: "600", color: C.primary },
   stepTitle: { marginTop: 4, fontSize: 18, fontWeight: "600", color: C.slate800 },
   stepDesc: { marginTop: 4, fontSize: 16, lineHeight: 24, color: C.slate600 },
-  nutritionShell: { borderRadius: 12, backgroundColor: C.stone100, padding: 12 },
+  nutritionShell: { borderRadius: 12, backgroundColor: "#F9FAFB", padding: 12 },
   nutritionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
   nutritionRowBorder: { borderBottomWidth: 1, borderBottomColor: C.gray300 },
   nutritionName: { fontSize: 16, color: C.slate600 },

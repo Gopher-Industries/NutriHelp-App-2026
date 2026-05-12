@@ -12,9 +12,11 @@ import {
   View,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const C = {
   primary: "#1A6DB5",
@@ -24,6 +26,14 @@ const C = {
   red600: "#dc2626",
   red50: "#fef2f2",
   white: "#fff",
+};
+
+const SURFACE_SHADOW = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 2,
 };
 
 const verticalScrollProps = {
@@ -253,14 +263,24 @@ export default function CreateRecipeScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.screenRoot}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <View style={styles.pageChrome}>
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation?.goBack?.()} style={styles.backBtn} hitSlop={8}>
+          <Ionicons name="arrow-back" size={22} color="#253B63" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Create Recipe</Text>
+        <View style={styles.headerSpacer} />
+      </View>
       <ScrollView
-        style={[styles.flex1, Platform.OS === "web" ? { overscrollBehavior: "none" } : null]}
+        style={[
+          styles.flex1,
+          styles.scrollSurface,
+          Platform.OS === "web" ? { overscrollBehavior: "none" } : null,
+        ]}
         contentContainerStyle={styles.scrollContent}
         {...verticalScrollProps}
       >
-        <Text style={styles.pageTitle}>Create Recipe</Text>
-
         <View style={styles.card}>
           <Text style={styles.fieldLabel}>Recipe Name</Text>
           <TextInput
@@ -438,16 +458,49 @@ export default function CreateRecipeScreen({ navigation }) {
           )}
         </Pressable>
       </ScrollView>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screenRoot: { flex: 1, backgroundColor: C.stone100 },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  pageChrome: { flex: 1 },
+  /** AI Meal Plan (`PersonalisedPlanForm`) header */
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#253B63",
+  },
+  headerSpacer: { width: 44 },
   flex1: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 28 },
-  pageTitle: { marginBottom: 16, fontSize: 24, fontWeight: "600", color: C.slate900 },
-  card: { borderRadius: 16, backgroundColor: C.white, padding: 16 },
+  scrollSurface: { backgroundColor: "#F8FAFC" },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 },
+  card: {
+    ...SURFACE_SHADOW,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    backgroundColor: C.white,
+    padding: 16,
+  },
   cardSpaced: { marginTop: 16 },
   fieldLabel: { marginBottom: 8, fontSize: 16, fontWeight: "600", color: C.slate800 },
   fieldLabelSpaced: { marginTop: 16 },
@@ -455,7 +508,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#E8EDF5",
     paddingHorizontal: 12,
     fontSize: 16,
     color: C.slate900,
@@ -467,7 +520,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
   },
   pickerSpaced: { marginTop: 8 },
@@ -490,17 +543,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
-    backgroundColor: C.stone100,
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 12,
   },
   addBtnText: { fontSize: 16, fontWeight: "600", color: C.primary },
-  subCard: { marginBottom: 12, borderRadius: 12, borderWidth: 1, borderColor: "#e5e7eb", padding: 12 },
+  subCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    padding: 12,
+    backgroundColor: "#FFFFFF",
+  },
   stepLabel: { marginBottom: 4, fontSize: 14, fontWeight: "600", color: C.primary },
   stepInput: {
     minHeight: 90,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#E8EDF5",
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,

@@ -204,8 +204,21 @@ export default function RecipeRating({
 }
 
 const styles = StyleSheet.create({
-  card: { width: "100%", alignItems: "center", borderRadius: 16, backgroundColor: "#fff", padding: 16 },
-  title: { width: "100%", textAlign: "center", fontSize: 18, fontWeight: "600", color: C.slate900 },
+  card: {
+    width: "100%",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+  title: { width: "100%", textAlign: "center", fontSize: 18, fontWeight: "600", color: "#253B63" },
   helper: { marginTop: 4, width: "100%", textAlign: "center", fontSize: 14, color: C.slate500 },
   hint: { marginTop: 4, width: "100%", textAlign: "center", fontSize: 12, color: C.slate400 },
   starWrap: { marginTop: 12 },

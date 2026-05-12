@@ -5,6 +5,7 @@ import { useColorScheme } from "react-native";
 import AccountStack from "./AccountStack";
 import HomeStack from "./HomeStack";
 import MealStack from "./MealStack";
+import RecipeStack from "./RecipeStack";
 import ScanStack from "./ScanStack";
 
 const Tab = createBottomTabNavigator();
@@ -14,6 +15,7 @@ const NUTRIHELP_GREEN = "#047857";
 const TAB_ICON_BY_ROUTE = {
   Home: "home",
   Meals: "restaurant",
+  Recipes: "book",
   Scan: "barcode",
   Profile: "person",
 };
@@ -45,6 +47,11 @@ export default function MainTabs() {
         name="Meals"
         component={MealStack}
         options={{ tabBarLabel: "Meals" }}
+      />
+      <Tab.Screen
+        name="Recipes"
+        component={RecipeStack}
+        options={{ tabBarLabel: "Recipes" }}
       />
       <Tab.Screen
         name="Scan"

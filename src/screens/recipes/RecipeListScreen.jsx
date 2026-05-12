@@ -15,10 +15,35 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export const COLUMN_GAP = 16;
 const NUM_COLUMNS = 2;
-const H_PADDING = 16;
+const H_PADDING = 18;
+
+/** Home `mealsCard`-style elevated surface */
+const SURFACE_SHADOW = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 2,
+};
+const SURFACE_BORDER = {
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: "#E8EDF5",
+  backgroundColor: "#FFFFFF",
+};
+
+/** Home `statCard`-style lighter lift (search row, chips) */
+const SURFACE_SHADOW_SUBTLE = {
+  shadowColor: "#0F172A",
+  shadowOpacity: 0.05,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 1,
+};
 
 const C = {
   primary: "#1A6DB5",
@@ -279,7 +304,8 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
       accessibilityHint="Opens recipe. Long press to show the full name."
       delayLongPress={350}
       style={[
-        styles.card,
+        SURFACE_SHADOW,
+        SURFACE_BORDER,
         {
           width: cardWidth,
           height: RECIPE_CARD_HEIGHT,
@@ -289,6 +315,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
         },
       ]}
     >
+      <View style={styles.cardClip}>
       {imageUri ? (
         <Image
           source={{ uri: imageUri }}
@@ -343,6 +370,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
             {recipe?.calories != null ? `${recipe.calories} kcal` : "—"}
           </Text>
         </View>
+      </View>
       </View>
     </Pressable>
   );
@@ -445,7 +473,14 @@ export default function RecipeListScreen({ navigation, route }) {
   );
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <View style={styles.pageChrome}>
+      <View style={styles.brandHeader}>
+        <View style={styles.headerSideSpacer} />
+        <Text style={styles.logoText}>NutriHelp</Text>
+        <View style={styles.headerSideSpacer} />
+      </View>
+      <View style={styles.screen}>
       <View style={styles.headerRow}>
         <Text style={styles.pageTitle}>Recipes</Text>
         <Pressable
@@ -494,7 +529,9 @@ export default function RecipeListScreen({ navigation, route }) {
         refreshing={isRefreshing}
         onRefresh={() => loadBrowseAndMerge(true)}
       />
-    </View>
+      </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -512,7 +549,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipUnselected: {
-    borderColor: C.gray300,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
   },
   chipSelected: {
@@ -527,23 +564,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: C.white,
   },
-  card: {
+  cardClip: {
+    flex: 1,
     overflow: "hidden",
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.gray200,
-    backgroundColor: C.white,
   },
   imagePlaceholder: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: C.stone200,
+    backgroundColor: "#E5E7EB",
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: C.slate900,
+    color: "#202633",
   },
   metaRow: {
     flexDirection: "row",
@@ -572,13 +607,14 @@ const styles = StyleSheet.create({
     color: C.slate600,
   },
   searchEntryBar: {
+    ...SURFACE_SHADOW_SUBTLE,
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
     minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: C.gray300,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -590,8 +626,11 @@ const styles = StyleSheet.create({
     color: C.gray400,
   },
   emptyBox: {
+    ...SURFACE_SHADOW,
     alignItems: "center",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 32,
@@ -601,11 +640,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: C.slate800,
   },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  /** Matches Home `content.paddingTop` + Meal Plan `topRow` inset */
+  pageChrome: { flex: 1, paddingTop: 8 },
+  brandHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    marginBottom: 20,
+    backgroundColor: "#FFFFFF",
+  },
+  headerSideSpacer: { width: 40 },
+  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
   screen: {
     flex: 1,
-    backgroundColor: C.stone100,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: H_PADDING,
   },
   headerRow: {
     flexDirection: "row",
@@ -615,8 +666,8 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 24,
-    fontWeight: "600",
-    color: C.slate900,
+    fontWeight: "800",
+    color: "#253B63",
   },
   primaryBtn: {
     minHeight: 44,

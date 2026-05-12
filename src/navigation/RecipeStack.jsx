@@ -12,29 +12,14 @@ export default function RecipeStack() {
     <Stack.Navigator
       initialRouteName="RecipeListScreen"
       screenOptions={{
+        headerShown: false,
         cardStyle: { flex: 1 },
       }}
     >
-      <Stack.Screen
-        name="RecipeListScreen"
-        component={RecipeListScreen}
-        options={{ title: "Recipes" }}
-      />
-      <Stack.Screen
-        name="RecipeDetailScreen"
-        component={RecipeDetailScreen}
-        options={{ title: "Recipe" }}
-      />
-      <Stack.Screen
-        name="CreateRecipeScreen"
-        component={CreateRecipeScreen}
-        options={{ title: "Create Recipe" }}
-      />
-      <Stack.Screen
-        name="SearchRecipesScreen"
-        component={SearchRecipesScreen}
-        options={{ title: "Search Recipes" }}
-      />
+      <Stack.Screen name="RecipeListScreen" component={RecipeListScreen} />
+      <Stack.Screen name="RecipeDetailScreen" component={RecipeDetailScreen} />
+      <Stack.Screen name="CreateRecipeScreen" component={CreateRecipeScreen} />
+      <Stack.Screen name="SearchRecipesScreen" component={SearchRecipesScreen} />
     </Stack.Navigator>
   );
 }
