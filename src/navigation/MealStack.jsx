@@ -27,6 +27,11 @@ export default function MealStack() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="AIWeeklyPlanScreen"
+        component={AiMealPlanScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="EditDailyPlanScreen"
         component={PlaceholderScreen}
         options={{ title: "Edit Daily Plan" }}
@@ -40,11 +45,6 @@ export default function MealStack() {
         name="MenuScreen"
         component={PlaceholderScreen}
         options={{ title: "Menu" }}
-      />
-      <Stack.Screen
-        name="AIWeeklyPlanScreen"
-        component={AiMealPlanScreen}
-        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

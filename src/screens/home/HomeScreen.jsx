@@ -13,8 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getTodayIntake,
   getTodayIntakeLocal,
-  logWaterIntake,
-  saveTodayIntakeLocal,
 } from "../../api/waterIntakeApi";
 import { useUser } from "../../context/UserContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
@@ -123,7 +121,6 @@ function SkeletonCard() {
 export default function HomeScreen({ navigation }) {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
-  const [waterLogging, setWaterLogging] = useState(false);
   const [summary, setSummary] = useState({
     calories: 0,
     water: 0,
@@ -181,27 +178,6 @@ export default function HomeScreen({ navigation }) {
     }, [refreshHome])
   );
 
-  const handleAddWater = async () => {
-    const nextWater = Math.min(summary.water + 1, WATER_TARGET);
-    setSummary((previous) => ({
-      ...previous,
-      water: nextWater,
-    }));
-
-    await saveTodayIntakeLocal(user?.id, nextWater);
-
-    if (!user?.id) {
-      return;
-    }
-
-    try {
-      setWaterLogging(true);
-      await logWaterIntake(user.id, nextWater);
-    } finally {
-      setWaterLogging(false);
-    }
-  };
-
   const hasMeals = summary.meals.length > 0;
 
   return (
@@ -253,7 +229,7 @@ export default function HomeScreen({ navigation }) {
               maxValue={CALORIE_TARGET}
               unit="kcal"
               label="Energy"
-              accent="#2B78C5"
+              accent="#F59E0B"
               onPress={() => navigation.navigate("GoalDetailsScreen")}
             />
             <StatCard
@@ -263,7 +239,7 @@ export default function HomeScreen({ navigation }) {
               unit="cups water"
               label="Hydration"
               accent="#2B78C5"
-              onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+              onPress={() => navigation.navigate("WaterIntakeScreen")}
             />
             <StatCard
               icon="🍽️"
@@ -271,7 +247,7 @@ export default function HomeScreen({ navigation }) {
               maxValue={MEAL_TARGET}
               unit="Meals"
               label="Completed"
-              accent="#2B78C5"
+              accent="#22C55E"
               onPress={() => navigation.navigate("Meals")}
             />
           </View>
@@ -285,14 +261,13 @@ export default function HomeScreen({ navigation }) {
           />
           <ActionButton
             icon="cup-outline"
-            label={waterLogging ? "Saving..." : "Add Water"}
-            onPress={handleAddWater}
-            disabled={waterLogging}
+            label="Add Water"
+            onPress={() => navigation.navigate("WaterIntakeScreen")}
           />
           <ActionButton
             icon="chat-processing-outline"
             label="Ask AI"
-            onPress={() => navigation.navigate("RecommendedDetailsScreen")}
+            onPress={() => navigation.navigate("ChatScreen")}
             isLast
           />
         </View>
