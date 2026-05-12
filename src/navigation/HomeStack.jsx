@@ -2,7 +2,9 @@ import { createStackNavigator } from "@react-navigation/stack";
 
 import GoalDetailsScreen from "../screens/home/GoalDetailsScreen";
 import HomeScreen from "../screens/home/HomeScreen";
+import ChatScreen from "../screens/home/ChatScreen";
 import HealthToolsScreen from "../screens/health/HealthToolsScreen";
+import WaterIntakeScreen from "../screens/health/WaterIntakeScreen";
 import MealPlanOverviewScreen from "../screens/home/MealPlanOverviewScreen";
 import NutritionSummaryScreen from "../screens/home/NutritionSummaryScreen";
 import RecommendedDetailsScreen from "../screens/home/RecommendedDetailsScreen";
@@ -19,7 +21,17 @@ export default function HomeStack() {
       <Stack.Screen
         name="HomeScreen"
         component={HomeScreen}
-        options={{ title: "Home" }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ChatScreen"
+        component={ChatScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="WaterIntakeScreen"
+        component={WaterIntakeScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="HealthNewsScreen"
@@ -39,12 +51,12 @@ export default function HomeStack() {
       <Stack.Screen
         name="GoalDetailsScreen"
         component={GoalDetailsScreen}
-        options={{ title: "Goal" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="NutritionSummaryScreen"
         component={NutritionSummaryScreen}
-        options={{ title: "Nutrition Summary" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="MealPlanOverviewScreen"
@@ -59,12 +71,12 @@ export default function HomeStack() {
       <Stack.Screen
         name="DailyPlanScreen"
         component={DailyPlanScreen}
-        options={{ title: "Daily Plan" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="WeeklyPlanScreen"
         component={WeeklyPlanScreen}
-        options={{ title: "Weekly Plan" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="FAQScreen"

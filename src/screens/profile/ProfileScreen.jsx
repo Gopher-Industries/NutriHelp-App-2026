@@ -11,8 +11,31 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import mealPlanApi from "../../api/mealPlanApi";
 import profileApi from "../../api/profileApi";
 import { useUser } from "../../context/UserContext";
+
+function computeStreak(items = []) {
+  if (!items.length) return 0;
+  const daysWithMeals = new Set(
+    items
+      .map((item) => (item?.date || item?.created_at || item?.createdAt || "").slice(0, 10))
+      .filter(Boolean)
+  );
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (daysWithMeals.has(key)) {
+      streak++;
+    } else if (i > 0) {
+      break;
+    }
+  }
+  return streak;
+}
 
 function buildInitials(profile) {
   const fullName = profile?.fullName || profile?.name || "";
@@ -85,16 +108,26 @@ export default function ProfileScreen({ navigation }) {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [streak, setStreak] = useState(0);
 
   const loadProfile = useCallback(async () => {
     try {
       setLoading(true);
-      const nextProfile = await profileApi.getProfile();
+      const [nextProfile, mealResponse] = await Promise.all([
+        profileApi.getProfile(),
+        mealPlanApi.getWeeklyPlan({ userId: user?.id }).catch(() => null),
+      ]);
       setProfile(nextProfile);
+      const items =
+        mealResponse?.data?.items ||
+        mealResponse?.items ||
+        mealResponse?.mealPlans ||
+        [];
+      setStreak(computeStreak(Array.isArray(items) ? items : []));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -181,9 +214,17 @@ export default function ProfileScreen({ navigation }) {
             <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
           </View>
           <View style={styles.streakTextWrap}>
-            <Text style={styles.streakTitle}>Streak: 12 Days</Text>
+            <Text style={styles.streakTitle}>
+              Streak: {streak} {streak === 1 ? "Day" : "Days"}
+            </Text>
             <Text style={styles.streakSubtitle}>
-              Your plant-based journey is thriving.
+              {streak >= 7
+                ? "Amazing consistency — keep it up!"
+                : streak >= 3
+                  ? "You're building a great habit!"
+                  : streak === 0
+                    ? "Start planning today to build your streak."
+                    : "Great start — keep going!"}
             </Text>
           </View>
         </View>

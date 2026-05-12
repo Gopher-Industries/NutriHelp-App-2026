@@ -30,8 +30,15 @@ export async function getProfile() {
   return normalizeProfileResponse(response);
 }
 
-export async function updateProfile({ fullName, email, contactNumber, address }) {
-  const { first_name, last_name } = splitFullName(fullName);
+export async function updateProfile({ fullName, firstName, lastName, email, contactNumber, address, dateOfBirth, dietaryPreference }) {
+  let first_name, last_name;
+
+  if (firstName !== undefined || lastName !== undefined) {
+    first_name = (firstName || "").trim();
+    last_name = (lastName || "").trim();
+  } else {
+    ({ first_name, last_name } = splitFullName(fullName));
+  }
 
   return put("/api/userprofile", {
     first_name,
@@ -39,6 +46,8 @@ export async function updateProfile({ fullName, email, contactNumber, address })
     email,
     contact_number: contactNumber,
     address,
+    ...(dateOfBirth ? { date_of_birth: dateOfBirth } : {}),
+    ...(dietaryPreference ? { dietary_preference: dietaryPreference } : {}),
   });
 }
 
