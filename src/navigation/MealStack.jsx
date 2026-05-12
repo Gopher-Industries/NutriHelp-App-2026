@@ -3,6 +3,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import WeeklyPlanScreen from "../screens/meal/WeeklyPlanScreen";
 import DailyPlanScreen from "../screens/meal/DailyPlanScreen";
 import MealPlanDetailScreen from "../screens/meal/MealPlanDetailScreen";
+import AiMealPlanScreen from "../screens/meal/AiMealPlanScreen";
 import NutritionCalculatorScreen from "../screens/health/NutritionCalculatorScreen";
 import PlaceholderScreen from "./_PlaceholderScreen";
 
@@ -42,8 +43,8 @@ export default function MealStack() {
       />
       <Stack.Screen
         name="AIWeeklyPlanScreen"
-        component={PlaceholderScreen}
-        options={{ title: "AI Weekly Plan" }}
+        component={AiMealPlanScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

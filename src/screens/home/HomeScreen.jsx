@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import mealPlanApi from "../../api/mealPlanApi";
 import {
   getTodayIntake,
   getTodayIntakeLocal,
@@ -18,12 +17,16 @@ import {
   saveTodayIntakeLocal,
 } from "../../api/waterIntakeApi";
 import { useUser } from "../../context/UserContext";
-import { groupMealsByType, normalizeMealItems } from "../meal/mealPlanUiHelpers";
+import { getDailyMeals } from "../../utils/dailyMealsStorage";
 
 const CALORIE_TARGET = 2000;
 const WATER_TARGET = 8;
 const MEAL_TARGET = 3;
 const TODAY = new Date();
+const TODAY_ISO = TODAY.toISOString().slice(0, 10);
+
+const MEAL_ACCENTS_MAP = { breakfast: "#F59E0B", lunch: "#22C55E", dinner: "#3B82F6" };
+const MEAL_LABELS_MAP = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -51,29 +54,6 @@ function toNumber(value) {
   return Number.isFinite(next) ? next : 0;
 }
 
-function flattenTodayMeals(items = []) {
-  return groupMealsByType(items, TODAY)
-    .map((group, index) => {
-      const liveRecipe = group.recipes.find((recipe) => recipe.title && !recipe.id?.includes("fallback"));
-      if (!group.hasLiveData || !liveRecipe) {
-        return null;
-      }
-
-      return {
-        id: `${group.mealType}-${liveRecipe.id}-${index}`,
-        title: liveRecipe.title,
-        mealType: group.title,
-        calories: toNumber(liveRecipe.calories),
-        accent:
-          group.mealType === "breakfast"
-            ? "#F59E0B"
-            : group.mealType === "lunch"
-              ? "#22C55E"
-              : "#3B82F6",
-      };
-    })
-    .filter(Boolean);
-}
 
 function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
   const progress = clampProgress(value, maxValue);
@@ -163,23 +143,33 @@ export default function HomeScreen({ navigation }) {
     try {
       setLoading(true);
 
-      const [mealResponse, remoteWater, localWater] = await Promise.all([
-        mealPlanApi.getWeeklyPlan({ userId: user?.id }).catch(() => null),
+      const [localMeals, remoteWater, localWater] = await Promise.all([
+        getDailyMeals(TODAY_ISO),
         getTodayIntake(user?.id).catch(() => null),
         getTodayIntakeLocal(user?.id),
       ]);
 
-      const items = normalizeMealItems(mealResponse);
-      const meals = flattenTodayMeals(items);
-      const calories = meals.reduce((total, meal) => total + toNumber(meal.calories), 0);
+      const meals = ["breakfast", "lunch", "dinner"].flatMap((type) => {
+        const arr = Array.isArray(localMeals[type])
+          ? localMeals[type]
+          : localMeals[type]?.title
+            ? [localMeals[type]]
+            : [];
+        return arr
+          .filter((m) => m.title)
+          .map((m, i) => ({
+            id: m._id ?? `${type}-${i}`,
+            title: m.title,
+            mealType: MEAL_LABELS_MAP[type],
+            calories: toNumber(m.calories),
+            accent: MEAL_ACCENTS_MAP[type],
+          }));
+      });
+
+      const calories = meals.reduce((total, meal) => total + meal.calories, 0);
       const water = remoteWater ?? localWater ?? 0;
 
-      setSummary({
-        calories,
-        water,
-        mealsCompleted: meals.length,
-        meals,
-      });
+      setSummary({ calories, water, mealsCompleted: meals.length, meals });
     } finally {
       setLoading(false);
     }
@@ -282,7 +272,7 @@ export default function HomeScreen({ navigation }) {
               unit="Meals"
               label="Completed"
               accent="#2B78C5"
-              onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+              onPress={() => navigation.navigate("Meals")}
             />
           </View>
         )}
@@ -291,7 +281,7 @@ export default function HomeScreen({ navigation }) {
           <ActionButton
             icon="silverware-fork-knife"
             label="Log Meal"
-            onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+            onPress={() => navigation.navigate("Meals")}
           />
           <ActionButton
             icon="cup-outline"
@@ -323,13 +313,13 @@ export default function HomeScreen({ navigation }) {
                 <MealItem
                   key={meal.id}
                   item={meal}
-                  onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+                  onPress={() => navigation.navigate("Meals")}
                 />
               ))}
 
               <Pressable
                 style={styles.linkButton}
-                onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+                onPress={() => navigation.navigate("Meals")}
               >
                 <Text style={styles.linkButtonText}>View Full Meal Plan →</Text>
               </Pressable>
@@ -343,7 +333,7 @@ export default function HomeScreen({ navigation }) {
               </Text>
               <Pressable
                 style={styles.emptyCta}
-                onPress={() => navigation.navigate("MealPlanOverviewScreen")}
+                onPress={() => navigation.navigate("Meals")}
               >
                 <Text style={styles.emptyCtaText}>Set Up Today's Meals</Text>
               </Pressable>
