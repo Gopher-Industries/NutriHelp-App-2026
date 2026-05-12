@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -20,6 +21,18 @@ import {
   useRecipeCardWidth,
 } from "./RecipeListScreen";
 import { useUser } from "../../context/UserContext";
+
+const C = {
+  primary: "#1A6DB5",
+  stone100: "#f5f5f4",
+  slate900: "#0f172a",
+  slate800: "#1e293b",
+  gray100: "#f3f4f6",
+  gray200: "#e5e7eb",
+  gray300: "#d1d5db",
+  gray500: "#6b7280",
+  white: "#fff",
+};
 
 const flatListScrollProps = {
   bounces: false,
@@ -84,8 +97,8 @@ function DebouncedSearchBar({
   onSubmitEditing,
 }) {
   return (
-    <View className="mb-4">
-      <View className="flex-row items-center rounded-xl border border-gray-300 bg-white pr-2">
+    <View style={styles.searchBarWrap}>
+      <View style={styles.searchRow}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -96,16 +109,11 @@ function DebouncedSearchBar({
           onBlur={onBlur}
           onSubmitEditing={onSubmitEditing}
           returnKeyType="search"
-          className="h-12 flex-1 px-4 text-base text-gray-900"
-          style={{ minHeight: 44 }}
+          style={styles.searchInput}
         />
         {isFocused && value.trim().length > 0 ? (
-          <Pressable
-            onPress={onClear}
-            className="h-9 w-9 items-center justify-center rounded-full bg-[#1A6DB5]"
-            hitSlop={8}
-          >
-            <Text className="text-lg font-semibold text-white">X</Text>
+          <Pressable onPress={onClear} style={styles.clearBtn} hitSlop={8}>
+            <Text style={styles.clearBtnText}>X</Text>
           </Pressable>
         ) : null}
       </View>
@@ -120,7 +128,7 @@ export default function SearchRecipesScreen({ navigation }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [allRecipes, setAllRecipes] = useState([]);
+  const [remoteRecipes, setRemoteRecipes] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [recentHydrated, setRecentHydrated] = useState(false);
@@ -203,14 +211,14 @@ export default function SearchRecipesScreen({ navigation }) {
         });
         const list = extractRecipeList(response).map(normalizeRecipe);
         if (active) {
-          setAllRecipes(list);
+          setRemoteRecipes(list);
         }
       } catch (error) {
         if (active) {
           if (__DEV__) {
             console.warn("[SearchRecipes] recipeApi.searchRecipes failed:", error?.message ?? error);
           }
-          setAllRecipes([]);
+          setRemoteRecipes([]);
         }
       } finally {
         if (active) {
@@ -224,7 +232,7 @@ export default function SearchRecipesScreen({ navigation }) {
     return () => {
       active = false;
     };
-  }, [searchRequest]);
+  }, [searchRequest, effectiveUserId]);
 
   /** Record a completed debounced search so typing (not only Enter) fills recents; skip when only the category filter changes. */
   useEffect(() => {
@@ -255,20 +263,20 @@ export default function SearchRecipesScreen({ navigation }) {
 
   const filters = useMemo(() => {
     const categories = new Set([
-      ...allRecipes.map((item) => item.category),
+      ...remoteRecipes.map((item) => item.category),
     ]);
     return ["All", ...[...categories].sort()];
-  }, [allRecipes]);
+  }, [remoteRecipes]);
 
   const filteredRecipes = useMemo(() => {
-    return allRecipes.filter((item) => {
+    return remoteRecipes.filter((item) => {
       const matchesFilter =
         !selectedFilter || selectedFilter === "All" ? true : item.category === selectedFilter;
       const matchesQuery =
         debouncedQuery.length === 0 || item.title.toLowerCase().includes(debouncedQuery);
       return matchesFilter && matchesQuery;
     });
-  }, [allRecipes, selectedFilter, debouncedQuery]);
+  }, [remoteRecipes, selectedFilter, debouncedQuery]);
 
   const titleSuggestions = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -276,7 +284,7 @@ export default function SearchRecipesScreen({ navigation }) {
       return [];
     }
 
-    const source = allRecipes.filter((item) =>
+    const source = remoteRecipes.filter((item) =>
       selectedFilter && selectedFilter !== "All" ? item.category === selectedFilter : true
     );
     const matchedTitles = source
@@ -284,7 +292,7 @@ export default function SearchRecipesScreen({ navigation }) {
       .filter((title) => title.toLowerCase().includes(normalized));
 
     return [...new Set(matchedTitles)].slice(0, 6);
-  }, [query, allRecipes, selectedFilter]);
+  }, [query, remoteRecipes, selectedFilter]);
 
   const displayedSuggestions =
     query.trim().length === 0 ? recentSearches : titleSuggestions;
@@ -319,6 +327,7 @@ export default function SearchRecipesScreen({ navigation }) {
   const handleRecipePress = (recipe) => {
     navigation?.navigate?.("RecipeDetailScreen", {
       recipeId: recipe.id,
+      recipe,
     });
   };
 
@@ -345,14 +354,11 @@ export default function SearchRecipesScreen({ navigation }) {
     }
 
     return (
-      <View className="items-center rounded-2xl bg-white px-4 py-8">
-        <Text className="text-center text-lg text-slate-800">{message}</Text>
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyMessage}>{message}</Text>
         {displayTerm.length > 0 ? (
-          <Pressable
-            onPress={handleClearSearch}
-            className="mt-4 min-h-[44px] min-w-[120px] items-center justify-center rounded-xl border border-[#1A6DB5] px-4"
-          >
-            <Text className="text-base font-semibold text-[#1A6DB5]">Clear search</Text>
+          <Pressable onPress={handleClearSearch} style={styles.emptyClearBtn}>
+            <Text style={styles.emptyClearText}>Clear search</Text>
           </Pressable>
         ) : null}
       </View>
@@ -360,18 +366,8 @@ export default function SearchRecipesScreen({ navigation }) {
   };
 
   return (
-    <View className="flex-1 bg-stone-100 px-4 pt-4" style={{ flex: 1 }}>
-      <View className="mb-3 flex-row items-center">
-        <Pressable
-          onPress={() => navigation?.navigate?.("RecipeListScreen")}
-          className="mr-3 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-white px-3"
-          accessibilityRole="button"
-          accessibilityLabel="Back to recipe list"
-        >
-          <Text className="text-lg font-semibold text-[#1A6DB5]">‹</Text>
-        </Pressable>
-        <Text className="flex-1 text-xl font-semibold text-slate-900">Search recipes</Text>
-      </View>
+    <View style={styles.screenRoot}>
+      <Text style={styles.pageTitle}>Search recipes</Text>
 
       <DebouncedSearchBar
         value={query}
@@ -388,30 +384,26 @@ export default function SearchRecipesScreen({ navigation }) {
       />
 
       {isSearchFocused ? (
-        <View className="mb-4 rounded-xl border border-gray-200 bg-white">
-          <Text className="px-4 pb-2 pt-3 text-sm font-semibold text-[#1A6DB5]">
+        <View style={styles.suggestionsPanel}>
+          <Text style={styles.suggestionsHeading}>
             {query.trim().length === 0 ? "Recent searches" : "Suggestions"}
           </Text>
           {displayedSuggestions.length === 0 ? (
-            <Text className="px-4 pb-4 text-base text-gray-500">
+            <Text style={styles.suggestionsEmpty}>
               {query.trim().length === 0 ? "No recent searches yet." : "No matching recipes."}
             </Text>
           ) : (
             <ScrollView
               style={[
-                { maxHeight: 180 },
+                styles.suggestionsScroll,
                 Platform.OS === "web" ? { overscrollBehavior: "none" } : null,
               ]}
               nestedScrollEnabled
               {...verticalScrollProps}
             >
               {displayedSuggestions.map((item) => (
-                <Pressable
-                  key={item}
-                  onPress={() => handleSuggestionPress(item)}
-                  className="min-h-[44px] justify-center border-t border-gray-100 px-4 py-2"
-                >
-                  <Text className="text-base text-slate-800">{item}</Text>
+                <Pressable key={item} onPress={() => handleSuggestionPress(item)} style={styles.suggestionRow}>
+                  <Text style={styles.suggestionText}>{item}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -422,9 +414,9 @@ export default function SearchRecipesScreen({ navigation }) {
       <FilterChips filters={filters} selectedFilter={selectedFilter} onSelect={setSelectedFilter} />
 
       {isLoading ? (
-        <View className="items-center py-6">
-          <ActivityIndicator size="small" color="#1A6DB5" />
-          <Text className="mt-2 text-base text-[#1A6DB5]">Searching…</Text>
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color={C.primary} />
+          <Text style={styles.loadingText}>Searching…</Text>
         </View>
       ) : null}
 
@@ -437,7 +429,7 @@ export default function SearchRecipesScreen({ navigation }) {
         numColumns={2}
         {...flatListScrollProps}
         style={[
-          { flex: 1, minHeight: 0 },
+          styles.list,
           Platform.OS === "web" ? { overscrollBehavior: "none" } : null,
         ]}
         columnWrapperStyle={{
@@ -445,10 +437,91 @@ export default function SearchRecipesScreen({ navigation }) {
           columnGap: COLUMN_GAP,
           alignItems: "flex-start",
         }}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={isLoading ? null : renderEmptyState}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screenRoot: { flex: 1, backgroundColor: C.stone100, paddingHorizontal: 16, paddingTop: 16 },
+  pageTitle: { marginBottom: 16, fontSize: 24, fontWeight: "600", color: C.slate900 },
+  searchBarWrap: { marginBottom: 16 },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.gray300,
+    backgroundColor: C.white,
+    paddingRight: 8,
+  },
+  searchInput: {
+    height: 48,
+    flex: 1,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#111827",
+    minHeight: 44,
+  },
+  clearBtn: {
+    height: 36,
+    width: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    backgroundColor: C.primary,
+  },
+  clearBtnText: { fontSize: 18, fontWeight: "600", color: C.white },
+  suggestionsPanel: {
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    backgroundColor: C.white,
+  },
+  suggestionsHeading: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    fontSize: 14,
+    fontWeight: "600",
+    color: C.primary,
+  },
+  suggestionsEmpty: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    fontSize: 16,
+    color: C.gray500,
+  },
+  suggestionsScroll: { maxHeight: 180 },
+  suggestionRow: {
+    minHeight: 44,
+    justifyContent: "center",
+    borderTopWidth: 1,
+    borderTopColor: C.gray100,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  suggestionText: { fontSize: 16, color: C.slate800 },
+  loadingRow: { alignItems: "center", paddingVertical: 24 },
+  loadingText: { marginTop: 8, fontSize: 16, color: C.primary },
+  list: { flex: 1, minHeight: 0 },
+  listContent: { paddingBottom: 24 },
+  emptyState: { alignItems: "center", borderRadius: 16, backgroundColor: C.white, paddingHorizontal: 16, paddingVertical: 32 },
+  emptyMessage: { textAlign: "center", fontSize: 18, color: C.slate800 },
+  emptyClearBtn: {
+    marginTop: 16,
+    minHeight: 44,
+    minWidth: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.primary,
+    paddingHorizontal: 16,
+  },
+  emptyClearText: { fontSize: 16, fontWeight: "600", color: C.primary },
+});

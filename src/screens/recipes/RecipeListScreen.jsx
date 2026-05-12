@@ -7,18 +7,32 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
 
 export const COLUMN_GAP = 16;
 const NUM_COLUMNS = 2;
 const H_PADDING = 16;
+
+const C = {
+  primary: "#1A6DB5",
+  stone100: "#f5f5f4",
+  stone200: "#e7e5e4",
+  slate900: "#0f172a",
+  slate800: "#1e293b",
+  slate600: "#475569",
+  gray200: "#e5e7eb",
+  gray300: "#d1d5db",
+  gray400: "#9ca3af",
+  gray700: "#374151",
+  white: "#fff",
+};
 
 /** Fixed layout so every card matches; title area always reserves two lines. */
 const RECIPE_CARD_IMAGE_H = 112;
@@ -52,8 +66,6 @@ const horizontalScrollProps = {
   ...(Platform.OS === "ios" ? { decelerationRate: "normal" } : {}),
   ...(Platform.OS === "android" ? { overScrollMode: "never" } : {}),
 };
-const LOCAL_CREATED_RECIPES_KEY = "nutrihelp.localCreatedRecipes";
-
 function extractUserId(user) {
   const candidates = [user?.id, user?.userId, user?.user_id, user?.profile?.id];
   for (const value of candidates) {
@@ -221,9 +233,8 @@ export function FilterChips({ filters, selectedFilter, onSelect }) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ flexGrow: 0, flexShrink: 0, alignSelf: "stretch" }}
-      contentContainerStyle={{ paddingRight: 8, alignItems: "flex-start" }}
-      className="mb-4"
+      style={styles.chipScroll}
+      contentContainerStyle={styles.chipScrollContent}
       {...horizontalScrollProps}
     >
       {filters.map((filter) => {
@@ -233,13 +244,9 @@ export function FilterChips({ filters, selectedFilter, onSelect }) {
           <Pressable
             key={filter}
             onPress={() => onSelect(filter)}
-            className={`mr-3 h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border px-4 ${
-              isSelected ? "border-[#1A6DB5] bg-[#1A6DB5]" : "border-gray-300 bg-white"
-            }`}
+            style={[styles.chip, isSelected ? styles.chipSelected : styles.chipUnselected]}
           >
-            <Text
-              className={`text-base ${isSelected ? "font-semibold text-white" : "text-gray-700"}`}
-            >
+            <Text style={[styles.chipText, isSelected ? styles.chipTextSelected : null]}>
               {filter}
             </Text>
           </Pressable>
@@ -271,26 +278,26 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
       accessibilityLabel={title || "Recipe"}
       accessibilityHint="Opens recipe. Long press to show the full name."
       delayLongPress={350}
-      className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
-      style={{
-        width: cardWidth,
-        height: RECIPE_CARD_HEIGHT,
-        minWidth: 44,
-        alignSelf: "flex-start",
-        flexShrink: 0,
-      }}
+      style={[
+        styles.card,
+        {
+          width: cardWidth,
+          height: RECIPE_CARD_HEIGHT,
+          minWidth: 44,
+          alignSelf: "flex-start",
+          flexShrink: 0,
+        },
+      ]}
     >
       {imageUri ? (
         <Image
           source={{ uri: imageUri }}
-          className="w-full"
-          style={{ height: RECIPE_CARD_IMAGE_H }}
+          style={{ height: RECIPE_CARD_IMAGE_H, width: "100%" }}
           resizeMode="cover"
         />
       ) : (
         <View
-          className="w-full items-center justify-center bg-stone-200"
-          style={{ height: RECIPE_CARD_IMAGE_H }}
+          style={[styles.imagePlaceholder, { height: RECIPE_CARD_IMAGE_H }]}
           accessibilityRole="image"
           accessibilityLabel="No recipe image"
         >
@@ -314,30 +321,25 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
           <Text
             numberOfLines={RECIPE_CARD_TITLE_MAX_LINES}
             ellipsizeMode="tail"
-            className="text-base font-semibold text-slate-900"
-            style={{ lineHeight: RECIPE_CARD_TITLE_LINE_HEIGHT }}
+            style={[styles.cardTitle, { lineHeight: RECIPE_CARD_TITLE_LINE_HEIGHT }]}
           >
             {title}
           </Text>
         </View>
 
-        <View style={{ height: RECIPE_CARD_META_ROW_H }} className="flex-row items-center justify-between gap-2">
-          <View className="min-h-0 min-w-0 flex-1 flex-row items-center">
+        <View style={[styles.metaRow, { height: RECIPE_CARD_META_ROW_H }]}>
+          <View style={styles.metaLeft}>
             <Ionicons name="star" size={15} color="#F59E0B" />
-            <Text className="ml-1 text-sm font-medium text-slate-800" numberOfLines={1}>
+            <Text style={[styles.metaRating, { marginLeft: 4 }]} numberOfLines={1}>
               {shouldShowScore ? avgRating.toFixed(1) : "—"}
             </Text>
             {reviewCount > 0 ? (
-              <Text className="ml-1 text-xs text-gray-400" numberOfLines={1}>
+              <Text style={[styles.metaCount, { marginLeft: 4 }]} numberOfLines={1}>
                 ({reviewCount})
               </Text>
             ) : null}
           </View>
-          <Text
-            className="text-sm font-medium text-slate-600"
-            numberOfLines={1}
-            style={{ flexShrink: 0 }}
-          >
+          <Text style={[styles.kcalText, { flexShrink: 0 }]} numberOfLines={1}>
             {recipe?.calories != null ? `${recipe.calories} kcal` : "—"}
           </Text>
         </View>
@@ -346,8 +348,8 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
   );
 }
 
-async function fetchListFromApi(userId, category) {
-  const primary = await recipeApi.getRecipes({ userId, category });
+async function fetchListFromApi(userId) {
+  const primary = await recipeApi.getRecipes({ userId });
   return extractRecipeList(primary);
 }
 
@@ -355,40 +357,20 @@ function SearchEntryBar({ onPress }) {
   return (
     <Pressable
       onPress={onPress}
-      className="mb-4 min-h-[48px] flex-row items-center rounded-xl border border-gray-300 bg-white px-4 py-3"
+      style={styles.searchEntryBar}
       accessibilityRole="button"
       accessibilityLabel="Open recipe search"
     >
       <Ionicons name="search-outline" size={22} color="#9ca3af" />
-      <Text className="ml-2 flex-1 text-base text-gray-400">Search recipes…</Text>
+      <Text style={styles.searchEntryText}>Search recipes…</Text>
     </Pressable>
   );
-}
-
-function mergeCreatedRecipe(mapped, pending) {
-  if (!pending) {
-    return mapped;
-  }
-  const p = normalizeRecipe(pending, mapped.length);
-  if (mapped.some((r) => String(r.id) === String(p.id))) {
-    return mapped;
-  }
-  return [p, ...mapped];
-}
-
-function mergeCreatedRecipes(mapped, pendings) {
-  let next = mapped;
-  for (const p of pendings ?? []) {
-    next = mergeCreatedRecipe(next, p);
-  }
-  return next;
 }
 
 export default function RecipeListScreen({ navigation, route }) {
   const { user } = useUser();
   const userId = useMemo(() => extractUserId(user), [user]);
   const effectiveUserId = userId ?? 0;
-  const pendingCreated = route?.params?.createdRecipe;
   const createdAt = route?.params?.createdAt;
 
   const [browseRecipes, setBrowseRecipes] = useState([]);
@@ -396,43 +378,7 @@ export default function RecipeListScreen({ navigation, route }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [browseFilter, setBrowseFilter] = useState("All");
   const [browseFilters, setBrowseFilters] = useState(["All"]);
-  const [localCreatedRecipes, setLocalCreatedRecipes] = useState([]);
   const cardWidth = useRecipeCardWidth();
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(LOCAL_CREATED_RECIPES_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        if (cancelled || !Array.isArray(parsed)) {
-          return;
-        }
-        setLocalCreatedRecipes(parsed);
-      } catch {
-        /* ignore storage issues */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!pendingCreated) {
-      return;
-    }
-    setBrowseRecipes((prev) => mergeCreatedRecipe(prev, pendingCreated));
-    setLocalCreatedRecipes((prev) => {
-      const normalized = normalizeRecipe(pendingCreated, prev.length);
-      const exists = prev.some(
-        (item, index) => String(normalizeRecipe(item, index).id) === String(normalized.id)
-      );
-      const next = exists ? prev : [pendingCreated, ...prev];
-      AsyncStorage.setItem(LOCAL_CREATED_RECIPES_KEY, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
-  }, [pendingCreated]);
 
   const loadBrowseAndMerge = useCallback(async (refreshing = false) => {
     if (refreshing) {
@@ -442,10 +388,8 @@ export default function RecipeListScreen({ navigation, route }) {
     }
 
     try {
-      const list = await fetchListFromApi(effectiveUserId, browseFilter);
-      let mapped = list.map((item, i) => normalizeRecipe(item, i));
-      mapped = mergeCreatedRecipe(mapped, pendingCreated);
-      mapped = mergeCreatedRecipes(mapped, localCreatedRecipes);
+      const list = await fetchListFromApi(effectiveUserId);
+      const mapped = list.map((item, i) => normalizeRecipe(item, i));
       setBrowseRecipes(mapped);
 
       const categories = new Set(mapped.map((item) => item.category).filter(Boolean));
@@ -464,16 +408,9 @@ export default function RecipeListScreen({ navigation, route }) {
           data,
         });
       }
-  
-      let mapped = mergeCreatedRecipe([], pendingCreated);
-      mapped = mergeCreatedRecipes(mapped, localCreatedRecipes);
-      setBrowseRecipes(mapped);
 
-      const categories = new Set(mapped.map((item) => item.category).filter(Boolean));
-      if (browseFilter && browseFilter !== "All") {
-        categories.add(browseFilter);
-      }
-      setBrowseFilters(["All", ...[...categories].sort()]);
+      setBrowseRecipes([]);
+      setBrowseFilters(["All"]);
     } finally {
       if (refreshing) {
         setIsRefreshing(false);
@@ -481,13 +418,18 @@ export default function RecipeListScreen({ navigation, route }) {
         setBrowseLoading(false);
       }
     }
-  }, [effectiveUserId, browseFilter, localCreatedRecipes, pendingCreated]);
+  }, [effectiveUserId, browseFilter]);
 
   useEffect(() => {
     loadBrowseAndMerge();
   }, [loadBrowseAndMerge, createdAt]);
 
-  const browseFiltered = useMemo(() => browseRecipes, [browseRecipes]);
+  const browseFiltered = useMemo(() => {
+    if (browseFilter === "All") {
+      return browseRecipes;
+    }
+    return browseRecipes.filter((item) => item.category === browseFilter);
+  }, [browseRecipes, browseFilter]);
 
   const handleRecipePress = (recipe) => {
     navigation?.navigate?.("RecipeDetailScreen", {
@@ -497,20 +439,20 @@ export default function RecipeListScreen({ navigation, route }) {
   };
 
   const renderBrowseEmpty = () => (
-    <View className="items-center rounded-2xl bg-white px-4 py-8">
-      <Text className="text-center text-lg text-slate-800">No recipes in this category.</Text>
+    <View style={styles.emptyBox}>
+      <Text style={styles.emptyText}>No recipes in this category.</Text>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-stone-100 px-4 pt-4">
-      <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-2xl font-semibold text-slate-900">Recipes</Text>
+    <View style={styles.screen}>
+      <View style={styles.headerRow}>
+        <Text style={styles.pageTitle}>Recipes</Text>
         <Pressable
           onPress={() => navigation?.navigate?.("CreateRecipeScreen")}
-          className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-[#1A6DB5] px-4"
+          style={styles.primaryBtn}
         >
-          <Text className="text-base font-semibold text-white">Create recipe</Text>
+          <Text style={styles.primaryBtnText}>Create recipe</Text>
         </Pressable>
       </View>
 
@@ -523,9 +465,9 @@ export default function RecipeListScreen({ navigation, route }) {
       />
 
       {browseLoading ? (
-        <View className="items-center py-6">
-          <ActivityIndicator size="small" color="#1A6DB5" />
-          <Text className="mt-2 text-base text-[#1A6DB5]">Loading recipes…</Text>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="small" color={C.primary} />
+          <Text style={styles.loadingText}>Loading recipes…</Text>
         </View>
       ) : null}
 
@@ -555,3 +497,148 @@ export default function RecipeListScreen({ navigation, route }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  chipScroll: { flexGrow: 0, flexShrink: 0, alignSelf: "stretch" },
+  chipScrollContent: { paddingRight: 8, alignItems: "flex-start", marginBottom: 16 },
+  chip: {
+    marginRight: 12,
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  chipUnselected: {
+    borderColor: C.gray300,
+    backgroundColor: C.white,
+  },
+  chipSelected: {
+    borderColor: C.primary,
+    backgroundColor: C.primary,
+  },
+  chipText: {
+    fontSize: 16,
+    color: C.gray700,
+  },
+  chipTextSelected: {
+    fontWeight: "600",
+    color: C.white,
+  },
+  card: {
+    overflow: "hidden",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    backgroundColor: C.white,
+  },
+  imagePlaceholder: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: C.stone200,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: C.slate900,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  metaLeft: {
+    minHeight: 0,
+    minWidth: 0,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  metaRating: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: C.slate800,
+  },
+  metaCount: {
+    fontSize: 12,
+    color: C.gray400,
+  },
+  kcalText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: C.slate600,
+  },
+  searchEntryBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.gray300,
+    backgroundColor: C.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchEntryText: {
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 16,
+    color: C.gray400,
+  },
+  emptyBox: {
+    alignItems: "center",
+    borderRadius: 16,
+    backgroundColor: C.white,
+    paddingHorizontal: 16,
+    paddingVertical: 32,
+  },
+  emptyText: {
+    textAlign: "center",
+    fontSize: 18,
+    color: C.slate800,
+  },
+  screen: {
+    flex: 1,
+    backgroundColor: C.stone100,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: C.slate900,
+  },
+  primaryBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: C.primary,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: C.white,
+  },
+  loadingBox: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 16,
+    color: C.primary,
+  },
+});

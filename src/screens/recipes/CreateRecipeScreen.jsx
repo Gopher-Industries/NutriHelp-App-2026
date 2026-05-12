@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -14,6 +15,16 @@ import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
+
+const C = {
+  primary: "#1A6DB5",
+  stone100: "#f5f5f4",
+  slate900: "#0f172a",
+  slate800: "#1e293b",
+  red600: "#dc2626",
+  red50: "#fef2f2",
+  white: "#fff",
+};
 
 const verticalScrollProps = {
   keyboardShouldPersistTaps: "handled",
@@ -77,55 +88,6 @@ function useFormValidation({ recipeName, ingredients, steps }) {
       isValid: Object.keys(errors).length === 0,
     };
   }, [recipeName, ingredients, steps]);
-}
-
-function buildCreatedRecipeSnapshot(payload, apiResponse, previewImageUri) {
-  const raw = apiResponse?.recipe ?? apiResponse?.data?.recipe ?? apiResponse?.data;
-  const localClientId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const hasServerId =
-    raw &&
-    (raw.id != null ||
-      raw.recipe_id != null ||
-      raw.recipeId != null ||
-      raw.recipeID != null);
-  if (hasServerId) {
-    return {
-      ...raw,
-      local_client_id: raw?.local_client_id ?? localClientId,
-    };
-  }
-  const tempId = localClientId;
-  const snapshot = {
-    id: tempId,
-    recipe_id: tempId,
-    local_client_id: localClientId,
-    title: payload.recipe_name,
-    name: payload.recipe_name,
-    category: payload.category,
-    time_minutes: Number(payload.time_minutes) || 15,
-    servings: Number(payload.servings) || 1,
-    difficulty: payload.difficulty || "Easy",
-    rating: 0,
-    total_ratings: 0,
-    ingredients: Array.isArray(payload.ingredients) ? payload.ingredients : [],
-    instructions: Array.isArray(payload.instructions)
-      ? payload.instructions.map((step, index) => ({
-          number: Number(step?.number ?? index + 1),
-          title: step?.title ?? `Step ${index + 1}`,
-          description: step?.description ?? step?.content ?? "",
-        }))
-      : [],
-    nutrition: payload.nutrition,
-  };
-  const cal = payload.nutrition?.calories;
-  if (cal != null && String(cal).trim() !== "") {
-    snapshot.calories = cal;
-  }
-  if (previewImageUri) {
-    snapshot.imageUrl = previewImageUri;
-    snapshot.image_url = previewImageUri;
-  }
-  return snapshot;
 }
 
 export default function CreateRecipeScreen({ navigation }) {
@@ -278,19 +240,12 @@ export default function CreateRecipeScreen({ navigation }) {
 
     try {
       setIsSubmitting(true);
-      const response = await recipeApi.createRecipe(payload);
-      const snapshot = buildCreatedRecipeSnapshot(payload, response, imageUri);
+      await recipeApi.createRecipe(payload);
       navigation?.navigate?.("RecipeListScreen", {
-        createdRecipe: snapshot,
         createdAt: Date.now(),
       });
       Alert.alert("Saved", "Recipe created successfully.");
     } catch (error) {
-      const snapshot = buildCreatedRecipeSnapshot(payload, null, imageUri);
-      navigation?.navigate?.("RecipeListScreen", {
-        createdRecipe: snapshot,
-        createdAt: Date.now(),
-      });
       Alert.alert("Save failed", "Could not save recipe right now. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -298,31 +253,26 @@ export default function CreateRecipeScreen({ navigation }) {
   };
 
   return (
-    <View className="flex-1 bg-stone-100" style={{ flex: 1 }}>
+    <View style={styles.screenRoot}>
       <ScrollView
-        style={[
-          { flex: 1 },
-          Platform.OS === "web" ? { overscrollBehavior: "none" } : null,
-        ]}
-        contentContainerStyle={{ padding: 16, paddingBottom: 28 }}
+        style={[styles.flex1, Platform.OS === "web" ? { overscrollBehavior: "none" } : null]}
+        contentContainerStyle={styles.scrollContent}
         {...verticalScrollProps}
       >
-        <Text className="mb-4 text-2xl font-semibold text-slate-900">Create Recipe</Text>
+        <Text style={styles.pageTitle}>Create Recipe</Text>
 
-        <View className="rounded-2xl bg-white p-4">
-          <Text className="mb-2 text-base font-semibold text-slate-800">Recipe Name</Text>
+        <View style={styles.card}>
+          <Text style={styles.fieldLabel}>Recipe Name</Text>
           <TextInput
             value={recipeName}
             onChangeText={setRecipeName}
             placeholder="Enter recipe name"
-            className="min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={styles.input}
           />
-          {showErrors && errors.recipeName ? (
-            <Text className="mt-1 text-sm text-red-600">{errors.recipeName}</Text>
-          ) : null}
+          {showErrors && errors.recipeName ? <Text style={styles.errorText}>{errors.recipeName}</Text> : null}
 
-          <Text className="mb-2 mt-4 text-base font-semibold text-slate-800">Category</Text>
-          <View className="min-h-[44px] justify-center rounded-xl border border-gray-300 bg-white">
+          <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Category</Text>
+          <View style={styles.pickerShell}>
             <Picker
               selectedValue={category}
               onValueChange={(value) => setCategory(value)}
@@ -334,26 +284,26 @@ export default function CreateRecipeScreen({ navigation }) {
             </Picker>
           </View>
 
-          <Text className="mb-2 mt-4 text-base font-semibold text-slate-800">Cooking Time (mins)</Text>
+          <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Cooking Time (mins)</Text>
           <TextInput
             value={timeMinutes}
             onChangeText={setTimeMinutes}
             placeholder="e.g. 30"
             keyboardType="numeric"
-            className="min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={styles.input}
           />
 
-          <Text className="mb-2 mt-4 text-base font-semibold text-slate-800">Servings</Text>
+          <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Servings</Text>
           <TextInput
             value={servings}
             onChangeText={setServings}
             placeholder="e.g. 2"
             keyboardType="numeric"
-            className="min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={styles.input}
           />
 
-          <Text className="mb-2 mt-4 text-base font-semibold text-slate-800">Difficulty</Text>
-          <View className="min-h-[44px] justify-center rounded-xl border border-gray-300 bg-white">
+          <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Difficulty</Text>
+          <View style={styles.pickerShell}>
             <Picker
               selectedValue={difficulty}
               onValueChange={(value) => setDifficulty(value)}
@@ -365,44 +315,36 @@ export default function CreateRecipeScreen({ navigation }) {
             </Picker>
           </View>
 
-          <Text className="mb-2 mt-4 text-base font-semibold text-slate-800">Recipe Photo</Text>
-          <Pressable
-            onPress={openImagePickerMenu}
-            className="min-h-[44px] items-center justify-center rounded-xl bg-[#1A6DB5] px-4"
-          >
-            <Text className="text-base font-semibold text-white">Choose / Take Photo</Text>
+          <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Recipe Photo</Text>
+          <Pressable onPress={openImagePickerMenu} style={styles.primaryBtn}>
+            <Text style={styles.primaryBtnText}>Choose / Take Photo</Text>
           </Pressable>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} className="mt-3 h-48 w-full rounded-xl" />
-          ) : null}
+          {imageUri ? <Image source={{ uri: imageUri }} style={styles.previewImage} /> : null}
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white p-4">
-          <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-lg font-semibold text-slate-900">Ingredients</Text>
-            <Pressable
-              onPress={addIngredientRow}
-              className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-stone-100 px-3"
-            >
-              <Text className="text-base font-semibold text-[#1A6DB5]">+ Add</Text>
+        <View style={[styles.card, styles.cardSpaced]}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Ingredients</Text>
+            <Pressable onPress={addIngredientRow} style={styles.addBtn}>
+              <Text style={styles.addBtnText}>+ Add</Text>
             </Pressable>
           </View>
 
           {ingredients.map((item, index) => (
-            <View key={item.id} className="mb-3 rounded-xl border border-gray-200 p-3">
+            <View key={item.id} style={styles.subCard}>
               <TextInput
                 value={item.name}
                 onChangeText={(value) => updateIngredientRow(item.id, "name", value)}
                 placeholder={`Ingredient ${index + 1} name`}
-                className="mb-2 min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+                style={[styles.input, styles.inputMarginBottom]}
               />
               <TextInput
                 value={item.quantity}
                 onChangeText={(value) => updateIngredientRow(item.id, "quantity", value)}
                 placeholder="Quantity (e.g. 1)"
-                className="min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+                style={styles.input}
               />
-              <View className="mt-2 min-h-[44px] justify-center rounded-xl border border-gray-300 bg-white">
+              <View style={[styles.pickerShell, styles.pickerSpaced]}>
                 <Picker
                   selectedValue={item.unit}
                   onValueChange={(value) => updateIngredientRow(item.id, "unit", value)}
@@ -414,103 +356,173 @@ export default function CreateRecipeScreen({ navigation }) {
                 </Picker>
               </View>
               {ingredients.length > 1 ? (
-                <Pressable
-                  onPress={() => removeIngredientRow(item.id)}
-                  className="mt-2 min-h-[44px] items-center justify-center rounded-xl bg-red-50"
-                >
-                  <Text className="text-base font-semibold text-red-600">Remove</Text>
+                <Pressable onPress={() => removeIngredientRow(item.id)} style={styles.removeBtn}>
+                  <Text style={styles.removeBtnText}>Remove</Text>
                 </Pressable>
               ) : null}
             </View>
           ))}
-          {showErrors && errors.ingredients ? (
-            <Text className="mt-1 text-sm text-red-600">{errors.ingredients}</Text>
-          ) : null}
+          {showErrors && errors.ingredients ? <Text style={styles.errorText}>{errors.ingredients}</Text> : null}
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white p-4">
-          <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-lg font-semibold text-slate-900">Instructions</Text>
-            <Pressable
-              onPress={addStepRow}
-              className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-stone-100 px-3"
-            >
-              <Text className="text-base font-semibold text-[#1A6DB5]">+ Add</Text>
+        <View style={[styles.card, styles.cardSpaced]}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Instructions</Text>
+            <Pressable onPress={addStepRow} style={styles.addBtn}>
+              <Text style={styles.addBtnText}>+ Add</Text>
             </Pressable>
           </View>
 
           {steps.map((item, index) => (
-            <View key={item.id} className="mb-3 rounded-xl border border-gray-200 p-3">
-              <Text className="mb-1 text-sm font-semibold text-[#1A6DB5]">Step {index + 1}</Text>
+            <View key={item.id} style={styles.subCard}>
+              <Text style={styles.stepLabel}>Step {index + 1}</Text>
               <TextInput
                 value={item.text}
                 onChangeText={(value) => updateStepRow(item.id, value)}
                 placeholder="Describe this step"
                 multiline
                 textAlignVertical="top"
-                className="min-h-[90px] rounded-xl border border-gray-300 px-3 py-2 text-base text-slate-900"
+                style={styles.stepInput}
               />
               {steps.length > 1 ? (
-                <Pressable
-                  onPress={() => removeStepRow(item.id)}
-                  className="mt-2 min-h-[44px] items-center justify-center rounded-xl bg-red-50"
-                >
-                  <Text className="text-base font-semibold text-red-600">Remove</Text>
+                <Pressable onPress={() => removeStepRow(item.id)} style={styles.removeBtn}>
+                  <Text style={styles.removeBtnText}>Remove</Text>
                 </Pressable>
               ) : null}
             </View>
           ))}
-          {showErrors && errors.steps ? (
-            <Text className="mt-1 text-sm text-red-600">{errors.steps}</Text>
-          ) : null}
+          {showErrors && errors.steps ? <Text style={styles.errorText}>{errors.steps}</Text> : null}
         </View>
 
-        <View className="mt-4 rounded-2xl bg-white p-4">
-          <Text className="mb-3 text-lg font-semibold text-slate-900">
-            Nutritional Information
-          </Text>
+        <View style={[styles.card, styles.cardSpaced]}>
+          <Text style={[styles.sectionTitle, styles.nutritionTitle]}>Nutritional Information</Text>
           <TextInput
             value={calories}
             onChangeText={setCalories}
             placeholder="Calories (kcal)"
             keyboardType="numeric"
-            className="mb-2 min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={[styles.input, styles.inputMarginBottom]}
           />
           <TextInput
             value={protein}
             onChangeText={setProtein}
             placeholder="Protein (g)"
             keyboardType="numeric"
-            className="mb-2 min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={[styles.input, styles.inputMarginBottom]}
           />
           <TextInput
             value={carbs}
             onChangeText={setCarbs}
             placeholder="Carbs (g)"
             keyboardType="numeric"
-            className="mb-2 min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={[styles.input, styles.inputMarginBottom]}
           />
           <TextInput
             value={fat}
             onChangeText={setFat}
             placeholder="Fat (g)"
             keyboardType="numeric"
-            className="min-h-[44px] rounded-xl border border-gray-300 px-3 text-base text-slate-900"
+            style={styles.input}
           />
         </View>
 
         <Pressable
           onPress={handleSubmit}
           disabled={isSubmitting}
-          className="mt-5 min-h-[48px] items-center justify-center rounded-xl bg-[#1A6DB5]"
+          style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
         >
           {isSubmitting ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text className="text-base font-semibold text-white">Save Recipe</Text>
+            <Text style={styles.submitBtnText}>Save Recipe</Text>
           )}
         </Pressable>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screenRoot: { flex: 1, backgroundColor: C.stone100 },
+  flex1: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 28 },
+  pageTitle: { marginBottom: 16, fontSize: 24, fontWeight: "600", color: C.slate900 },
+  card: { borderRadius: 16, backgroundColor: C.white, padding: 16 },
+  cardSpaced: { marginTop: 16 },
+  fieldLabel: { marginBottom: 8, fontSize: 16, fontWeight: "600", color: C.slate800 },
+  fieldLabelSpaced: { marginTop: 16 },
+  input: {
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: C.slate900,
+  },
+  inputMarginBottom: { marginBottom: 8 },
+  errorText: { marginTop: 4, fontSize: 14, color: C.red600 },
+  pickerShell: {
+    minHeight: 44,
+    justifyContent: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    backgroundColor: C.white,
+  },
+  pickerSpaced: { marginTop: 8 },
+  primaryBtn: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: C.primary,
+    paddingHorizontal: 16,
+  },
+  primaryBtnText: { fontSize: 16, fontWeight: "600", color: C.white },
+  previewImage: { marginTop: 12, height: 192, width: "100%", borderRadius: 12 },
+  sectionHeader: { marginBottom: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  sectionTitle: { fontSize: 18, fontWeight: "600", color: C.slate900 },
+  nutritionTitle: { marginBottom: 12 },
+  addBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: C.stone100,
+    paddingHorizontal: 12,
+  },
+  addBtnText: { fontSize: 16, fontWeight: "600", color: C.primary },
+  subCard: { marginBottom: 12, borderRadius: 12, borderWidth: 1, borderColor: "#e5e7eb", padding: 12 },
+  stepLabel: { marginBottom: 4, fontSize: 14, fontWeight: "600", color: C.primary },
+  stepInput: {
+    minHeight: 90,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: C.slate900,
+  },
+  removeBtn: {
+    marginTop: 8,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: C.red50,
+  },
+  removeBtnText: { fontSize: 16, fontWeight: "600", color: C.red600 },
+  submitBtn: {
+    marginTop: 20,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: C.primary,
+  },
+  submitBtnDisabled: { opacity: 0.7 },
+  submitBtnText: { fontSize: 16, fontWeight: "600", color: C.white },
+});
