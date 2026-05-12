@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -13,10 +15,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
+import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
-import { formatDisplayName, groupMealsByType, MEAL_TYPES } from "./mealPlanUiHelpers";
+import { formatDisplayName, groupMealsByType, MEAL_TYPES, normalizeRecipe } from "./mealPlanUiHelpers";
 
-const SUGGESTED_MEALS = [
+const FALLBACK_MEALS = [
   { id: "oatmeal", title: "Oatmeal", calories: 320 },
   { id: "greek-yogurt-bowl", title: "Greek Yogurt Bowl", calories: 280 },
   { id: "fruit-smoothie", title: "Fruit Smoothie", calories: 300 },
@@ -64,7 +67,7 @@ function FilledMealCard({ recipe, accent }) {
       <View style={styles.recipeTextWrap}>
         <Text style={styles.recipeTitle}>{recipe.title}</Text>
         <Text style={styles.recipeMeta}>
-          {Math.round(recipe.calories || 0)} Cal · 10 min · 1 serving
+          {Math.round(recipe.calories || 0)} Cal · 1 serving
         </Text>
       </View>
     </View>
@@ -79,6 +82,9 @@ export default function DailyPlanScreen({ navigation, route }) {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMealType, setSheetMealType] = useState("breakfast");
   const [searchText, setSearchText] = useState("");
+  const [savingMealType, setSavingMealType] = useState(null);
+  const [availableRecipes, setAvailableRecipes] = useState([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
 
   const openAddMeal = useCallback((mealType) => {
     setSheetMealType(mealType);
@@ -101,7 +107,7 @@ export default function DailyPlanScreen({ navigation, route }) {
               )
             );
           }
-        } catch (_error) {
+        } catch {
           if (!cancelled) {
             setGroups(groupMealsByType([], selectedDate));
           }
@@ -120,15 +126,44 @@ export default function DailyPlanScreen({ navigation, route }) {
     }, [openAddMeal, route?.params?.openAddMeal, selectedDate, user?.id])
   );
 
+  useEffect(() => {
+    if (!sheetVisible) return;
+    let cancelled = false;
+
+    async function loadRecipes() {
+      setRecipesLoading(true);
+      try {
+        const response = await recipeApi.getRecipes({ userId: user?.id });
+        if (!cancelled) {
+          const raw = response?.data?.recipes || response?.recipes || response?.data || [];
+          const list = Array.isArray(raw) ? raw : [];
+          if (list.length > 0) {
+            const normalized = list.slice(0, 30).map((r, i) => normalizeRecipe(r, sheetMealType, i));
+            setAvailableRecipes(normalized);
+          } else {
+            setAvailableRecipes(FALLBACK_MEALS.map((m) => ({ ...m })));
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setAvailableRecipes(FALLBACK_MEALS.map((m) => ({ ...m })));
+        }
+      } finally {
+        if (!cancelled) setRecipesLoading(false);
+      }
+    }
+
+    loadRecipes();
+    return () => { cancelled = true; };
+  }, [sheetVisible, sheetMealType, user?.id]);
+
   const visibleOptions = useMemo(() => {
     const query = searchText.trim().toLowerCase();
-    if (!query) {
-      return SUGGESTED_MEALS;
-    }
-    return SUGGESTED_MEALS.filter((item) =>
+    if (!query) return availableRecipes;
+    return availableRecipes.filter((item) =>
       item.title.toLowerCase().includes(query)
     );
-  }, [searchText]);
+  }, [searchText, availableRecipes]);
 
   const groupsByType = useMemo(() => {
     const map = new Map();
@@ -138,16 +173,40 @@ export default function DailyPlanScreen({ navigation, route }) {
     return map;
   }, [groups]);
 
-  const handleAddDraftMeal = (meal) => {
+  const handleAddMeal = async (meal) => {
     setDraftMeals((previous) => ({
       ...previous,
-      [sheetMealType]: {
-        ...meal,
-        title: meal.title,
-        calories: meal.calories,
-      },
+      [sheetMealType]: { ...meal },
     }));
     setSheetVisible(false);
+
+    const mealType = sheetMealType;
+    setSavingMealType(mealType);
+
+    try {
+      await mealPlanApi.updateDailyPlan({
+        recipe_ids: [meal.id],
+        meal_type: mealType,
+        user_id: user?.id,
+        date: selectedDate,
+      });
+
+      const response = await mealPlanApi.getWeeklyPlan({ userId: user?.id });
+      setGroups(
+        groupMealsByType(
+          response?.data?.items || response?.items || response?.mealPlans || [],
+          selectedDate
+        )
+      );
+    } catch (error) {
+      Alert.alert(
+        "Could not save",
+        error?.message || "Meal was added locally but could not be saved to your account.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setSavingMealType(null);
+    }
   };
 
   return (
@@ -176,19 +235,26 @@ export default function DailyPlanScreen({ navigation, route }) {
           const draftRecipe = draftMeals[mealType];
           const recipe = draftRecipe || liveRecipe;
           const accent = MEAL_ACCENTS[mealType];
+          const isSaving = savingMealType === mealType;
 
           return (
             <View key={mealType} style={styles.sectionBlock}>
-              <Text style={[styles.sectionLabel, { color: accent }]}>
-                {formatDisplayName(mealType)}
-              </Text>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionLabel, { color: accent }]}>
+                  {formatDisplayName(mealType)}
+                </Text>
+                {isSaving && (
+                  <ActivityIndicator size="small" color={accent} style={styles.sectionSpinner} />
+                )}
+              </View>
 
               {recipe ? (
                 <>
                   <FilledMealCard recipe={recipe} accent={accent} />
                   <Pressable
-                    style={styles.solidAddButton}
-                    onPress={() => openAddMeal(mealType)}
+                    style={[styles.solidAddButton, isSaving && styles.buttonDisabled]}
+                    onPress={() => !isSaving && openAddMeal(mealType)}
+                    disabled={isSaving}
                   >
                     <Text style={styles.solidAddButtonText}>
                       + Add {formatDisplayName(mealType)}
@@ -228,22 +294,35 @@ export default function DailyPlanScreen({ navigation, route }) {
               onChangeText={setSearchText}
             />
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {visibleOptions.map((meal) => (
-                <View key={meal.id} style={styles.optionRow}>
-                  <View>
-                    <Text style={styles.optionTitle}>{meal.title}</Text>
-                    <Text style={styles.optionCalories}>{meal.calories} Cal</Text>
+            {recipesLoading ? (
+              <View style={styles.sheetLoading}>
+                <ActivityIndicator size="large" color="#2A78C5" />
+                <Text style={styles.sheetLoadingText}>Loading meals...</Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {visibleOptions.length === 0 ? (
+                  <View style={styles.emptyResults}>
+                    <Text style={styles.emptyResultsText}>No meals found</Text>
                   </View>
-                  <Pressable
-                    style={styles.optionAddButton}
-                    onPress={() => handleAddDraftMeal(meal)}
-                  >
-                    <Ionicons name="add" size={18} color="#FFFFFF" />
-                  </Pressable>
-                </View>
-              ))}
-            </ScrollView>
+                ) : (
+                  visibleOptions.map((meal) => (
+                    <View key={meal.id} style={styles.optionRow}>
+                      <View style={styles.optionInfo}>
+                        <Text style={styles.optionTitle}>{meal.title}</Text>
+                        <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} Cal</Text>
+                      </View>
+                      <Pressable
+                        style={styles.optionAddButton}
+                        onPress={() => handleAddMeal(meal)}
+                      >
+                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                      </Pressable>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
@@ -289,10 +368,17 @@ const styles = StyleSheet.create({
   sectionBlock: {
     marginBottom: 20,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   sectionLabel: {
     fontSize: 18,
     fontWeight: "500",
-    marginBottom: 10,
+  },
+  sectionSpinner: {
+    marginLeft: 8,
   },
   filledCard: {
     minHeight: 98,
@@ -378,6 +464,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#2A78C5",
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   sheetOverlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -419,6 +508,23 @@ const styles = StyleSheet.create({
     color: "#253B63",
     marginBottom: 10,
   },
+  sheetLoading: {
+    alignItems: "center",
+    paddingVertical: 32,
+  },
+  sheetLoadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#98A2B3",
+  },
+  emptyResults: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  emptyResultsText: {
+    fontSize: 14,
+    color: "#98A2B3",
+  },
   optionRow: {
     minHeight: 68,
     borderBottomWidth: 1,
@@ -427,6 +533,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 10,
+  },
+  optionInfo: {
+    flex: 1,
+    marginRight: 12,
   },
   optionTitle: {
     fontSize: 16,
