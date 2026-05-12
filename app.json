@@ -72,7 +72,7 @@
         "android.permission.CAMERA",
         "android.permission.CAMERA"
       ],
-      "package": "com.anonymous.NutriHelpApp2026"
+      "package": "com.nutrihelp.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

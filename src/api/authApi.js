@@ -111,6 +111,14 @@ export async function verifyMFA(email, password, code) {
   return transformMFAResponse(response);
 }
 
+export async function resendMFA(email, password) {
+  return post(
+    "/api/login/resend-mfa",
+    { email: email.trim(), password },
+    { skipAuth: true }
+  );
+}
+
 
 export async function requestPasswordReset(email) {
   return post(
@@ -214,6 +222,7 @@ export default {
   loginUser,
   registerUser,
   verifyMFA,
+  resendMFA,
   requestPasswordReset,
   verifyPasswordResetCode,
   resetPassword,

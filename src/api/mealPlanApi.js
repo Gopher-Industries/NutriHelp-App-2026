@@ -71,12 +71,17 @@ export async function submitPlanFeedback(planId, payload) {
   return post(buildPath(MEAL_PLAN_ENDPOINTS.feedback, { planId }), payload);
 }
 
+export async function saveMealToDaily(payload) {
+  return post("/api/mealplan/ai-suggestion", payload);
+}
+
 const mealPlanApi = {
   getWeeklyPlan,
   getDailyPlan,
   updateDailyPlan,
   generateAIPlan,
   submitPlanFeedback,
+  saveMealToDaily,
 };
 
 export default mealPlanApi;
