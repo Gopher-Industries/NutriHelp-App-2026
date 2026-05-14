@@ -1,15 +1,15 @@
 import { createStackNavigator } from "@react-navigation/stack";
 
+import RecipeListScreen from "../screens/recipes/RecipeListScreen";
 import PlaceholderScreen from "./_PlaceholderScreen";
 
 const Stack = createStackNavigator();
 export default function RecipeStack() {
   return (
-    <Stack.Navigator initialRouteName="RecipeListScreen">
+    <Stack.Navigator initialRouteName="RecipeListScreen" screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="RecipeListScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Recipes" }}
+        component={RecipeListScreen}
       />
       <Stack.Screen
         name="RecipeDetailScreen"

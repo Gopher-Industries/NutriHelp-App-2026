@@ -5,6 +5,7 @@ import {
   Alert,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -28,52 +29,36 @@ function buildReminderKey(userId) {
   return `${REMINDERS_KEY}.${scope}`;
 }
 
-function ProgressRing({ progress, current, goal }) {
-  const size = 230;
-  const strokeWidth = 20;
+function ProgressRing({ current, goal }) {
+  const size = 220;
+  const strokeWidth = 18;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progressLength = circumference * progress;
-  const segmentLength = circumference / 4;
-  const visibleSegment = Math.max(segmentLength - 28, 8);
+  const cx = size / 2;
+  const cy = size / 2;
+
+  const gapDeg = 5;
+  const segDeg = (360 / goal) - gapDeg;
+  const segLength = (circumference * segDeg) / 360;
 
   return (
     <View style={styles.ringWrap}>
       <Svg width={size} height={size}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#DDDAD7"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-
-        {[0, 1, 2, 3].map((index) => {
-          const dashOffset = index * segmentLength;
-          const activeLength = Math.max(
-            Math.min(progressLength - dashOffset, visibleSegment),
-            0
-          );
-
-          if (activeLength <= 0) {
-            return null;
-          }
-
+        {Array.from({ length: goal }).map((_, i) => {
+          const filled = i < current;
+          const angle = -90 + i * (360 / goal);
           return (
             <Circle
-              key={`segment-${index}`}
-              cx={size / 2}
-              cy={size / 2}
+              key={i}
+              cx={cx}
+              cy={cy}
               r={radius}
-              stroke="#57E1D4"
+              stroke={filled ? "#2A78C5" : "#DBEAFE"}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               fill="none"
-              strokeDasharray={`${activeLength} ${circumference}`}
-              strokeDashoffset={circumference * 0.25 - dashOffset}
-              rotation="-90"
-              origin={`${size / 2}, ${size / 2}`}
+              strokeDasharray={`${segLength} ${circumference - segLength}`}
+              transform={`rotate(${angle}, ${cx}, ${cy})`}
             />
           );
         })}
@@ -81,8 +66,7 @@ function ProgressRing({ progress, current, goal }) {
 
       <View style={styles.ringCenter}>
         <Text style={styles.ringCurrent}>{current}</Text>
-        <Text style={styles.ringDivider}> / </Text>
-        <Text style={styles.ringGoal}>{goal}</Text>
+        <Text style={styles.ringLabel}>of {goal} cups</Text>
       </View>
     </View>
   );
@@ -90,7 +74,7 @@ function ProgressRing({ progress, current, goal }) {
 
 function QuickAction({ label, onPress }) {
   return (
-    <Pressable style={styles.quickActionButton} onPress={onPress}>
+    <Pressable style={styles.quickActionBtn} onPress={onPress}>
       <Text style={styles.quickActionText}>{label}</Text>
     </Pressable>
   );
@@ -111,19 +95,13 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
         getTodayIntakeLocal(userId),
         AsyncStorage.getItem(buildReminderKey(userId)),
       ]);
-
-      if (cancelled) {
-        return;
-      }
-
+      if (cancelled) return;
       setGlasses(remoteGlasses ?? localGlasses ?? 0);
       setRemindersEnabled(storedReminder === "true");
     }
 
     bootstrap();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [userId]);
 
   const progress = useMemo(
@@ -135,15 +113,10 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
     const safeValue = Math.max(0, Math.min(nextGlasses, dailyGoal));
     setGlasses(safeValue);
     await saveTodayIntakeLocal(userId, safeValue);
-
-    if (userId) {
-      logWaterIntake(userId, safeValue).catch(console.error);
-    }
+    if (userId) logWaterIntake(userId, safeValue).catch(console.error);
   };
 
-  const adjustGlasses = async (delta) => {
-    await persistIntake(glasses + delta);
-  };
+  const adjustGlasses = (delta) => persistIntake(glasses + delta);
 
   const handleToggleReminders = async (value) => {
     setRemindersEnabled(value);
@@ -151,60 +124,96 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
   };
 
   const applyCustomAmount = async () => {
-    const parsed = Number.parseInt(customValue, 10);
+    const parsed = parseInt(customValue, 10);
     if (!Number.isFinite(parsed) || parsed <= 0) {
       Alert.alert("Custom intake", "Please enter a valid number of cups.");
       return;
     }
-
     await persistIntake(glasses + parsed);
     setCustomVisible(false);
   };
 
+  const pct = Math.round(progress * 100);
+  const remaining = Math.max(dailyGoal - glasses, 0);
+
   return (
-    <View style={styles.screen}>
-      <View style={styles.topRow}>
-        <View style={styles.modeIconButton}>
-          <Ionicons name="water-outline" size={26} color="#56E0D3" />
-        </View>
-        <Text style={styles.logoText}>NutriHelp</Text>
-        <View style={styles.modeIconButtonDark}>
-          <Ionicons name="moon-outline" size={24} color="#B9B1A8" />
-        </View>
-      </View>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Progress ring */}
+      <ProgressRing current={glasses} goal={dailyGoal} />
 
-      <ProgressRing progress={progress} current={glasses} goal={dailyGoal} />
-
-      <Text style={styles.message}>
-        Let's start building healthy hydration habits together
+      {/* Status text */}
+      <Text style={styles.statusTitle}>
+        {pct >= 100 ? "Daily goal reached! 🎉" : `${pct}% of daily goal`}
+      </Text>
+      <Text style={styles.statusSubtitle}>
+        {remaining > 0
+          ? `${remaining} more cup${remaining > 1 ? "s" : ""} to reach your goal`
+          : "Great job staying hydrated today"}
       </Text>
 
-      <View style={styles.counterRow}>
-        <Pressable style={styles.circleControl} onPress={() => adjustGlasses(-1)}>
-          <Ionicons name="remove" size={26} color="#56E0D3" />
+      {/* Counter */}
+      <View style={styles.counterCard}>
+        <Pressable
+          style={[styles.counterBtn, glasses <= 0 && styles.counterBtnDisabled]}
+          onPress={() => adjustGlasses(-1)}
+          disabled={glasses <= 0}
+        >
+          <Ionicons name="remove" size={24} color={glasses <= 0 ? "#CBD5E1" : "#2A78C5"} />
         </Pressable>
-        <Text style={styles.counterValue}>{glasses}</Text>
-        <Pressable style={styles.circleControl} onPress={() => adjustGlasses(1)}>
-          <Ionicons name="add" size={26} color="#56E0D3" />
+
+        <View style={styles.counterCenter}>
+          <Text style={styles.counterValue}>{glasses}</Text>
+          <Text style={styles.counterLabel}>cups today</Text>
+        </View>
+
+        <Pressable
+          style={[styles.counterBtn, glasses >= dailyGoal && styles.counterBtnDisabled]}
+          onPress={() => adjustGlasses(1)}
+          disabled={glasses >= dailyGoal}
+        >
+          <Ionicons name="add" size={24} color={glasses >= dailyGoal ? "#CBD5E1" : "#2A78C5"} />
         </Pressable>
       </View>
 
-      <View style={styles.quickActionsRow}>
+      {/* Quick actions */}
+      <View style={styles.quickRow}>
         <QuickAction label="+1 cup" onPress={() => adjustGlasses(1)} />
         <QuickAction label="+2 cups" onPress={() => adjustGlasses(2)} />
         <QuickAction label="Custom" onPress={() => setCustomVisible(true)} />
       </View>
 
-      <View style={styles.remindersRow}>
-        <Text style={styles.remindersText}>Daily reminders</Text>
+      {/* Reminders toggle */}
+      <View style={styles.remindersCard}>
+        <View style={styles.remindersLeft}>
+          <Ionicons name="notifications-outline" size={20} color="#2A78C5" />
+          <View style={{ marginLeft: 12 }}>
+            <Text style={styles.remindersTitle}>Daily reminders</Text>
+            <Text style={styles.remindersSubtitle}>
+              {remindersEnabled ? "Reminders are on" : "Tap to enable reminders"}
+            </Text>
+          </View>
+        </View>
         <Switch
           value={remindersEnabled}
           onValueChange={handleToggleReminders}
-          trackColor={{ false: "#4B5563", true: "#4B5563" }}
-          thumbColor="#1F2328"
+          trackColor={{ false: "#E5E7EB", true: "#BFDBFE" }}
+          thumbColor={remindersEnabled ? "#2A78C5" : "#9CA3AF"}
         />
       </View>
 
+      {/* Hydration tip */}
+      <View style={styles.tipCard}>
+        <Ionicons name="bulb-outline" size={16} color="#2A78C5" style={{ marginBottom: 6 }} />
+        <Text style={styles.tipText}>
+          Drinking enough water supports digestion, energy levels, and overall health. Aim for 8 cups per day.
+        </Text>
+      </View>
+
+      {/* Custom modal */}
       <Modal
         transparent
         animationType="fade"
@@ -213,8 +222,8 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Custom water amount</Text>
-            <Text style={styles.modalSubtitle}>Enter the number of cups to add</Text>
+            <Text style={styles.modalTitle}>Add custom amount</Text>
+            <Text style={styles.modalSubtitle}>How many cups would you like to add?</Text>
 
             <TextInput
               style={styles.modalInput}
@@ -222,143 +231,109 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
               onChangeText={setCustomValue}
               keyboardType="number-pad"
               placeholder="1"
-              placeholderTextColor="#A8A29E"
+              placeholderTextColor="#9CA3AF"
             />
 
-            <Pressable style={styles.modalPrimaryButton} onPress={applyCustomAmount}>
+            <Pressable style={styles.modalPrimaryBtn} onPress={applyCustomAmount}>
               <Text style={styles.modalPrimaryText}>Add cups</Text>
             </Pressable>
 
-            <Pressable
-              style={styles.modalSecondaryButton}
-              onPress={() => setCustomVisible(false)}
-            >
+            <Pressable style={styles.modalSecondaryBtn} onPress={() => setCustomVisible(false)}>
               <Text style={styles.modalSecondaryText}>Cancel</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
+  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36 },
+
+  ringWrap: { alignItems: "center", justifyContent: "center", marginBottom: 20 },
+  ringCenter: { position: "absolute", alignItems: "center" },
+  ringCurrent: { fontSize: 52, fontWeight: "800", color: "#253B63" },
+  ringLabel: { fontSize: 14, color: "#94A3B8", fontWeight: "500" },
+
+  statusTitle: { fontSize: 20, fontWeight: "700", color: "#253B63", textAlign: "center", marginBottom: 6 },
+  statusSubtitle: { fontSize: 14, color: "#667085", textAlign: "center", marginBottom: 24 },
+
+  counterCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 26,
-    paddingTop: 18,
-    paddingBottom: 28,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 34,
-  },
-  modeIconButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#083F38",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modeIconButtonDark: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#202227",
+  counterBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: "#2A78C5",
     alignItems: "center",
     justifyContent: "center",
   },
-  logoText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111111",
-  },
-  ringWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 26,
-  },
-  ringCenter: {
-    position: "absolute",
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  ringCurrent: {
-    fontSize: 54,
-    fontWeight: "800",
-    color: "#57E1D4",
-  },
-  ringDivider: {
-    fontSize: 24,
-    color: "#9F968D",
-  },
-  ringGoal: {
-    fontSize: 24,
-    color: "#9F968D",
-  },
-  message: {
-    textAlign: "center",
-    fontSize: 22,
-    lineHeight: 34,
-    color: "#B8AEA3",
-    marginBottom: 34,
-    paddingHorizontal: 12,
-  },
-  counterRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 26,
-  },
-  circleControl: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    borderWidth: 3,
-    borderColor: "#11CFC1",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  counterValue: {
-    width: 86,
-    textAlign: "center",
-    fontSize: 38,
-    fontWeight: "700",
-    color: "#D1CCC5",
-  },
-  quickActionsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 78,
-  },
-  quickActionButton: {
+  counterBtnDisabled: { borderColor: "#E5E7EB" },
+  counterCenter: { alignItems: "center" },
+  counterValue: { fontSize: 40, fontWeight: "800", color: "#253B63" },
+  counterLabel: { fontSize: 13, color: "#94A3B8", fontWeight: "500" },
+
+  quickRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  quickActionBtn: {
     flex: 1,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 2,
-    borderColor: "#3B3B3B",
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
+    borderColor: "#BFDBFE",
+    backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
   },
-  quickActionText: {
-    fontSize: 17,
-    fontWeight: "500",
-    color: "#C2BCB4",
-  },
-  remindersRow: {
+  quickActionText: { fontSize: 14, fontWeight: "600", color: "#2A78C5" },
+
+  remindersCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  remindersText: {
-    fontSize: 22,
-    color: "#D2CCC4",
+  remindersLeft: { flexDirection: "row", alignItems: "center" },
+  remindersTitle: { fontSize: 15, fontWeight: "600", color: "#253B63" },
+  remindersSubtitle: { fontSize: 12, color: "#94A3B8", marginTop: 2 },
+
+  tipCard: {
+    borderRadius: 16,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    padding: 16,
+    alignItems: "flex-start",
   },
+  tipText: { fontSize: 13, color: "#3B82F6", lineHeight: 20 },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.22)",
@@ -372,51 +347,33 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 22,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#0F172A",
-    marginBottom: 6,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#78716C",
-    marginBottom: 16,
-  },
+  modalTitle: { fontSize: 20, fontWeight: "800", color: "#253B63", marginBottom: 6 },
+  modalSubtitle: { fontSize: 14, color: "#667085", lineHeight: 21, marginBottom: 16 },
   modalInput: {
-    height: 54,
-    borderRadius: 16,
+    height: 52,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D6D3D1",
+    borderColor: "#CBD5E1",
     paddingHorizontal: 16,
     fontSize: 20,
-    color: "#111827",
+    color: "#253B63",
     marginBottom: 14,
   },
-  modalPrimaryButton: {
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: "#11CFC1",
+  modalPrimaryBtn: {
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#2A78C5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
   },
-  modalPrimaryText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#083F38",
-  },
-  modalSecondaryButton: {
-    height: 48,
-    borderRadius: 18,
-    backgroundColor: "#F5F5F4",
+  modalPrimaryText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  modalSecondaryBtn: {
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
   },
-  modalSecondaryText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#57534E",
-  },
+  modalSecondaryText: { fontSize: 15, fontWeight: "600", color: "#667085" },
 });
