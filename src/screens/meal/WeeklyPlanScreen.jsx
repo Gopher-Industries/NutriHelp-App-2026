@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -14,11 +14,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
+import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
-import { getDailyMeals, removeDailyMealItem, saveDailyMeal } from "../../utils/dailyMealsStorage";
-import { formatDisplayName, getWeekDates, groupMealsByType, MEAL_TYPES } from "./mealPlanUiHelpers";
+import { getDailyMeals, saveDailyMeal } from "../../utils/dailyMealsStorage";
+import { formatDisplayName, getWeekDates, groupMealsByType, MEAL_TYPES, normalizeRecipe } from "./mealPlanUiHelpers";
 
-const SUGGESTED_MEALS = [
+const FALLBACK_MEALS = [
   { id: "oatmeal", title: "Oatmeal", calories: 320 },
   { id: "greek-yogurt-bowl", title: "Greek Yogurt Bowl", calories: 280 },
   { id: "fruit-smoothie", title: "Fruit Smoothie", calories: 300 },
@@ -46,158 +47,6 @@ function formatScreenDate(date) {
   }).format(date);
 }
 
-function NutrientChip({ label, value }) {
-  return (
-    <View style={styles.nutrientChip}>
-      <Text style={styles.nutrientChipLabel}>{label}</Text>
-      <Text style={styles.nutrientChipValue}>{value}</Text>
-    </View>
-  );
-}
-
-function MealItemCard({ recipe, accent, onDelete }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasDetail =
-    recipe.proteins > 0 || recipe.fats > 0 || recipe.fiber > 0 || recipe.sodium > 0;
-  const hasIngredients = Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0;
-
-  return (
-    <View style={styles.filledCard}>
-      <View style={[styles.mealAccentBar, { backgroundColor: accent }]} />
-      <View style={styles.mealTextWrap}>
-        <View style={styles.mealTitleRow}>
-          <Text style={styles.mealTitle} numberOfLines={2}>{recipe.title}</Text>
-          <View style={styles.mealTitleActions}>
-            <Text style={styles.mealCalText}>{Math.round(recipe.calories || 0)} cal</Text>
-            <Pressable onPress={onDelete} hitSlop={8} style={styles.deleteBtn}>
-              <Ionicons name="trash-outline" size={14} color="#EF4444" />
-            </Pressable>
-          </View>
-        </View>
-
-        {recipe.description ? (
-          <Text style={styles.mealDesc} numberOfLines={3}>{recipe.description}</Text>
-        ) : null}
-
-        {hasDetail ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.nutrientScroll}
-          >
-            <View style={styles.nutrientRow}>
-              {recipe.proteins > 0 ? (
-                <NutrientChip label="Protein" value={`${recipe.proteins}g`} />
-              ) : null}
-              {recipe.fats > 0 ? (
-                <NutrientChip label="Fat" value={`${recipe.fats}g`} />
-              ) : null}
-              {recipe.fiber > 0 ? (
-                <NutrientChip label="Fiber" value={`${recipe.fiber}g`} />
-              ) : null}
-              {recipe.sodium > 0 ? (
-                <NutrientChip label="Sodium" value={`${recipe.sodium}mg`} />
-              ) : null}
-            </View>
-          </ScrollView>
-        ) : null}
-
-        {hasIngredients ? (
-          <>
-            <Pressable
-              style={styles.ingredientsToggle}
-              onPress={() => setExpanded((p) => !p)}
-            >
-              <Text style={styles.ingredientsToggleText}>
-                {expanded ? "Hide ingredients" : "Show ingredients"}
-              </Text>
-              <Ionicons
-                name={expanded ? "chevron-up" : "chevron-down"}
-                size={12}
-                color="#6B7280"
-              />
-            </Pressable>
-            {expanded ? (
-              <View style={styles.ingredientsList}>
-                {recipe.ingredients.map((ing, i) => (
-                  <View key={i} style={styles.ingredientRow}>
-                    <Text style={styles.ingredientDot}>•</Text>
-                    <Text style={styles.ingredientItem}>{ing.item}</Text>
-                    <Text style={styles.ingredientAmount}>{ing.amount}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-function EmptyMealSlot({ mealType, onAdd }) {
-  return (
-    <View style={styles.emptyCard}>
-      <View style={styles.emptyCardInner}>
-        <Ionicons name="restaurant-outline" size={20} color="#D1D5DB" />
-        <Text style={styles.emptyCardText}>Nothing planned yet</Text>
-      </View>
-      <Pressable
-        style={styles.addSlotBtn}
-        onPress={onAdd}
-        android_ripple={{ color: "#DBEAFE" }}
-      >
-        <Ionicons name="add" size={16} color="#2A78C5" />
-        <Text style={styles.addSlotBtnText}>Add {formatDisplayName(mealType)}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function MealSection({ mealType, group, draftMeals, onAdd, onDelete }) {
-  const accent = MEAL_ACCENTS[mealType];
-  const liveRecipe = group?.hasLiveData ? group?.recipes?.[0] : null;
-  const meals =
-    draftMeals?.length > 0
-      ? draftMeals
-      : liveRecipe
-        ? [{ title: liveRecipe.title, calories: liveRecipe.calories, _id: "live" }]
-        : [];
-
-  return (
-    <View style={styles.mealSection}>
-      <View style={styles.mealSectionHeader}>
-        <View style={[styles.mealSectionDot, { backgroundColor: accent }]} />
-        <Text style={[styles.mealSectionTitle, { color: accent }]}>
-          {formatDisplayName(mealType)}
-        </Text>
-      </View>
-
-      {meals.length > 0 ? (
-        <>
-          {meals.map((meal, index) => (
-            <MealItemCard
-              key={meal._id ?? index}
-              recipe={meal}
-              accent={accent}
-              onDelete={() => onDelete(mealType, meal._id)}
-            />
-          ))}
-          <Pressable
-            style={styles.addMoreBtn}
-            onPress={onAdd}
-            android_ripple={{ color: "#DBEAFE" }}
-          >
-            <Ionicons name="add-circle-outline" size={15} color="#6B7280" />
-            <Text style={styles.addMoreBtnText}>Add another</Text>
-          </Pressable>
-        </>
-      ) : (
-        <EmptyMealSlot mealType={mealType} onAdd={onAdd} />
-      )}
-    </View>
-  );
-}
 
 export default function WeeklyPlanScreen({ navigation }) {
   const { user } = useUser();
@@ -208,6 +57,8 @@ export default function WeeklyPlanScreen({ navigation }) {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMealType, setSheetMealType] = useState("breakfast");
   const [searchText, setSearchText] = useState("");
+  const [availableRecipes, setAvailableRecipes] = useState([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
 
@@ -234,7 +85,7 @@ export default function WeeklyPlanScreen({ navigation }) {
 
       setStatus("ready");
     } catch {
-      setStatus("ready");
+      setStatus("error");
     }
   }, [selectedDate, user?.id]);
 
@@ -243,6 +94,34 @@ export default function WeeklyPlanScreen({ navigation }) {
       loadPlan();
     }, [loadPlan])
   );
+
+  useEffect(() => {
+    if (!sheetVisible) return;
+    let cancelled = false;
+
+    async function loadRecipes() {
+      setRecipesLoading(true);
+      try {
+        const response = await recipeApi.getRecipes({ userId: user?.id });
+        if (!cancelled) {
+          const raw = response?.data?.recipes || response?.recipes || response?.data || [];
+          const list = Array.isArray(raw) ? raw : [];
+          setAvailableRecipes(
+            list.length > 0
+              ? list.slice(0, 30).map((r, i) => normalizeRecipe(r, sheetMealType, i))
+              : FALLBACK_MEALS.map((m) => ({ ...m }))
+          );
+        }
+      } catch {
+        if (!cancelled) setAvailableRecipes(FALLBACK_MEALS.map((m) => ({ ...m })));
+      } finally {
+        if (!cancelled) setRecipesLoading(false);
+      }
+    }
+
+    loadRecipes();
+    return () => { cancelled = true; };
+  }, [sheetVisible, sheetMealType, user?.id]);
 
   const groupsByType = useMemo(() => {
     const map = new Map();
@@ -258,34 +137,44 @@ export default function WeeklyPlanScreen({ navigation }) {
 
   const handleAddDraft = useCallback(
     async (meal) => {
-      const entry = { title: meal.title, calories: meal.calories, _id: Date.now().toString() };
+      const dateStr =
+        selectedDate instanceof Date
+          ? selectedDate.toISOString().slice(0, 10)
+          : String(selectedDate).slice(0, 10);
+      const entry = { ...meal, _id: meal.id || Date.now().toString() };
       setDraftMeals((prev) => {
         const existing = Array.isArray(prev[sheetMealType]) ? prev[sheetMealType] : [];
         return { ...prev, [sheetMealType]: [...existing, entry] };
       });
       setSheetVisible(false);
       await saveDailyMeal(selectedDate, sheetMealType, entry);
+      try {
+        await mealPlanApi.updateDailyPlan({
+          recipe_ids: [meal.id],
+          meal_type: sheetMealType,
+          user_id: user?.id,
+          date: dateStr,
+        });
+        const response = await mealPlanApi.getWeeklyPlan({ userId: user?.id });
+        setGroups(
+          groupMealsByType(
+            response?.data?.items || response?.items || response?.mealPlans || [],
+            selectedDate
+          )
+        );
+      } catch {
+        // local save succeeded; backend sync failure is non-fatal
+      }
     },
-    [sheetMealType, selectedDate]
-  );
-
-  const handleDelete = useCallback(
-    async (mealType, mealId) => {
-      setDraftMeals((prev) => {
-        const existing = Array.isArray(prev[mealType]) ? prev[mealType] : [];
-        return { ...prev, [mealType]: existing.filter((m) => m._id !== mealId) };
-      });
-      await removeDailyMealItem(selectedDate, mealType, mealId);
-    },
-    [selectedDate]
+    [sheetMealType, selectedDate, user?.id]
   );
 
   const visibleOptions = useMemo(() => {
     const q = searchText.trim().toLowerCase();
     return q
-      ? SUGGESTED_MEALS.filter((m) => m.title.toLowerCase().includes(q))
-      : SUGGESTED_MEALS;
-  }, [searchText]);
+      ? availableRecipes.filter((m) => m.title.toLowerCase().includes(q))
+      : availableRecipes;
+  }, [searchText, availableRecipes]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -343,9 +232,6 @@ export default function WeeklyPlanScreen({ navigation }) {
                 <Text style={[styles.dayChipLabel, active && styles.dayChipLabelActive]}>
                   {date.toLocaleDateString("en-AU", { weekday: "short" })}
                 </Text>
-                <Text style={[styles.dayChipNum, active && styles.dayChipNumActive]}>
-                  {date.getDate()}
-                </Text>
               </Pressable>
             );
           })}
@@ -369,17 +255,47 @@ export default function WeeklyPlanScreen({ navigation }) {
             </Pressable>
           </View>
         ) : (
-          <View style={styles.mealsContainer}>
-            {MEAL_TYPES.map((mealType) => (
-              <MealSection
-                key={mealType}
-                mealType={mealType}
-                group={groupsByType.get(mealType)}
-                draftMeals={draftMeals[mealType] || []}
-                onAdd={() => openSheet(mealType)}
-                onDelete={handleDelete}
-              />
-            ))}
+          <View style={styles.dailyCard}>
+            {MEAL_TYPES.map((mealType) => {
+              const accent = MEAL_ACCENTS[mealType];
+              const group = groupsByType.get(mealType);
+              const liveRecipe = group?.hasLiveData ? group?.recipes?.[0] : null;
+              const drafts = Array.isArray(draftMeals[mealType]) ? draftMeals[mealType] : [];
+              const displayName = drafts[0]?.title || liveRecipe?.title || null;
+              return (
+                <View key={mealType} style={styles.mealSummaryRow}>
+                  <View style={[styles.mealRowBar, { backgroundColor: accent }]} />
+                  <View style={styles.mealSummaryText}>
+                    <Text style={[styles.mealSummaryType, { color: accent }]}>
+                      {formatDisplayName(mealType)}
+                    </Text>
+                    {displayName ? (
+                      <Text style={styles.mealSummaryTitle} numberOfLines={1}>{displayName}</Text>
+                    ) : (
+                      <Text style={styles.mealSummaryEmpty}>Nothing planned yet</Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+            <View style={styles.dailyCardActions}>
+              <Pressable
+                style={styles.viewDetailsBtn}
+                onPress={() => navigation.navigate("DailyPlanScreen", {
+                  date: selectedDate instanceof Date
+                    ? selectedDate.toISOString().slice(0, 10)
+                    : String(selectedDate).slice(0, 10),
+                })}
+              >
+                <Text style={styles.viewDetailsBtnText}>View Details</Text>
+              </Pressable>
+              <Pressable
+                style={styles.addMealsBtn}
+                onPress={() => openSheet("breakfast")}
+              >
+                <Text style={styles.addMealsBtnText}>+ Add Meals</Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -411,28 +327,35 @@ export default function WeeklyPlanScreen({ navigation }) {
               onChangeText={setSearchText}
             />
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {visibleOptions.length === 0 ? (
-                <Text style={styles.noResults}>No meals found</Text>
-              ) : (
-                visibleOptions.map((meal) => (
-                  <Pressable
-                    key={meal.id}
-                    style={styles.optionRow}
-                    onPress={() => handleAddDraft(meal)}
-                    android_ripple={{ color: "#EFF6FF" }}
-                  >
-                    <View>
-                      <Text style={styles.optionTitle}>{meal.title}</Text>
-                      <Text style={styles.optionCalories}>{meal.calories} cal</Text>
-                    </View>
-                    <View style={styles.optionAddBtn}>
-                      <Ionicons name="add" size={18} color="#FFFFFF" />
-                    </View>
-                  </Pressable>
-                ))
-              )}
-            </ScrollView>
+            {recipesLoading ? (
+              <View style={styles.sheetLoading}>
+                <ActivityIndicator size="large" color="#2A78C5" />
+                <Text style={styles.sheetLoadingText}>Loading meals...</Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {visibleOptions.length === 0 ? (
+                  <Text style={styles.noResults}>No meals found</Text>
+                ) : (
+                  visibleOptions.map((meal) => (
+                    <Pressable
+                      key={meal.id}
+                      style={styles.optionRow}
+                      onPress={() => handleAddDraft(meal)}
+                      android_ripple={{ color: "#EFF6FF" }}
+                    >
+                      <View>
+                        <Text style={styles.optionTitle}>{meal.title}</Text>
+                        <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} cal</Text>
+                      </View>
+                      <View style={styles.optionAddBtn}>
+                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                      </View>
+                    </Pressable>
+                  ))
+                )}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
@@ -459,9 +382,9 @@ const styles = StyleSheet.create({
 
   dayChipRow: { gap: 8, paddingBottom: 4 },
   dayChip: {
-    width: 58,
-    height: 68,
-    borderRadius: 16,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
@@ -469,10 +392,8 @@ const styles = StyleSheet.create({
     borderColor: "#BFDBFE",
   },
   dayChipActive: { backgroundColor: "#2A78C5", borderColor: "#2A78C5" },
-  dayChipLabel: { fontSize: 11, fontWeight: "600", color: "#6B7280", marginBottom: 4 },
-  dayChipLabelActive: { color: "#DBEAFE" },
-  dayChipNum: { fontSize: 20, fontWeight: "800", color: "#253B63" },
-  dayChipNumActive: { color: "#FFFFFF" },
+  dayChipLabel: { fontSize: 11, fontWeight: "700", color: "#6B7280" },
+  dayChipLabelActive: { color: "#FFFFFF" },
 
   selectedDateLabel: {
     fontSize: 20,
@@ -504,9 +425,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 
-  mealsContainer: { gap: 12 },
-
-  mealSection: {
+  dailyCard: {
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#E5E7EB",
@@ -517,126 +436,49 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
+    paddingVertical: 4,
   },
-  mealSectionHeader: {
+  mealSummaryRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
     paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingVertical: 10,
+    gap: 12,
   },
-  mealSectionDot: { width: 8, height: 8, borderRadius: 4 },
-  mealSectionTitle: { fontSize: 14, fontWeight: "700", letterSpacing: 0.2 },
-
-  filledCard: {
+  mealRowBar: { width: 4, height: 36, borderRadius: 2 },
+  mealSummaryText: { flex: 1 },
+  mealSummaryType: { fontSize: 11, fontWeight: "700", marginBottom: 2 },
+  mealSummaryTitle: { fontSize: 14, fontWeight: "600", color: "#253B63" },
+  mealSummaryEmpty: { fontSize: 13, color: "#9CA3AF" },
+  dailyCardActions: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    marginHorizontal: 12,
-    marginBottom: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    backgroundColor: "#FAFAFA",
-    overflow: "hidden",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    marginTop: 4,
   },
-  mealAccentBar: { width: 4, alignSelf: "stretch" },
-  mealTextWrap: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
-  mealTitleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 8,
-    marginBottom: 4,
-  },
-  mealTitle: { flex: 1, fontSize: 14, fontWeight: "700", color: "#253B63" },
-  mealTitleActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexShrink: 0,
-    marginTop: 1,
-  },
-  mealCalText: { fontSize: 12, color: "#6B7280", fontWeight: "500" },
-  deleteBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: "#FEF2F2",
+  viewDetailsBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#2A78C5",
     alignItems: "center",
     justifyContent: "center",
   },
-  mealMeta: { fontSize: 12, color: "#9CA3AF" },
-  mealDesc: { fontSize: 12, color: "#6B7280", lineHeight: 17, marginBottom: 8 },
-  nutrientScroll: { marginBottom: 8 },
-  nutrientRow: { flexDirection: "row", gap: 6 },
-  nutrientChip: {
-    backgroundColor: "#EFF6FF",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  nutrientChipLabel: { fontSize: 10, color: "#6B7280", fontWeight: "600", marginBottom: 1 },
-  nutrientChipValue: { fontSize: 11, color: "#1E40AF", fontWeight: "700" },
-  ingredientsToggle: {
-    flexDirection: "row",
+  viewDetailsBtnText: { fontSize: 14, fontWeight: "700", color: "#2A78C5" },
+  addMealsBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2A78C5",
     alignItems: "center",
-    gap: 4,
-    paddingVertical: 4,
-    minHeight: 28,
+    justifyContent: "center",
   },
-  ingredientsToggleText: { fontSize: 12, color: "#6B7280", fontWeight: "600" },
-  ingredientsList: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
-    padding: 8,
-    gap: 3,
-    marginTop: 2,
-  },
-  ingredientRow: { flexDirection: "row", alignItems: "flex-start", gap: 5 },
-  ingredientDot: { fontSize: 11, color: "#9CA3AF", lineHeight: 17 },
-  ingredientItem: { flex: 1, fontSize: 12, color: "#374151", lineHeight: 17 },
-  ingredientAmount: { fontSize: 12, color: "#6B7280", lineHeight: 17 },
-
-  emptyCard: {
-    marginHorizontal: 12,
-    marginBottom: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    borderStyle: "dashed",
-    overflow: "hidden",
-  },
-  emptyCardInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  emptyCardText: { fontSize: 13, color: "#9CA3AF" },
-
-  addSlotBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-    minHeight: 44,
-  },
-  addSlotBtnText: { fontSize: 13, fontWeight: "600", color: "#2A78C5" },
-
-  addMoreBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minHeight: 44,
-  },
-  addMoreBtnText: { fontSize: 12, color: "#6B7280", fontWeight: "500" },
+  addMealsBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 
   aiHeroCard: {
     flexDirection: "row",
@@ -676,6 +518,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginLeft: 8,
   },
+
+  sheetLoading: { alignItems: "center", paddingVertical: 32 },
+  sheetLoadingText: { marginTop: 10, fontSize: 14, color: "#98A2B3" },
 
   sheetOverlay: {
     flex: 1,

@@ -1,14 +1,16 @@
-// src/screens/scan/BarcodeScannerScreen.jsx
 import { useState, useRef } from "react";
 import {
   ActivityIndicator,
   Linking,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { post } from "../../api/baseApi";
 import { saveScannedMeal } from "../../api/mealLogApi";
@@ -20,147 +22,150 @@ function normalizeBarcodeResult(response) {
   const item = scan?.item || {};
   const allergens = scan?.allergens || {};
   const detection = payload?.detectionResult || {};
-
   return {
     name: item?.name || payload?.productName || "Product",
     barcode: item?.barcode || scan?.query?.barcode || null,
-    hasUserAllergen:
-      detection?.hasUserAllergen ?? allergens?.hasMatch ?? false,
-    matchingAllergens:
-      detection?.matchingAllergens ||
-      allergens?.matchingIngredients ||
-      [],
-    detectedIngredients:
-      payload?.barcodeIngredients || allergens?.detectedIngredients || [],
+    hasUserAllergen: detection?.hasUserAllergen ?? allergens?.hasMatch ?? false,
+    matchingAllergens: detection?.matchingAllergens || allergens?.matchingIngredients || [],
+    detectedIngredients: payload?.barcodeIngredients || allergens?.detectedIngredients || [],
   };
 }
 
-// --- Loading Overlay ---
 function LoadingOverlay() {
   return (
     <View style={styles.loadingOverlay}>
       <ActivityIndicator size="large" color="#FFFFFF" />
-      <Text style={styles.loadingText}>Looking up barcode...</Text>
+      <Text style={styles.loadingText}>Looking up barcode…</Text>
     </View>
   );
 }
 
-// --- Bottom Sheet Result ---
 function ResultSheet({ result, onClose, onSave, saveState }) {
+  const safeChip = !result.hasUserAllergen;
   return (
     <View style={styles.resultSheet}>
       <View style={styles.resultHandle} />
+
       <Text style={styles.resultEyebrow}>Barcode Result</Text>
-      <Text style={styles.resultTitle}>{result.name ?? "Product"}</Text>
+      <Text style={styles.resultTitle} numberOfLines={2}>{result.name}</Text>
 
-      <View style={styles.heroCard}>
-        <View style={styles.heroHeader}>
-          <Text style={styles.heroTitle}>Allergen Check</Text>
-          <View
-            style={[
-              styles.statusChip,
-              result.hasUserAllergen ? styles.statusChipDanger : styles.statusChipSafe,
-            ]}
-          >
-            <Text style={styles.statusChipText}>
-              {result.hasUserAllergen ? "Match found" : "Safe for profile"}
+      {/* Allergen status card */}
+      <View style={styles.allergenCard}>
+        <View style={styles.allergenCardLeft}>
+          <Ionicons
+            name={safeChip ? "shield-checkmark-outline" : "warning-outline"}
+            size={22}
+            color={safeChip ? "#22C55E" : "#EF4444"}
+          />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.allergenCardLabel}>Allergen Check</Text>
+            <Text style={[styles.allergenCardStatus, { color: safeChip ? "#22C55E" : "#EF4444" }]}>
+              {safeChip ? "Safe for your profile" : "Allergen match found"}
             </Text>
           </View>
         </View>
-
-        <View style={styles.metricGrid}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Barcode</Text>
-            <Text style={styles.metricValue}>{result.barcode ?? "--"}</Text>
-          </View>
-
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Ingredients found</Text>
-            <Text style={styles.metricValue}>
-              {result.detectedIngredients?.length || 0}
-            </Text>
-          </View>
+        <View style={[styles.statusChip, safeChip ? styles.chipSafe : styles.chipDanger]}>
+          <Text style={styles.statusChipText}>{safeChip ? "Safe" : "Alert"}</Text>
         </View>
       </View>
 
-      <View style={styles.notesCard}>
-        <Text style={styles.notesTitle}>Matched allergens</Text>
-        <Text style={styles.notesText}>
-          {result.matchingAllergens?.length
-            ? result.matchingAllergens.join(", ")
-            : "No allergen conflicts detected for this barcode."}
-        </Text>
+      {/* Metrics */}
+      <View style={styles.metricRow}>
+        <View style={styles.metricItem}>
+          <Text style={styles.metricValue}>{result.barcode ?? "--"}</Text>
+          <Text style={styles.metricLabel}>Barcode</Text>
+        </View>
+        <View style={styles.metricDivider} />
+        <View style={styles.metricItem}>
+          <Text style={styles.metricValue}>{result.detectedIngredients?.length || 0}</Text>
+          <Text style={styles.metricLabel}>Ingredients</Text>
+        </View>
+        <View style={styles.metricDivider} />
+        <View style={styles.metricItem}>
+          <Text style={styles.metricValue}>{result.matchingAllergens?.length || 0}</Text>
+          <Text style={styles.metricLabel}>Allergens</Text>
+        </View>
       </View>
 
-      <View style={styles.notesCard}>
-        <Text style={styles.notesTitle}>Detected ingredients</Text>
-        <Text style={styles.notesText}>
-          {result.detectedIngredients?.length
-            ? result.detectedIngredients.join(", ")
-            : "No ingredient list was returned by the scan service."}
-        </Text>
-      </View>
+      {/* Matched allergens */}
+      {result.matchingAllergens?.length > 0 && (
+        <View style={styles.infoCard}>
+          <Text style={styles.infoCardTitle}>Matched allergens</Text>
+          <Text style={styles.infoCardText}>{result.matchingAllergens.join(", ")}</Text>
+        </View>
+      )}
+
+      {/* Detected ingredients */}
+      {result.detectedIngredients?.length > 0 && (
+        <View style={styles.infoCard}>
+          <Text style={styles.infoCardTitle}>Detected ingredients</Text>
+          <Text style={styles.infoCardText}>{result.detectedIngredients.join(", ")}</Text>
+        </View>
+      )}
 
       <Pressable
-        style={[
-          styles.secondaryButton,
-          saveState === "saved" ? styles.secondaryButtonSaved : null,
-        ]}
+        style={[styles.primaryBtn, saveState === "saved" && styles.savedBtn]}
         onPress={onSave}
         disabled={saveState === "saving" || saveState === "saved"}
       >
-        <Text style={styles.secondaryButtonText}>
-          {saveState === "saving"
-            ? "Saving..."
-            : saveState === "saved"
-              ? "Saved to History"
-              : "Save to History"}
+        <Ionicons
+          name={saveState === "saved" ? "checkmark-circle-outline" : "bookmark-outline"}
+          size={18}
+          color="#FFFFFF"
+          style={{ marginRight: 8 }}
+        />
+        <Text style={styles.primaryBtnText}>
+          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved to History" : "Save to History"}
         </Text>
       </Pressable>
 
-      <Pressable style={styles.closeButton} onPress={onClose}>
-        <Text style={styles.closeButtonText}>Scan another product</Text>
+      <Pressable style={styles.secondaryBtn} onPress={onClose}>
+        <Text style={styles.secondaryBtnText}>Scan Another Product</Text>
       </Pressable>
     </View>
   );
 }
 
-// --- Permission Explanation Screen ---
 function PermissionExplanationScreen({ onRequest }) {
   return (
-    <View style={styles.permissionScreen}>
-      <Text style={styles.permissionTitle}>Camera Access Needed</Text>
-      <Text style={styles.permissionText}>
-        NutriHelp needs access to your camera to scan barcodes and look up
-        nutritional information for your food products.
-      </Text>
-      <Pressable style={styles.primaryButton} onPress={onRequest}>
-        <Text style={styles.primaryButtonText}>Allow Camera Access</Text>
-      </Pressable>
-    </View>
+    <SafeAreaView style={styles.permissionSafe} edges={["top"]}>
+      <View style={styles.permissionContainer}>
+        <View style={styles.permissionIconWrap}>
+          <Ionicons name="camera-outline" size={40} color="#2A78C5" />
+        </View>
+        <Text style={styles.permissionTitle}>Camera Access Needed</Text>
+        <Text style={styles.permissionText}>
+          NutriHelp needs access to your camera to scan barcodes and look up
+          nutritional information for your food products.
+        </Text>
+        <Pressable style={styles.primaryBtn} onPress={onRequest}>
+          <Text style={styles.primaryBtnText}>Allow Camera Access</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
   );
 }
 
-// --- Permission Denied Fallback ---
 function PermissionDeniedScreen() {
   return (
-    <View style={styles.permissionScreen}>
-      <Text style={styles.permissionTitle}>Camera Access Denied</Text>
-      <Text style={styles.permissionText}>
-        You've denied camera access. To use the barcode scanner, please enable
-        camera permissions in your device settings.
-      </Text>
-      <Pressable
-        style={styles.primaryButton}
-        onPress={() => Linking.openSettings()}
-      >
-        <Text style={styles.primaryButtonText}>Open Settings</Text>
-      </Pressable>
-    </View>
+    <SafeAreaView style={styles.permissionSafe} edges={["top"]}>
+      <View style={styles.permissionContainer}>
+        <View style={[styles.permissionIconWrap, { backgroundColor: "#FEF2F2" }]}>
+          <Ionicons name="camera-off-outline" size={40} color="#EF4444" />
+        </View>
+        <Text style={styles.permissionTitle}>Camera Access Denied</Text>
+        <Text style={styles.permissionText}>
+          To use the barcode scanner, please enable camera permissions in your
+          device settings.
+        </Text>
+        <Pressable style={styles.primaryBtn} onPress={() => Linking.openSettings()}>
+          <Text style={styles.primaryBtnText}>Open Settings</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
   );
 }
 
-// --- Main Screen ---
 export default function BarcodeScannerScreen() {
   const { user } = useUser();
   const [permission, requestPermission] = useCameraPermissions();
@@ -173,7 +178,6 @@ export default function BarcodeScannerScreen() {
   const [saveState, setSaveState] = useState("idle");
   const scanLocked = useRef(false);
 
-  // Step 1 — show custom explanation screen before system dialog
   if (!hasRequestedPermission) {
     return (
       <PermissionExplanationScreen
@@ -185,7 +189,6 @@ export default function BarcodeScannerScreen() {
     );
   }
 
-  // Step 2 — permission denied fallback
   if (permission && !permission.granted) {
     return <PermissionDeniedScreen />;
   }
@@ -194,7 +197,7 @@ export default function BarcodeScannerScreen() {
     if (!barcode || loading) return;
     const normalizedBarcode = String(barcode).trim();
     if (!/^\d{8,14}$/.test(normalizedBarcode)) {
-      setError("Please scan or enter a valid barcode with 8 to 14 digits.");
+      setError("Please enter a valid barcode (8–14 digits).");
       return;
     }
     setError("");
@@ -213,9 +216,9 @@ export default function BarcodeScannerScreen() {
   };
 
   const handleBarcodeScanned = ({ data, type }) => {
-    if (scanLocked.current) return; // prevent duplicate requests
+    if (scanLocked.current) return;
     if (type === "qr") {
-      setError("QR codes are ignored here. Please scan a product barcode.");
+      setError("QR codes are not supported. Please scan a product barcode.");
       return;
     }
     lookupBarcode(data);
@@ -231,12 +234,11 @@ export default function BarcodeScannerScreen() {
     setResult(null);
     setManualBarcode("");
     setSaveState("idle");
-    scanLocked.current = false; // unlock scanner
+    scanLocked.current = false;
   };
 
   const handleSaveToHistory = async () => {
     if (!result) return;
-
     try {
       setSaveState("saving");
       await saveScannedMeal({
@@ -260,7 +262,6 @@ export default function BarcodeScannerScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Camera */}
       <CameraView
         style={styles.camera}
         facing="back"
@@ -271,26 +272,26 @@ export default function BarcodeScannerScreen() {
         onBarcodeScanned={result ? undefined : handleBarcodeScanned}
       />
 
-      {/* Torch toggle */}
-      <Pressable
-        style={styles.torchButton}
-        onPress={() => setTorchOn((prev) => !prev)}
-      >
-        <Text style={styles.torchButtonText}>
-          {torchOn ? "⚡ Flash On" : "⚡ Flash Off"}
-        </Text>
-      </Pressable>
-
-      {/* Scan frame hint */}
-      <View style={styles.scanHint}>
-        <Text style={styles.scanHintText}>
-          Point camera at a barcode to scan
-        </Text>
+      {/* Scan frame overlay */}
+      <View style={styles.scanFrameWrap} pointerEvents="none">
+        <View style={styles.scanFrame}>
+          <View style={[styles.corner, styles.cornerTL]} />
+          <View style={[styles.corner, styles.cornerTR]} />
+          <View style={[styles.corner, styles.cornerBL]} />
+          <View style={[styles.corner, styles.cornerBR]} />
+        </View>
+        <Text style={styles.scanHintText}>Align barcode within the frame</Text>
       </View>
 
-      {/* Manual input fallback */}
+      {/* Torch toggle */}
+      <Pressable style={styles.torchBtn} onPress={() => setTorchOn((p) => !p)}>
+        <Ionicons name={torchOn ? "flash" : "flash-off"} size={18} color={torchOn ? "#FCD34D" : "#FFFFFF"} />
+        <Text style={styles.torchBtnText}>{torchOn ? "Flash On" : "Flash Off"}</Text>
+      </Pressable>
+
+      {/* Manual input */}
       <View style={styles.manualContainer}>
-        <Text style={styles.manualLabel}>Or enter barcode manually:</Text>
+        <Text style={styles.manualLabel}>Or enter barcode manually</Text>
         <View style={styles.manualRow}>
           <TextInput
             style={styles.manualInput}
@@ -302,336 +303,244 @@ export default function BarcodeScannerScreen() {
             editable={!loading}
           />
           <Pressable
-            style={styles.manualButton}
+            style={[styles.manualBtn, loading && { opacity: 0.6 }]}
             onPress={handleManualSubmit}
             disabled={loading}
           >
-            <Text style={styles.manualButtonText}>Search</Text>
+            <Text style={styles.manualBtnText}>Search</Text>
           </Pressable>
         </View>
-
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? (
+          <View style={styles.errorRow}>
+            <Ionicons name="alert-circle-outline" size={14} color="#FCA5A5" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
       </View>
 
-      {/* Loading overlay */}
       {loading && <LoadingOverlay />}
 
-      {/* Result bottom sheet */}
       {result && (
-        <ResultSheet
-          result={result}
-          onClose={handleCloseResult}
-          onSave={handleSaveToHistory}
-          saveState={saveState}
-        />
+        <ScrollView
+          style={styles.resultSheetWrap}
+          contentContainerStyle={{ flexGrow: 1 }}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
+          <ResultSheet
+            result={result}
+            onClose={handleCloseResult}
+            onSave={handleSaveToHistory}
+            saveState={saveState}
+          />
+        </ScrollView>
       )}
     </View>
   );
 }
 
+const CORNER_SIZE = 22;
+const CORNER_THICK = 3;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000000",
-  },
+  container: { flex: 1, backgroundColor: "#000000" },
+  camera: { flex: 1 },
 
-  camera: {
-    flex: 1,
+  scanFrameWrap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  scanFrame: {
+    width: 240,
+    height: 160,
+    marginBottom: 12,
+  },
+  corner: {
+    position: "absolute",
+    width: CORNER_SIZE,
+    height: CORNER_SIZE,
+    borderColor: "#FFFFFF",
+  },
+  cornerTL: { top: 0, left: 0, borderTopWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK, borderTopLeftRadius: 4 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: CORNER_THICK, borderRightWidth: CORNER_THICK, borderTopRightRadius: 4 },
+  cornerBL: { bottom: 0, left: 0, borderBottomWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK, borderBottomLeftRadius: 4 },
+  cornerBR: { bottom: 0, right: 0, borderBottomWidth: CORNER_THICK, borderRightWidth: CORNER_THICK, borderBottomRightRadius: 4 },
+  scanHintText: { color: "#FFFFFF", fontSize: 13, fontWeight: "500", textAlign: "center", opacity: 0.85 },
 
-  torchButton: {
+  torchBtn: {
     position: "absolute",
     top: 56,
     right: 20,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
-
-  torchButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-
-  scanHint: {
-    position: "absolute",
-    top: "45%",
-    alignSelf: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-
-  scanHintText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-  },
+  torchBtnText: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
 
   manualContainer: {
     position: "absolute",
-    bottom: 160,
+    bottom: 170,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
   },
-
-  manualLabel: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    marginBottom: 8,
-  },
-
-  manualRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-
+  manualLabel: { color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: "500", marginBottom: 8 },
+  manualRow: { flexDirection: "row", gap: 8 },
   manualInput: {
     flex: 1,
-    height: 44,
+    height: 46,
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
     fontSize: 14,
     color: "#18233D",
   },
-
-  manualButton: {
-    height: 44,
-    paddingHorizontal: 16,
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
+  manualBtn: {
+    height: 46,
+    paddingHorizontal: 18,
+    backgroundColor: "#2A78C5",
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
+  manualBtnText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
 
-  manualButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
-  errorText: {
-    marginTop: 8,
-    color: "#FCA5A5",
-    fontSize: 12,
-  },
+  errorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+  errorText: { color: "#FCA5A5", fontSize: 12 },
 
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0,0,0,0.72)",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
   },
+  loadingText: { color: "#FFFFFF", fontSize: 14, fontWeight: "500" },
 
-  loadingText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-
-  resultSheet: {
+  resultSheetWrap: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
+    maxHeight: "78%",
+  },
+  resultSheet: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     paddingBottom: 40,
   },
-
   resultHandle: {
-    width: 58,
+    width: 48,
     height: 5,
     borderRadius: 999,
     backgroundColor: "#D1D5DB",
     alignSelf: "center",
-    marginBottom: 16,
+    marginBottom: 18,
   },
-
   resultEyebrow: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase",
-    color: "#1877F2",
-    marginBottom: 8,
+    color: "#2A78C5",
+    marginBottom: 4,
   },
+  resultTitle: { fontSize: 24, fontWeight: "800", color: "#253B63", marginBottom: 16 },
 
-  resultTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 18,
-  },
-
-  heroCard: {
-    borderRadius: 28,
-    backgroundColor: "#0F172A",
-    padding: 18,
-    marginBottom: 16,
-  },
-
-  heroHeader: {
+  allergenCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
-  },
-
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-
-  statusChip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-
-  statusChipSafe: {
-    backgroundColor: "#1D4ED8",
-  },
-
-  statusChipDanger: {
-    backgroundColor: "#DC2626",
-  },
-
-  statusChipText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-
-  metricGrid: {
-    flexDirection: "row",
-    gap: 12,
-  },
-
-  metricCard: {
-    flex: 1,
-    borderRadius: 18,
-    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F8FAFC",
     padding: 14,
+    marginBottom: 14,
   },
+  allergenCardLeft: { flexDirection: "row", alignItems: "center" },
+  allergenCardLabel: { fontSize: 12, color: "#94A3B8", fontWeight: "500", marginBottom: 2 },
+  allergenCardStatus: { fontSize: 14, fontWeight: "700" },
+  statusChip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  chipSafe: { backgroundColor: "#DCFCE7" },
+  chipDanger: { backgroundColor: "#FEE2E2" },
+  statusChipText: { fontSize: 12, fontWeight: "700", color: "#374151" },
 
-  metricLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#93C5FD",
-    marginBottom: 8,
+  metricRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    marginBottom: 14,
   },
+  metricItem: { flex: 1, alignItems: "center" },
+  metricDivider: { width: 1, height: 32, backgroundColor: "#E5E7EB" },
+  metricValue: { fontSize: 16, fontWeight: "800", color: "#253B63", marginBottom: 2 },
+  metricLabel: { fontSize: 11, color: "#94A3B8", fontWeight: "500" },
 
-  metricValue: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-
-  notesCard: {
-    borderRadius: 22,
+  infoCard: {
+    borderRadius: 14,
     backgroundColor: "#F8FAFC",
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    padding: 16,
-    marginBottom: 12,
+    padding: 14,
+    marginBottom: 10,
   },
+  infoCardTitle: { fontSize: 13, fontWeight: "700", color: "#253B63", marginBottom: 5 },
+  infoCardText: { fontSize: 13, color: "#667085", lineHeight: 19 },
 
-  notesTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 8,
-  },
-
-  notesText: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#475569",
-  },
-
-  closeButton: {
-    marginTop: 10,
+  primaryBtn: {
     height: 52,
-    backgroundColor: "#1877F2",
-    borderRadius: 16,
+    borderRadius: 26,
+    backgroundColor: "#2A78C5",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  closeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
-  secondaryButton: {
     marginTop: 6,
-    height: 48,
-    borderRadius: 16,
-    borderWidth: 1,
+    marginBottom: 10,
+  },
+  primaryBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  savedBtn: { backgroundColor: "#22C55E" },
+
+  secondaryBtn: {
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
     borderColor: "#CBD5E1",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
   },
+  secondaryBtnText: { fontSize: 15, fontWeight: "600", color: "#667085" },
 
-  secondaryButtonText: {
-    color: "#18233D",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  secondaryButtonSaved: {
-    borderColor: "#22C55E",
-    backgroundColor: "#F0FDF4",
-  },
-
-  permissionScreen: {
+  permissionSafe: { flex: 1, backgroundColor: "#FFFFFF" },
+  permissionContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
   },
-
-  permissionTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#18233D",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-
-  permissionText: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-
-  primaryButton: {
-    height: 48,
-    width: "100%",
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
+  permissionIconWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 24,
+    backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 24,
   },
-
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  permissionTitle: { fontSize: 22, fontWeight: "800", color: "#253B63", marginBottom: 12, textAlign: "center" },
+  permissionText: { fontSize: 14, color: "#667085", textAlign: "center", lineHeight: 22, marginBottom: 32 },
 });
