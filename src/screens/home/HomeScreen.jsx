@@ -2,7 +2,6 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useState } from "react";
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,23 +14,17 @@ import {
   getTodayIntake,
   getTodayIntakeLocal,
 } from "../../api/waterIntakeApi";
-import mealPlanApi from "../../api/mealPlanApi";
 import { useUser } from "../../context/UserContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
-import { groupMealsByType, MEAL_TYPES } from "../meal/mealPlanUiHelpers";
 
 const CALORIE_TARGET = 2000;
 const WATER_TARGET = 8;
 const MEAL_TARGET = 3;
+const TODAY = new Date();
+const TODAY_ISO = TODAY.toISOString().slice(0, 10);
 
 const MEAL_ACCENTS_MAP = { breakfast: "#F59E0B", lunch: "#22C55E", dinner: "#3B82F6" };
 const MEAL_LABELS_MAP = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
-const FALLBACK_MEAL_IMAGES = [
-  "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&w=900&q=80",
-];
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -46,7 +39,7 @@ function getTodayLabel() {
     month: "long",
     day: "numeric",
     year: "numeric",
-  }).format(new Date());
+  }).format(TODAY);
 }
 
 function clampProgress(value, max) {
@@ -59,31 +52,6 @@ function toNumber(value) {
   return Number.isFinite(next) ? next : 0;
 }
 
-function toIsoDate(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
-}
-
-function pickMealImageUrl(meal, index) {
-  const candidates = [
-    meal?.imageUrl,
-    meal?.image_url,
-    meal?.thumbnail_url,
-    meal?.recipe_image_url,
-    meal?.rawRecipe?.imageUrl,
-    meal?.rawRecipe?.image_url,
-    meal?.rawRecipe?.thumbnail_url,
-  ];
-  for (const candidate of candidates) {
-    const value = String(candidate ?? "").trim();
-    if (value) {
-      return value;
-    }
-  }
-  return FALLBACK_MEAL_IMAGES[index % FALLBACK_MEAL_IMAGES.length];
-}
-
 
 function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
   const progress = clampProgress(value, maxValue);
@@ -91,12 +59,7 @@ function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
   return (
     <Pressable style={styles.statCard} onPress={onPress}>
       <Text style={styles.statIcon}>{icon}</Text>
-      <Text
-        style={styles.statValue}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.78}
-      >
+      <Text style={styles.statValue}>
         <Text style={[styles.statValueAccent, { color: accent }]}>{value}</Text>
         <Text style={styles.statValueMuted}>/{maxValue}</Text>
       </Text>
@@ -133,15 +96,13 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
 
 function MealItem({ item, onPress }) {
   return (
-    <Pressable style={styles.mealCardHorizontal} onPress={onPress}>
-      <Image source={{ uri: item.imageUrl }} style={styles.mealThumb} resizeMode="cover" />
-      <View style={styles.mealCardBody}>
-        <Text style={styles.mealTitle} numberOfLines={2}>
-          {item.title}
-        </Text>
+    <Pressable style={styles.mealItem} onPress={onPress}>
+      <View style={[styles.mealAccent, { backgroundColor: item.accent }]} />
+      <View style={styles.mealTextWrap}>
+        <Text style={styles.mealTitle}>{item.title}</Text>
         <Text style={[styles.mealType, { color: item.accent }]}>{item.mealType}</Text>
-        <Text style={styles.mealCalories}>{item.calories} kcal</Text>
       </View>
+      <Text style={styles.mealCalories}>{item.calories} cal</Text>
     </Pressable>
   );
 }
@@ -165,7 +126,6 @@ export default function HomeScreen({ navigation }) {
     water: 0,
     mealsCompleted: 0,
     meals: [],
-    mealSections: [],
   });
 
   const displayName = useMemo(
@@ -179,65 +139,34 @@ export default function HomeScreen({ navigation }) {
   const refreshHome = useCallback(async () => {
     try {
       setLoading(true);
-      const todayIso = toIsoDate(new Date());
 
-      const [localMeals, weeklyPlan, remoteWater, localWater] = await Promise.all([
-        getDailyMeals(todayIso),
-        mealPlanApi.getWeeklyPlan({ userId: user?.id }).catch(() => null),
+      const [localMeals, remoteWater, localWater] = await Promise.all([
+        getDailyMeals(TODAY_ISO),
         getTodayIntake(user?.id).catch(() => null),
         getTodayIntakeLocal(user?.id),
       ]);
 
-      const liveGroups = groupMealsByType(
-        weeklyPlan?.data?.items || weeklyPlan?.items || weeklyPlan?.mealPlans || [],
-        todayIso
-      );
-      const liveByType = new Map(liveGroups.map((group) => [group.mealType, group]));
-
-      const mealSections = MEAL_TYPES.map((type) => {
-        const source = localMeals || {};
-        const hasLocalOverride = Object.prototype.hasOwnProperty.call(source, type);
-        const localArr = Array.isArray(source[type])
-          ? source[type]
-          : source[type]?.title
-            ? [source[type]]
+      const meals = ["breakfast", "lunch", "dinner"].flatMap((type) => {
+        const arr = Array.isArray(localMeals[type])
+          ? localMeals[type]
+          : localMeals[type]?.title
+            ? [localMeals[type]]
             : [];
-
-        const localMealsMapped = localArr
+        return arr
           .filter((m) => m.title)
           .map((m, i) => ({
-            id: m._id ?? `${type}-local-${i}`,
+            id: m._id ?? `${type}-${i}`,
             title: m.title,
             mealType: MEAL_LABELS_MAP[type],
             calories: toNumber(m.calories),
             accent: MEAL_ACCENTS_MAP[type],
-            imageUrl: pickMealImageUrl(m, i),
           }));
-
-        const liveGroup = liveByType.get(type);
-        const liveMeals = (liveGroup?.hasLiveData ? liveGroup.recipes || [] : []).map((m, i) => ({
-          id: m.id ?? `${type}-live-${i}`,
-          title: m.title ?? "Untitled Meal",
-          mealType: MEAL_LABELS_MAP[type],
-          calories: toNumber(m.calories),
-          accent: MEAL_ACCENTS_MAP[type],
-          imageUrl: pickMealImageUrl(m, i),
-        }));
-        const meals = hasLocalOverride ? localMealsMapped : liveMeals;
-
-        return {
-          type,
-          label: MEAL_LABELS_MAP[type],
-          accent: MEAL_ACCENTS_MAP[type],
-          meals,
-        };
       });
-      const meals = mealSections.flatMap((section) => section.meals);
 
       const calories = meals.reduce((total, meal) => total + meal.calories, 0);
       const water = remoteWater ?? localWater ?? 0;
 
-      setSummary({ calories, water, mealsCompleted: meals.length, meals, mealSections });
+      setSummary({ calories, water, mealsCompleted: meals.length, meals });
     } finally {
       setLoading(false);
     }
@@ -249,7 +178,7 @@ export default function HomeScreen({ navigation }) {
     }, [refreshHome])
   );
 
-  const hasMeals = summary.mealsCompleted > 0;
+  const hasMeals = summary.meals.length > 0;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -355,31 +284,13 @@ export default function HomeScreen({ navigation }) {
             </View>
           ) : hasMeals ? (
             <>
-              {summary.mealSections
-                .filter((section) => section.meals.length > 0)
-                .map((section) => (
-                  <View key={section.type} style={styles.mealSection}>
-                    <View style={styles.mealSectionHeader}>
-                      <Text style={[styles.mealSectionTitle, { color: section.accent }]}>
-                        {section.label}
-                      </Text>
-                      <Text style={styles.mealSectionCount}>{section.meals.length} items</Text>
-                    </View>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.mealHorizontalContent}
-                    >
-                      {section.meals.map((meal) => (
-                        <MealItem
-                          key={meal.id}
-                          item={meal}
-                          onPress={() => navigation.navigate("Meals")}
-                        />
-                      ))}
-                    </ScrollView>
-                  </View>
-                ))}
+              {summary.meals.map((meal) => (
+                <MealItem
+                  key={meal.id}
+                  item={meal}
+                  onPress={() => navigation.navigate("Meals")}
+                />
+              ))}
 
               <Pressable
                 style={styles.linkButton}
@@ -537,7 +448,6 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 15,
     fontWeight: "700",
-    flexShrink: 1,
   },
 
   statValueAccent: {
@@ -628,50 +538,25 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  mealSection: {
-    marginBottom: 12,
-  },
-
-  mealSectionHeader: {
+  mealItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-
-  mealSectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  mealSectionCount: {
-    fontSize: 12,
-    color: "#8A94A6",
-    fontWeight: "600",
-  },
-
-  mealHorizontalContent: {
-    paddingRight: 4,
-  },
-
-  mealCardHorizontal: {
-    width: 188,
     borderWidth: 1,
     borderColor: "#E5E7EB",
     borderRadius: 12,
     backgroundColor: "#FFFFFF",
-    marginRight: 10,
+    marginBottom: 12,
     overflow: "hidden",
   },
 
-  mealThumb: {
-    width: "100%",
-    height: 96,
-    backgroundColor: "#E2E8F0",
+  mealAccent: {
+    width: 4,
+    alignSelf: "stretch",
   },
 
-  mealCardBody: {
-    paddingHorizontal: 10,
+  mealTextWrap: {
+    flex: 1,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
 
@@ -688,10 +573,9 @@ const styles = StyleSheet.create({
   },
 
   mealCalories: {
-    marginTop: 4,
+    paddingRight: 12,
     fontSize: 12,
     color: "#9CA3AF",
-    fontWeight: "600",
   },
 
   linkButton: {

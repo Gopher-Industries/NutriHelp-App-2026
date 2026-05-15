@@ -45,20 +45,6 @@ export async function saveDailyMeal(date, mealType, meal) {
   }
 }
 
-export async function setDailyMealForType(date, mealType, meal) {
-  try {
-    const current = await getDailyMeals(date);
-    const type = String(mealType).toLowerCase();
-    const entry = meal?._id ? meal : { ...meal, _id: Date.now().toString() };
-    await AsyncStorage.setItem(
-      storageKey(date),
-      JSON.stringify({ ...current, [type]: [entry] })
-    );
-  } catch (err) {
-    console.error("[dailyMealsStorage] set type error:", err);
-  }
-}
-
 export async function removeDailyMealItem(date, mealType, mealId) {
   try {
     const current = await getDailyMeals(date);
@@ -70,18 +56,5 @@ export async function removeDailyMealItem(date, mealType, mealId) {
     );
   } catch (err) {
     console.error("[dailyMealsStorage] remove error:", err);
-  }
-}
-
-export async function clearDailyMealType(date, mealType) {
-  try {
-    const current = await getDailyMeals(date);
-    const type = String(mealType).toLowerCase();
-    await AsyncStorage.setItem(
-      storageKey(date),
-      JSON.stringify({ ...current, [type]: [] })
-    );
-  } catch (err) {
-    console.error("[dailyMealsStorage] clear type error:", err);
   }
 }
