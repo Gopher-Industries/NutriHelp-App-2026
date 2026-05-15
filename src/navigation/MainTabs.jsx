@@ -51,7 +51,14 @@ export default function MainTabs() {
       <Tab.Screen
         name="Recipes"
         component={RecipeStack}
-        options={{ tabBarLabel: "Recipes" }}
+        options={{ tabBarLabel: "Recipes", popToTopOnBlur: true }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("Recipes", {
+              screen: "RecipeListScreen",
+            });
+          },
+        })}
       />
       <Tab.Screen
         name="Scan"
