@@ -48,24 +48,6 @@
             "BROWSABLE",
             "DEFAULT"
           ]
-        },
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "nutrihelp",
-              "host": "auth-callback"
-            },
-            {
-              "scheme": "https",
-              "host": "*.exp.direct"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
         }
       ],
       "permissions": [
@@ -80,6 +62,11 @@
     "plugins": [
       "expo-secure-store",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2d9203de-8e7a-443d-8223-47618dc6a9c0"
+      }
+    }
   }
 }
