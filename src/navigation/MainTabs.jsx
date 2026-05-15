@@ -10,7 +10,7 @@ import ScanStack from "./ScanStack";
 
 const Tab = createBottomTabNavigator();
 
-const NUTRIHELP_BLUE = "#2A78C5";
+const NUTRIHELP_PRIMARY = "#0B5FA5";
 
 const TAB_ICON_BY_ROUTE = {
   Home: "home",
@@ -29,7 +29,7 @@ export default function MainTabs() {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: NUTRIHELP_BLUE,
+        tabBarActiveTintColor: NUTRIHELP_PRIMARY,
         tabBarInactiveTintColor: isDark ? "#9CA3AF" : "#6B7280",
         tabBarStyle: {
           backgroundColor: isDark ? "#0B1220" : "#FFFFFF",
@@ -51,7 +51,14 @@ export default function MainTabs() {
       <Tab.Screen
         name="Recipes"
         component={RecipeStack}
-        options={{ tabBarLabel: "Recipes" }}
+        options={{ tabBarLabel: "Recipes", popToTopOnBlur: true }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("Recipes", {
+              screen: "RecipeListScreen",
+            });
+          },
+        })}
       />
       <Tab.Screen
         name="Scan"
