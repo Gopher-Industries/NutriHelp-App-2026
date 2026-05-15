@@ -13,9 +13,11 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getBookmarkedRecipes } from "../../utils/recipeBookmarks";
 
 export const COLUMN_GAP = 16;
 const NUM_COLUMNS = 2;
@@ -172,6 +174,24 @@ function pickRecipeImageUrl(raw) {
   return "";
 }
 
+function pickRecipeCuisine(raw) {
+  const candidates = [
+    raw?.cuisine,
+    raw?.cuisine_name,
+    raw?.cuisine_name_snapshot,
+    raw?.rawRecipe?.cuisine_name_snapshot,
+    raw?.rawRecipe?.cuisine_name,
+    raw?.rawRecipe?.cuisine,
+  ];
+  for (const candidate of candidates) {
+    const s = String(candidate ?? "").trim();
+    if (s) {
+      return s;
+    }
+  }
+  return "";
+}
+
 export function normalizeRecipe(raw, index) {
   const rating =
     Number(raw?.rating ?? raw?.avg_rating ?? raw?.average_rating ?? 0) || 0;
@@ -203,6 +223,8 @@ export function normalizeRecipe(raw, index) {
     title: raw?.title ?? raw?.name ?? raw?.recipe_name ?? "Untitled Recipe",
     description: raw?.description ?? raw?.summary ?? raw?.details ?? "",
     category: String(raw?.category ?? raw?.meal_type ?? "").trim() || "Recommended",
+    cuisine: pickRecipeCuisine(raw),
+    cuisine_name: pickRecipeCuisine(raw),
     timeMinutes: Number(raw?.timeMinutes ?? raw?.time_minutes ?? raw?.time ?? 10),
     servings: Number(raw?.servings ?? raw?.serving_count ?? 1),
     difficulty: raw?.difficulty ?? raw?.level ?? "Easy",
@@ -225,7 +247,75 @@ export function normalizeRecipe(raw, index) {
       : [],
     nutrition: normalizedNutrition,
     imageUrl: pickRecipeImageUrl(raw),
+    source: raw?.source ?? raw?.sourceType ?? "",
+    sourceType: raw?.sourceType ?? raw?.source ?? "",
+    authorName: raw?.authorName ?? raw?.author_name ?? "",
+    author_name: raw?.author_name ?? raw?.authorName ?? "",
+    authorId: raw?.authorId ?? raw?.author_user_id ?? null,
+    author_user_id: raw?.author_user_id ?? raw?.authorId ?? null,
+    rawRecipe: raw?.rawRecipe ?? raw,
   };
+}
+
+function getReviewSourceType(recipe) {
+  const normalized = String(recipe?.sourceType ?? recipe?.source ?? "")
+    .trim()
+    .toLowerCase();
+  if (normalized.includes("community")) {
+    return "community";
+  }
+  if (
+    normalized === "recipe_library" ||
+    normalized.includes("library") ||
+    normalized.includes("catalog")
+  ) {
+    return "recipe_library";
+  }
+  return "";
+}
+
+function mergeReviewSummaryIntoRecipe(recipe, summaries) {
+  const sourceType = getReviewSourceType(recipe);
+  const key = recipeApi.getRecipeReviewKey(sourceType, recipe?.id ?? recipe?.recipe_id);
+  if (!key || !summaries || typeof summaries !== "object") {
+    return recipe;
+  }
+
+  const summary = summaries[key];
+  if (!summary || typeof summary !== "object") {
+    return recipe;
+  }
+
+  const nextRatingRaw = Number(summary.averageRating ?? summary.rating);
+  const nextTotalRaw = Number(summary.reviewCount ?? summary.count);
+  const nextRating = Number.isFinite(nextRatingRaw) ? Math.max(0, nextRatingRaw) : 0;
+  const nextTotal = Number.isFinite(nextTotalRaw) ? Math.max(0, nextTotalRaw) : 0;
+
+  return {
+    ...recipe,
+    rating: nextRating,
+    totalRatings: nextTotal,
+  };
+}
+
+async function enrichRecipesWithReviewSummary(recipes) {
+  if (!Array.isArray(recipes) || recipes.length === 0) {
+    return recipes;
+  }
+
+  const items = recipes
+    .map((recipe) => ({
+      sourceType: getReviewSourceType(recipe),
+      recipeId: recipe?.id ?? recipe?.recipe_id,
+    }))
+    .filter((item) => item.sourceType && item.recipeId != null);
+
+  if (items.length === 0) {
+    return recipes;
+  }
+
+  const summaries = await recipeApi.fetchRecipeReviewSummaries(items);
+  return recipes.map((recipe) => mergeReviewSummaryIntoRecipe(recipe, summaries));
 }
 
 export function extractRecipeList(response) {
@@ -404,8 +494,7 @@ export default function RecipeListScreen({ navigation, route }) {
   const [browseRecipes, setBrowseRecipes] = useState([]);
   const [browseLoading, setBrowseLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [browseFilter, setBrowseFilter] = useState("All");
-  const [browseFilters, setBrowseFilters] = useState(["All"]);
+  const [bookmarkedRecipes, setBookmarkedRecipes] = useState([]);
   const cardWidth = useRecipeCardWidth();
 
   const loadBrowseAndMerge = useCallback(async (refreshing = false) => {
@@ -416,16 +505,18 @@ export default function RecipeListScreen({ navigation, route }) {
     }
 
     try {
-      const list = await fetchListFromApi(effectiveUserId);
+      const [list, bookmarks] = await Promise.all([
+        fetchListFromApi(effectiveUserId),
+        getBookmarkedRecipes(effectiveUserId),
+      ]);
       const mapped = list.map((item, i) => normalizeRecipe(item, i));
-      setBrowseRecipes(mapped);
-
-      const categories = new Set(mapped.map((item) => item.category).filter(Boolean));
-      if (browseFilter && browseFilter !== "All") {
-        categories.add(browseFilter);
-      }
-      const nextFilters = ["All", ...[...categories].sort()];
-      setBrowseFilters(nextFilters);
+      const mappedBookmarks = bookmarks.map((item, i) => normalizeRecipe(item, i));
+      const [mappedWithReviews, bookmarksWithReviews] = await Promise.all([
+        enrichRecipesWithReviewSummary(mapped).catch(() => mapped),
+        enrichRecipesWithReviewSummary(mappedBookmarks).catch(() => mappedBookmarks),
+      ]);
+      setBrowseRecipes(mappedWithReviews);
+      setBookmarkedRecipes(bookmarksWithReviews);
     } catch (error) {
       if (__DEV__) {
         const status = error?.status ?? error?.response?.status;
@@ -438,7 +529,7 @@ export default function RecipeListScreen({ navigation, route }) {
       }
 
       setBrowseRecipes([]);
-      setBrowseFilters(["All"]);
+      setBookmarkedRecipes([]);
     } finally {
       if (refreshing) {
         setIsRefreshing(false);
@@ -446,29 +537,53 @@ export default function RecipeListScreen({ navigation, route }) {
         setBrowseLoading(false);
       }
     }
-  }, [effectiveUserId, browseFilter]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     loadBrowseAndMerge();
   }, [loadBrowseAndMerge, createdAt]);
 
-  const browseFiltered = useMemo(() => {
-    if (browseFilter === "All") {
-      return browseRecipes;
-    }
-    return browseRecipes.filter((item) => item.category === browseFilter);
-  }, [browseRecipes, browseFilter]);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      (async () => {
+        try {
+          const bookmarks = await getBookmarkedRecipes(effectiveUserId);
+          if (active) {
+            const mappedBookmarks = bookmarks.map((item, i) => normalizeRecipe(item, i));
+            const bookmarksWithReviews = await enrichRecipesWithReviewSummary(mappedBookmarks).catch(
+              () => mappedBookmarks
+            );
+            setBookmarkedRecipes(bookmarksWithReviews);
+          }
+        } catch {
+          if (active) {
+            setBookmarkedRecipes([]);
+          }
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [effectiveUserId])
+  );
 
   const handleRecipePress = (recipe) => {
+    const isCommunity =
+      String(recipe?.source ?? recipe?.sourceType ?? "")
+        .toLowerCase()
+        .includes("community");
     navigation?.navigate?.("RecipeDetailScreen", {
-      recipeId: recipe.id,
+      recipeId: isCommunity ? undefined : recipe.id,
       recipe,
     });
   };
 
   const renderBrowseEmpty = () => (
     <View style={styles.emptyBox}>
-      <Text style={styles.emptyText}>No recipes in this category.</Text>
+      <Text style={styles.emptyText}>No recipes found.</Text>
     </View>
   );
 
@@ -482,7 +597,7 @@ export default function RecipeListScreen({ navigation, route }) {
       </View>
       <View style={styles.screen}>
       <View style={styles.headerRow}>
-        <Text style={styles.pageTitle}>Recipes</Text>
+        <Text style={styles.pageTitle}>My recipe</Text>
         <Pressable
           onPress={() => navigation?.navigate?.("CreateRecipeScreen")}
           style={styles.primaryBtn}
@@ -493,11 +608,39 @@ export default function RecipeListScreen({ navigation, route }) {
 
       <SearchEntryBar onPress={() => navigation?.navigate?.("SearchRecipesScreen", {})} />
 
-      <FilterChips
-        filters={browseFilters}
-        selectedFilter={browseFilter}
-        onSelect={setBrowseFilter}
-      />
+      {bookmarkedRecipes.length > 0 ? (
+        <View style={styles.bookmarksSection}>
+          <View style={styles.bookmarksHeader}>
+            <Ionicons name="bookmark" size={18} color={C.primary} />
+            <Text style={styles.bookmarksTitle}>Bookmarked</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.bookmarksRow}
+            {...horizontalScrollProps}
+          >
+            {bookmarkedRecipes.slice(0, 10).map((item) => (
+              <Pressable
+                key={`bookmark-${item.id}`}
+                style={styles.bookmarkItem}
+                onPress={() => handleRecipePress(item)}
+              >
+                {String(item?.imageUrl ?? "").trim() ? (
+                  <Image source={{ uri: String(item.imageUrl).trim() }} style={styles.bookmarkImage} />
+                ) : (
+                  <View style={styles.bookmarkImagePlaceholder}>
+                    <Ionicons name="image-outline" size={22} color="#A8A29E" />
+                  </View>
+                )}
+                <Text style={styles.bookmarkName} numberOfLines={2}>
+                  {item.title}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
 
       {browseLoading ? (
         <View style={styles.loadingBox}>
@@ -507,7 +650,7 @@ export default function RecipeListScreen({ navigation, route }) {
       ) : null}
 
       <FlatList
-        data={browseLoading ? [] : browseFiltered}
+        data={browseLoading ? [] : browseRecipes}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <RecipeCard recipe={item} onPress={handleRecipePress} cardWidth={cardWidth} />
@@ -624,6 +767,52 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: C.gray400,
+  },
+  bookmarksSection: {
+    marginBottom: 14,
+  },
+  bookmarksHeader: {
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  bookmarksTitle: {
+    marginLeft: 6,
+    fontSize: 15,
+    fontWeight: "700",
+    color: C.slate900,
+  },
+  bookmarksRow: {
+    paddingRight: 4,
+  },
+  bookmarkItem: {
+    ...SURFACE_SHADOW_SUBTLE,
+    width: 150,
+    marginRight: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E8EDF5",
+    backgroundColor: C.white,
+    overflow: "hidden",
+  },
+  bookmarkImage: {
+    width: "100%",
+    height: 80,
+  },
+  bookmarkImagePlaceholder: {
+    width: "100%",
+    height: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E5E7EB",
+  },
+  bookmarkName: {
+    minHeight: 48,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontWeight: "600",
+    color: C.slate800,
   },
   emptyBox: {
     ...SURFACE_SHADOW,
