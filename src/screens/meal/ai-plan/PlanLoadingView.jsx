@@ -5,10 +5,10 @@ import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 const MESSAGES = [
   "🔍 Searching for the best recipes for you...",
   "🥗 Analysing your dietary preferences...",
-  "💊 Checking your health conditions...",
+  "💊 Reviewing your health goals...",
   "⚖️  Balancing your nutrition targets...",
   "🍽️  Crafting your 7-day meal plan...",
-  "🧂 Reviewing sodium and allergen levels...",
+  "🧂 Checking sodium and allergen levels...",
   "📋 Selecting ingredients just for you...",
   "✨ Putting the finishing touches on your plan...",
 ];

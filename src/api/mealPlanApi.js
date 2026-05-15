@@ -6,6 +6,7 @@ const MEAL_PLAN_ENDPOINTS = {
   weeklyPlan: "/api/mealplan",
   aiGenerate: "/api/meal-plan/ai-generate",
   feedback: "/api/meal-plan/feedback/:planId",
+  foodSearch: "/api/fooddata/search",
 };
 
 function buildPath(template, params = {}) {
@@ -57,12 +58,27 @@ export async function getDailyPlan({ userId, date, mealType } = {}) {
 }
 
 export async function updateDailyPlan(payload) {
-  return post(MEAL_PLAN_ENDPOINTS.weeklyPlan, payload);
+  const safePayload = {
+    ...payload,
+    recipe_ids: (payload.recipe_ids || []).map(id => {
+      // Mock IDs like 'oatmeal' fail numeric constraint in DB
+      return typeof id === 'string' && isNaN(Number(id)) ? 999 : Number(id);
+    })
+  };
+  return post(MEAL_PLAN_ENDPOINTS.weeklyPlan, safePayload);
+}
+
+export async function deleteMealPlan(planId, userId) {
+  return baseApi.delete(MEAL_PLAN_ENDPOINTS.weeklyPlan, {
+    body: { id: planId, user_id: userId },
+  });
 }
 
 export async function generateAIPlan(payload) {
   return post(MEAL_PLAN_ENDPOINTS.aiGenerate, payload);
 }
+
+export const aiGeneratePlan = generateAIPlan;
 
 export async function submitPlanFeedback(planId, payload) {
   if (!planId) {
@@ -75,13 +91,20 @@ export async function saveMealToDaily(payload) {
   return post("/api/mealplan/ai-suggestion", payload);
 }
 
+export async function searchFood(query) {
+  return get(MEAL_PLAN_ENDPOINTS.foodSearch, { query: { query } });
+}
+
 const mealPlanApi = {
   getWeeklyPlan,
   getDailyPlan,
   updateDailyPlan,
+  deleteMealPlan,
   generateAIPlan,
+  aiGeneratePlan,
   submitPlanFeedback,
   saveMealToDaily,
+  searchFood,
 };
 
 export default mealPlanApi;
