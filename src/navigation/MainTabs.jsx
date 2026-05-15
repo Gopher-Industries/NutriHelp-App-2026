@@ -5,15 +5,17 @@ import { useColorScheme } from "react-native";
 import AccountStack from "./AccountStack";
 import HomeStack from "./HomeStack";
 import MealStack from "./MealStack";
+import RecipeStack from "./RecipeStack";
 import ScanStack from "./ScanStack";
 
 const Tab = createBottomTabNavigator();
 
-const NUTRIHELP_GREEN = "#047857";
+const NUTRIHELP_PRIMARY = "#0B5FA5";
 
 const TAB_ICON_BY_ROUTE = {
   Home: "home",
   Meals: "restaurant",
+  Recipes: "book",
   Scan: "barcode",
   Profile: "person",
 };
@@ -27,7 +29,7 @@ export default function MainTabs() {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: NUTRIHELP_GREEN,
+        tabBarActiveTintColor: NUTRIHELP_PRIMARY,
         tabBarInactiveTintColor: isDark ? "#9CA3AF" : "#6B7280",
         tabBarStyle: {
           backgroundColor: isDark ? "#0B1220" : "#FFFFFF",
@@ -45,6 +47,18 @@ export default function MainTabs() {
         name="Meals"
         component={MealStack}
         options={{ tabBarLabel: "Meals" }}
+      />
+      <Tab.Screen
+        name="Recipes"
+        component={RecipeStack}
+        options={{ tabBarLabel: "Recipes", popToTopOnBlur: true }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("Recipes", {
+              screen: "RecipeListScreen",
+            });
+          },
+        })}
       />
       <Tab.Screen
         name="Scan"

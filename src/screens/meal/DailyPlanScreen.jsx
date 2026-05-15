@@ -60,16 +60,17 @@ function EmptyMealCard({ mealType, onAdd }) {
   );
 }
 
-function FilledMealCard({ recipe, accent }) {
+function FilledMealCard({ recipe, accent, mealType }) {
   return (
     <View style={styles.filledCard}>
-      <View style={[styles.recipeThumb, { backgroundColor: accent }]} />
+      <View style={[styles.accentBar, { backgroundColor: accent }]} />
       <View style={styles.recipeTextWrap}>
-        <Text style={styles.recipeTitle}>{recipe.title}</Text>
-        <Text style={styles.recipeMeta}>
-          {Math.round(recipe.calories || 0)} Cal · 1 serving
+        <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
+        <Text style={[styles.recipeTypeLabel, { color: accent }]}>
+          {formatDisplayName(mealType)}
         </Text>
       </View>
+      <Text style={styles.recipeCal}>{Math.round(recipe.calories || 0)} cal</Text>
     </View>
   );
 }
@@ -250,7 +251,7 @@ export default function DailyPlanScreen({ navigation, route }) {
 
               {recipe ? (
                 <>
-                  <FilledMealCard recipe={recipe} accent={accent} />
+                  <FilledMealCard recipe={recipe} accent={accent} mealType={mealType} />
                   <Pressable
                     style={[styles.solidAddButton, isSaving && styles.buttonDisabled]}
                     onPress={() => !isSaving && openAddMeal(mealType)}
@@ -381,34 +382,40 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   filledCard: {
-    minHeight: 98,
+    minHeight: 78,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#CBD5E1",
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
+    overflow: "hidden",
     marginBottom: 12,
   },
-  recipeThumb: {
-    width: 54,
-    height: 54,
-    borderRadius: 12,
-    marginRight: 16,
+  accentBar: {
+    width: 4,
+    alignSelf: "stretch",
+    borderRadius: 0,
+    marginRight: 14,
   },
   recipeTextWrap: {
     flex: 1,
+    paddingVertical: 14,
   },
   recipeTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: "#253B63",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  recipeMeta: {
+  recipeTypeLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  recipeCal: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: "#9CA3AF",
+    marginRight: 14,
   },
   emptyCard: {
     minHeight: 98,
@@ -438,9 +445,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A78C5",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
-    alignSelf: "flex-start",
-    minWidth: 180,
   },
   solidAddButtonText: {
     fontSize: 15,
@@ -450,19 +454,14 @@ const styles = StyleSheet.create({
   outlineAddButton: {
     height: 48,
     borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: "#2A78C5",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#2A78C5",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
-    alignSelf: "flex-start",
-    minWidth: 180,
   },
   outlineAddButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#2A78C5",
+    color: "#FFFFFF",
   },
   buttonDisabled: {
     opacity: 0.6,
