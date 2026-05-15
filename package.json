@@ -60,9 +60,5 @@
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2"
   },
-  "private": true,
-  "overrides": {
-  "react": "19.1.0",
-  "expo-crypto": "15.0.9"
-}
+  "private": true
 }
