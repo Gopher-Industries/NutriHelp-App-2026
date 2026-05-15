@@ -5,9 +5,11 @@ const RECIPE_IMAGES = [
   "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
 ];
 
-export const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
+export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"];
 export const SUMMARY_COLORS = {
   Protein: "#1877F2",
+  Carbs: "#F59E0B",
+  Fat: "#9333EA",
   Fiber: "#39D353",
   Sugar: "#FF4D00",
   Sodium: "#FFC400",
@@ -25,7 +27,16 @@ export function sameDay(left, right) {
   if (!left || !right) {
     return false;
   }
-  return String(left).slice(0, 10) === String(right).slice(0, 10);
+  const toDateStr = (v) => {
+    if (v instanceof Date) {
+      const y = v.getFullYear();
+      const m = String(v.getMonth() + 1).padStart(2, "0");
+      const d = String(v.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+    return String(v).slice(0, 10);
+  };
+  return toDateStr(left) === toDateStr(right);
 }
 
 export function getWeekDates(anchor = new Date()) {
@@ -76,6 +87,8 @@ export function normalizeRecipe(recipe, mealType, index = 0) {
     imageUrl: recipe?.imageUrl || recipe?.image_url || RECIPE_IMAGES[index % RECIPE_IMAGES.length],
     calories: toNumber(recipe?.nutrition?.calories ?? recipe?.calories),
     protein: toNumber(recipe?.nutrition?.protein ?? recipe?.protein),
+    carbs: toNumber(recipe?.nutrition?.carbs ?? recipe?.carbs),
+    fat: toNumber(recipe?.nutrition?.fat ?? recipe?.fat),
     fiber: toNumber(recipe?.nutrition?.fiber ?? recipe?.fiber),
     sugar: toNumber(recipe?.nutrition?.sugar ?? recipe?.sugar),
     sodium: toNumber(recipe?.nutrition?.sodium ?? recipe?.sodium),
@@ -103,6 +116,8 @@ export function groupMealsByType(items = [], date = new Date()) {
             imageUrl,
             calories: 320 + index * 40,
             protein: 18 + index * 4,
+            carbs: 40 + index * 5,
+            fat: 10 + index * 2,
             fiber: 6 + index * 2,
             sugar: 8 + index * 2,
             sodium: 1.2 + index * 0.3,
@@ -121,16 +136,20 @@ export function buildNutritionSummary(recipes = []) {
   const totals = recipes.reduce(
     (acc, recipe) => {
       acc.protein += toNumber(recipe.protein);
+      acc.carbs += toNumber(recipe.carbs);
+      acc.fat += toNumber(recipe.fat);
       acc.fiber += toNumber(recipe.fiber);
       acc.sugar += toNumber(recipe.sugar);
       acc.sodium += toNumber(recipe.sodium);
       return acc;
     },
-    { protein: 0, fiber: 0, sugar: 0, sodium: 0 }
+    { protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 }
   );
 
   const targets = {
     protein: 80,
+    carbs: 250,
+    fat: 65,
     fiber: 30,
     sugar: 50,
     sodium: 5,
@@ -142,6 +161,18 @@ export function buildNutritionSummary(recipes = []) {
       value: `${Math.round(totals.protein)} g`,
       progress: Math.min(totals.protein / targets.protein, 1),
       color: SUMMARY_COLORS.Protein,
+    },
+    {
+      label: "Carbs",
+      value: `${Math.round(totals.carbs)} g`,
+      progress: Math.min(totals.carbs / targets.carbs, 1),
+      color: SUMMARY_COLORS.Carbs,
+    },
+    {
+      label: "Fat",
+      value: `${Math.round(totals.fat)} g`,
+      progress: Math.min(totals.fat / targets.fat, 1),
+      color: SUMMARY_COLORS.Fat,
     },
     {
       label: "Fiber",
