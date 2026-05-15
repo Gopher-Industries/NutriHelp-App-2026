@@ -10,7 +10,7 @@ import ScanStack from "./ScanStack";
 
 const Tab = createBottomTabNavigator();
 
-const NUTRIHELP_GREEN = "#047857";
+const NUTRIHELP_PRIMARY = "#0B5FA5";
 
 const TAB_ICON_BY_ROUTE = {
   Home: "home",
@@ -29,7 +29,7 @@ export default function MainTabs() {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: NUTRIHELP_GREEN,
+        tabBarActiveTintColor: NUTRIHELP_PRIMARY,
         tabBarInactiveTintColor: isDark ? "#9CA3AF" : "#6B7280",
         tabBarStyle: {
           backgroundColor: isDark ? "#0B1220" : "#FFFFFF",
