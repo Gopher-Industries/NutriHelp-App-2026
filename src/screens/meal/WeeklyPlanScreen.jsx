@@ -10,13 +10,9 @@ import {
   Text,
   TextInput,
   View,
-  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import EmptyState from "../../components/common/EmptyState";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
-import WeeklyProgressChart from "../../components/charts/WeeklyProgressChart";
 import mealPlanApi from "../../api/mealPlanApi";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
@@ -37,7 +33,6 @@ const MEAL_ACCENTS = {
   breakfast: "#F59E0B",
   lunch: "#22C55E",
   dinner: "#3B82F6",
-  snack: "#8B5CF6",
 };
 
 function sameCalendarDay(left, right) {
@@ -56,38 +51,43 @@ function formatScreenDate(date) {
 export default function WeeklyPlanScreen({ navigation }) {
   const { user } = useUser();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState("loading");
-  const [weeklyRawData, setWeeklyRawData] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [draftMeals, setDraftMeals] = useState({});
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetMealType, setSheetMealType] = useState("breakfast");
-  const [sheetDate, setSheetDate] = useState(new Date());
   const [searchText, setSearchText] = useState("");
   const [availableRecipes, setAvailableRecipes] = useState([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(selectedDate), [selectedDate]);
 
-  const loadPlan = useCallback(async (isRefresh = false) => {
+  const loadPlan = useCallback(async () => {
     try {
-      if (isRefresh) setRefreshing(true);
-      else setStatus("loading");
+      setStatus("loading");
 
+      // Always load locally-saved meals first (AI plan saves + bottom-sheet adds).
+      const local = await getDailyMeals(selectedDate);
+      setDraftMeals(local);
+
+      // Best-effort backend fetch — failures show empty sections, not an error screen.
       try {
         const response = await mealPlanApi.getWeeklyPlan({ userId: user?.id });
-        const raw = response?.data?.items || response?.items || response?.mealPlans || [];
-        setWeeklyRawData(raw);
+        setGroups(
+          groupMealsByType(
+            response?.data?.items || response?.items || response?.mealPlans || [],
+            selectedDate
+          )
+        );
       } catch {
-        setWeeklyRawData([]);
+        setGroups(groupMealsByType([], selectedDate));
       }
 
       setStatus("ready");
     } catch {
       setStatus("error");
-    } finally {
-      if (isRefresh) setRefreshing(false);
     }
-  }, [user?.id]);
+  }, [selectedDate, user?.id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -123,34 +123,14 @@ export default function WeeklyPlanScreen({ navigation }) {
     return () => { cancelled = true; };
   }, [sheetVisible, sheetMealType, user?.id]);
 
-  const weekGridData = useMemo(() => {
-    return weekDates.map((date) => {
-      const groups = groupMealsByType(weeklyRawData, date);
-      const groupMap = new Map();
-      groups.forEach((g) => groupMap.set(g.mealType, g));
-      return { date, groupMap };
-    });
-  }, [weekDates, weeklyRawData]);
+  const groupsByType = useMemo(() => {
+    const map = new Map();
+    groups.forEach((g) => map.set(g.mealType, g));
+    return map;
+  }, [groups]);
 
-  const chartData = useMemo(() => {
-    return weekGridData.map(({ date, groupMap }) => {
-      let dailyCalories = 0;
-      MEAL_TYPES.forEach((type) => {
-        const group = groupMap.get(type);
-        if (group?.hasLiveData && group.recipes?.[0]) {
-          dailyCalories += group.recipes[0].calories || 0;
-        }
-      });
-      return {
-        day: date.toLocaleDateString("en-AU", { weekday: "short" }),
-        calories: Math.round(dailyCalories),
-      };
-    });
-  }, [weekGridData]);
-
-  const openSheet = useCallback((mealType, date) => {
+  const openSheet = useCallback((mealType) => {
     setSheetMealType(mealType);
-    setSheetDate(date);
     setSearchText("");
     setSheetVisible(true);
   }, []);
@@ -158,13 +138,16 @@ export default function WeeklyPlanScreen({ navigation }) {
   const handleAddDraft = useCallback(
     async (meal) => {
       const dateStr =
-        sheetDate instanceof Date
-          ? sheetDate.toISOString().slice(0, 10)
-          : String(sheetDate).slice(0, 10);
+        selectedDate instanceof Date
+          ? selectedDate.toISOString().slice(0, 10)
+          : String(selectedDate).slice(0, 10);
       const entry = { ...meal, _id: meal.id || Date.now().toString() };
-      
+      setDraftMeals((prev) => {
+        const existing = Array.isArray(prev[sheetMealType]) ? prev[sheetMealType] : [];
+        return { ...prev, [sheetMealType]: [...existing, entry] };
+      });
       setSheetVisible(false);
-      await saveDailyMeal(sheetDate, sheetMealType, entry);
+      await saveDailyMeal(selectedDate, sheetMealType, entry);
       try {
         await mealPlanApi.updateDailyPlan({
           recipe_ids: [meal.id],
@@ -172,13 +155,18 @@ export default function WeeklyPlanScreen({ navigation }) {
           user_id: user?.id,
           date: dateStr,
         });
-        loadPlan(false);
+        const response = await mealPlanApi.getWeeklyPlan({ userId: user?.id });
+        setGroups(
+          groupMealsByType(
+            response?.data?.items || response?.items || response?.mealPlans || [],
+            selectedDate
+          )
+        );
       } catch {
         // local save succeeded; backend sync failure is non-fatal
-        loadPlan(false);
       }
     },
-    [sheetMealType, sheetDate, user?.id, loadPlan]
+    [sheetMealType, selectedDate, user?.id]
   );
 
   const visibleOptions = useMemo(() => {
@@ -194,9 +182,6 @@ export default function WeeklyPlanScreen({ navigation }) {
         style={styles.screen}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadPlan(true)} />
-        }
       >
         {/* Header */}
         <View style={styles.topRow}>
@@ -226,108 +211,94 @@ export default function WeeklyPlanScreen({ navigation }) {
           </View>
         </Pressable>
 
-        {/* Weekly Progress Chart */}
-        <View style={styles.chartContainer}>
-          <WeeklyProgressChart data={chartData} />
-        </View>
+        {/* Week day selector */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dayChipRow}
+        >
+          {weekDates.map((date) => {
+            const active = sameCalendarDay(date, selectedDate);
+            return (
+              <Pressable
+                key={date.toISOString()}
+                style={[styles.dayChip, active && styles.dayChipActive]}
+                onPress={() => {
+                  setSelectedDate(date);
+                  setDraftMeals({});
+                }}
+                android_ripple={{ color: "#93C5FD", borderless: true }}
+              >
+                <Text style={[styles.dayChipLabel, active && styles.dayChipLabelActive]}>
+                  {date.toLocaleDateString("en-AU", { weekday: "short" })}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-        <Text style={styles.sectionHeading}>This Week's Plan</Text>
+        {/* Selected date heading */}
+        <Text style={styles.selectedDateLabel}>{formatScreenDate(selectedDate)}</Text>
 
-        {/* 7-Column Grid */}
+        {/* Daily meal sections */}
         {status === "loading" ? (
-          <View style={styles.loadingWrapper}>
-            <LoadingSpinner message="Loading your plan..." />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2A78C5" />
+            <Text style={styles.loadingText}>Loading your plan...</Text>
           </View>
         ) : status === "error" ? (
-          <EmptyState
-            icon="alert-circle-outline"
-            title="Could not load your meal plan"
-            message="There was an issue loading your data. Please try again."
-            actionLabel="Retry"
-            onAction={() => loadPlan(false)}
-          />
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={40} color="#EF4444" />
+            <Text style={styles.errorTitle}>Could not load your meal plan</Text>
+            <Pressable style={styles.retryBtn} onPress={loadPlan}>
+              <Text style={styles.retryBtnText}>Retry</Text>
+            </Pressable>
+          </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.gridOuter}
-          >
-            <View>
-              {/* Header row (Days) */}
-              <View style={styles.gridHeaderRow}>
-                <View style={styles.gridCellMealLabel} />
-                {weekGridData.map(({ date }) => (
-                  <Pressable
-                    key={date.toISOString()}
-                    style={styles.gridCellHeader}
-                    onPress={() =>
-                      navigation.navigate("DailyPlanScreen", {
-                        date:
-                          date instanceof Date
-                            ? date.toISOString().slice(0, 10)
-                            : String(date).slice(0, 10),
-                      })
-                    }
-                  >
-                    <Text style={styles.gridCellHeaderText}>
-                      {date.toLocaleDateString("en-AU", { weekday: "short" })}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              {/* Meal rows */}
-              {MEAL_TYPES.map((mealType) => (
-                <View key={mealType} style={styles.gridRow}>
-                  <View style={styles.gridCellMealLabel}>
-                    <Text style={styles.gridCellMealLabelText}>
+          <View style={styles.dailyCard}>
+            {MEAL_TYPES.map((mealType) => {
+              const accent = MEAL_ACCENTS[mealType];
+              const group = groupsByType.get(mealType);
+              const liveRecipe = group?.hasLiveData ? group?.recipes?.[0] : null;
+              const drafts = Array.isArray(draftMeals[mealType]) ? draftMeals[mealType] : [];
+              const displayName = drafts[0]?.title || liveRecipe?.title || null;
+              return (
+                <View key={mealType} style={styles.mealSummaryRow}>
+                  <View style={[styles.mealRowBar, { backgroundColor: accent }]} />
+                  <View style={styles.mealSummaryText}>
+                    <Text style={[styles.mealSummaryType, { color: accent }]}>
                       {formatDisplayName(mealType)}
                     </Text>
+                    {displayName ? (
+                      <Text style={styles.mealSummaryTitle} numberOfLines={1}>{displayName}</Text>
+                    ) : (
+                      <Text style={styles.mealSummaryEmpty}>Nothing planned yet</Text>
+                    )}
                   </View>
-                  {weekGridData.map(({ date, groupMap }) => {
-                    const group = groupMap.get(mealType);
-                    const recipe = group?.hasLiveData ? group.recipes[0] : null;
-
-                    return (
-                      <Pressable
-                        key={`${date.toISOString()}-${mealType}`}
-                        style={styles.gridCell}
-                        onPress={() => {
-                          if (recipe) {
-                            navigation.navigate("DailyPlanScreen", {
-                              date:
-                                date instanceof Date
-                                  ? date.toISOString().slice(0, 10)
-                                  : String(date).slice(0, 10),
-                            });
-                          } else {
-                            openSheet(mealType, date);
-                          }
-                        }}
-                      >
-                        {recipe ? (
-                          <Text
-                            style={[
-                              styles.gridCellItem,
-                              { backgroundColor: MEAL_ACCENTS[mealType] + "22", color: MEAL_ACCENTS[mealType] },
-                            ]}
-                            numberOfLines={2}
-                          >
-                            {recipe.title}
-                          </Text>
-                        ) : (
-                          <View style={styles.gridCellEmpty}>
-                            <Ionicons name="add" size={20} color="#D1D5DB" />
-                          </View>
-                        )}
-                      </Pressable>
-                    );
-                  })}
                 </View>
-              ))}
+              );
+            })}
+            <View style={styles.dailyCardActions}>
+              <Pressable
+                style={styles.viewDetailsBtn}
+                onPress={() => navigation.navigate("DailyPlanScreen", {
+                  date: selectedDate instanceof Date
+                    ? selectedDate.toISOString().slice(0, 10)
+                    : String(selectedDate).slice(0, 10),
+                })}
+              >
+                <Text style={styles.viewDetailsBtnText}>View Details</Text>
+              </Pressable>
+              <Pressable
+                style={styles.addMealsBtn}
+                onPress={() => openSheet("breakfast")}
+              >
+                <Text style={styles.addMealsBtnText}>+ Add Meals</Text>
+              </Pressable>
             </View>
-          </ScrollView>
+          </View>
         )}
+
       </ScrollView>
 
       {/* Add meal bottom sheet */}
@@ -409,49 +380,105 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: 32, fontWeight: "800", color: "#253B63", marginBottom: 6 },
   pageSubtitle: { fontSize: 15, color: "#66758F", marginBottom: 22 },
 
-  chartContainer: { marginBottom: 24 },
-  sectionHeading: { fontSize: 20, fontWeight: "700", color: "#253B63", marginBottom: 12 },
-
-  loadingWrapper: { paddingVertical: 40 },
-
-  gridOuter: { paddingBottom: 16, paddingRight: 10 },
-  gridHeaderRow: { flexDirection: "row", alignItems: "flex-end", marginBottom: 8 },
-  gridCellMealLabel: { width: 68, marginRight: 8, justifyContent: "center" },
-  gridCellMealLabelText: { fontSize: 13, fontWeight: "600", color: "#66758F", textAlign: "right" },
-  gridCellHeader: {
-    width: 68,
+  dayChipRow: { gap: 8, paddingBottom: 4 },
+  dayChip: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#EFF6FF",
     alignItems: "center",
-    marginHorizontal: 4,
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#BFDBFE",
   },
-  gridCellHeaderText: { fontSize: 13, fontWeight: "700", color: "#253B63" },
-  
-  gridRow: { flexDirection: "row", alignItems: "stretch", marginBottom: 8 },
-  gridCell: {
-    width: 68,
-    minHeight: 56,
-    marginHorizontal: 4,
-  },
-  gridCellItem: {
-    flex: 1,
-    borderRadius: 8,
-    padding: 6,
-    fontSize: 10,
+  dayChipActive: { backgroundColor: "#2A78C5", borderColor: "#2A78C5" },
+  dayChipLabel: { fontSize: 11, fontWeight: "700", color: "#6B7280" },
+  dayChipLabelActive: { color: "#FFFFFF" },
+
+  selectedDateLabel: {
+    fontSize: 20,
     fontWeight: "700",
-    textAlign: "center",
-    textAlignVertical: "center",
-    lineHeight: 12,
-    overflow: "hidden",
+    color: "#253B63",
+    marginTop: 16,
+    marginBottom: 16,
   },
-  gridCellEmpty: {
-    flex: 1,
-    borderRadius: 8,
-    backgroundColor: "#F9FAFB",
+
+  loadingContainer: {
+    paddingVertical: 48,
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: { fontSize: 14, color: "#9CA3AF" },
+
+  errorContainer: {
+    paddingVertical: 48,
+    alignItems: "center",
+    gap: 12,
+  },
+  errorTitle: { fontSize: 16, fontWeight: "600", color: "#374151", textAlign: "center" },
+  retryBtn: {
+    marginTop: 4,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#2A78C5",
+  },
+  retryBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+
+  dailyCard: {
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    borderStyle: "dashed",
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+    paddingVertical: 4,
+  },
+  mealSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  mealRowBar: { width: 4, height: 36, borderRadius: 2 },
+  mealSummaryText: { flex: 1 },
+  mealSummaryType: { fontSize: 11, fontWeight: "700", marginBottom: 2 },
+  mealSummaryTitle: { fontSize: 14, fontWeight: "600", color: "#253B63" },
+  mealSummaryEmpty: { fontSize: 13, color: "#9CA3AF" },
+  dailyCardActions: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    marginTop: 4,
+  },
+  viewDetailsBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#2A78C5",
     alignItems: "center",
     justifyContent: "center",
   },
+  viewDetailsBtnText: { fontSize: 14, fontWeight: "700", color: "#2A78C5" },
+  addMealsBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2A78C5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addMealsBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 
   aiHeroCard: {
     flexDirection: "row",

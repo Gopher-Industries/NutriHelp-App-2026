@@ -4,9 +4,8 @@ import WeeklyPlanScreen from "../screens/meal/WeeklyPlanScreen";
 import DailyPlanScreen from "../screens/meal/DailyPlanScreen";
 import MealPlanDetailScreen from "../screens/meal/MealPlanDetailScreen";
 import AiMealPlanScreen from "../screens/meal/AiMealPlanScreen";
-import NutritionCalculatorScreen from "../screens/meal/NutritionCalculatorScreen";
-import MenuScreen from "../screens/meal/MenuScreen";
-import EditDailyPlanScreen from "../screens/meal/EditDailyPlanScreen";
+import NutritionCalculatorScreen from "../screens/health/NutritionCalculatorScreen";
+import PlaceholderScreen from "./_PlaceholderScreen";
 
 const Stack = createStackNavigator();
 export default function MealStack() {
@@ -34,18 +33,18 @@ export default function MealStack() {
       />
       <Stack.Screen
         name="EditDailyPlanScreen"
-        component={EditDailyPlanScreen}
-        options={{ headerShown: false }}
+        component={PlaceholderScreen}
+        options={{ title: "Edit Daily Plan" }}
       />
       <Stack.Screen
         name="NutritionCalculatorScreen"
         component={NutritionCalculatorScreen}
-        options={{ headerShown: false }}
+        options={{ title: "Nutrition Calculator" }}
       />
       <Stack.Screen
         name="MenuScreen"
-        component={MenuScreen}
-        options={{ headerShown: false }}
+        component={PlaceholderScreen}
+        options={{ title: "Menu" }}
       />
     </Stack.Navigator>
   );
