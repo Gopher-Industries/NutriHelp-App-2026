@@ -183,7 +183,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
                       state === CHIP_DISLIKED && styles.mealChipTextDisliked,
                     ]}
                   >
-                    {state === CHIP_LIKED ? "👍 " : state === CHIP_DISLIKED ? "👎 " : ""}{label}
+                    {label}
                   </Text>
                 </Pressable>
               );

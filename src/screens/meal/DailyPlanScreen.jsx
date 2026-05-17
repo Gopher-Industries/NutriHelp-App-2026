@@ -14,11 +14,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import NutritionPieChart from "../../components/charts/NutritionPieChart";
 import mealPlanApi from "../../api/mealPlanApi";
 import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
-import { formatDisplayName, groupMealsByType, MEAL_TYPES, normalizeRecipe, SUMMARY_COLORS } from "./mealPlanUiHelpers";
+import { formatDisplayName, groupMealsByType, MEAL_TYPES, normalizeRecipe } from "./mealPlanUiHelpers";
 
 const FALLBACK_MEALS = [
   { id: "oatmeal", title: "Oatmeal", calories: 320 },
@@ -32,7 +31,6 @@ const MEAL_ACCENTS = {
   breakfast: "#F59E0B",
   lunch: "#22C55E",
   dinner: "#3B82F6",
-  snack: "#8B5CF6",
 };
 
 function formatLongDate(value) {
@@ -67,21 +65,12 @@ function FilledMealCard({ recipe, accent, mealType }) {
     <View style={styles.filledCard}>
       <View style={[styles.accentBar, { backgroundColor: accent }]} />
       <View style={styles.recipeTextWrap}>
-        <View style={styles.recipeTopRow}>
-          <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
-          <Text style={styles.recipeCal}>{Math.round(recipe.calories || 0)} cal</Text>
-        </View>
-        <View style={styles.recipeBottomRow}>
-          <Text style={[styles.recipeTypeLabel, { color: accent }]}>
-            {formatDisplayName(mealType)}
-          </Text>
-          <View style={styles.macroGroup}>
-            <Text style={styles.macroText}>P:{Math.round(recipe.protein || 0)}g</Text>
-            <Text style={styles.macroText}>C:{Math.round(recipe.carbs || 0)}g</Text>
-            <Text style={styles.macroText}>F:{Math.round(recipe.fat || 0)}g</Text>
-          </View>
-        </View>
+        <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
+        <Text style={[styles.recipeTypeLabel, { color: accent }]}>
+          {formatDisplayName(mealType)}
+        </Text>
       </View>
+      <Text style={styles.recipeCal}>{Math.round(recipe.calories || 0)} cal</Text>
     </View>
   );
 }
@@ -185,27 +174,6 @@ export default function DailyPlanScreen({ navigation, route }) {
     return map;
   }, [groups]);
 
-  const dailyTotals = useMemo(() => {
-    let protein = 0, carbs = 0, fat = 0;
-    MEAL_TYPES.forEach((mealType) => {
-      const group = groupsByType.get(mealType);
-      const liveRecipe = group?.hasLiveData ? group?.recipes?.[0] : null;
-      const draftRecipe = draftMeals[mealType];
-      const recipe = draftRecipe || liveRecipe;
-      if (recipe) {
-        protein += recipe.protein || 0;
-        carbs += recipe.carbs || 0;
-        fat += recipe.fat || 0;
-      }
-    });
-
-    return [
-      { label: "Protein", value: Math.round(protein * 4), colour: SUMMARY_COLORS.Protein },
-      { label: "Carbs", value: Math.round(carbs * 4), colour: SUMMARY_COLORS.Carbs },
-      { label: "Fat", value: Math.round(fat * 9), colour: SUMMARY_COLORS.Fat },
-    ];
-  }, [groupsByType, draftMeals]);
-
   const handleAddMeal = async (meal) => {
     setDraftMeals((previous) => ({
       ...previous,
@@ -254,23 +222,13 @@ export default function DailyPlanScreen({ navigation, route }) {
             <Ionicons name="arrow-back" size={22} color="#667085" />
             <Text style={styles.backText}>Back</Text>
           </Pressable>
-          <Pressable 
-            style={styles.editButton} 
-            onPress={() => navigation.navigate("EditDailyPlanScreen", { date: selectedDate })}
-          >
-            <Ionicons name="pencil-outline" size={18} color="#253B63" />
-            <Text style={styles.editButtonText}>Edit</Text>
-          </Pressable>
+          <Text style={styles.logoText}>NutriHelp</Text>
         </View>
 
         <Text style={styles.dayTitle}>
           {new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(selectedDate))}
         </Text>
         <Text style={styles.dayDate}>{formatLongDate(selectedDate)}</Text>
-
-        <View style={styles.pieContainer}>
-          <NutritionPieChart data={dailyTotals} />
-        </View>
 
         {MEAL_TYPES.map((mealType) => {
           const group = groupsByType.get(mealType);
@@ -392,19 +350,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#667085",
   },
-  editButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  editButtonText: {
+  logoText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#253B63",
-    marginLeft: 4,
+    fontWeight: "700",
+    color: "#18233D",
   },
   dayTitle: {
     fontSize: 34,
@@ -416,9 +365,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#667085",
     marginBottom: 18,
-  },
-  pieContainer: {
-    marginBottom: 24,
   },
   sectionBlock: {
     marginBottom: 20,
@@ -454,44 +400,22 @@ const styles = StyleSheet.create({
   },
   recipeTextWrap: {
     flex: 1,
-    paddingVertical: 12,
-    paddingRight: 14,
-  },
-  recipeTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  recipeBottomRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    paddingVertical: 14,
   },
   recipeTitle: {
-    flex: 1,
     fontSize: 15,
     fontWeight: "700",
     color: "#253B63",
-    marginRight: 8,
+    marginBottom: 4,
   },
   recipeTypeLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "500",
   },
   recipeCal: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#64748B",
-  },
-  macroGroup: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  macroText: {
-    fontSize: 11,
-    color: "#94A3B8",
-    fontWeight: "500",
+    color: "#9CA3AF",
+    marginRight: 14,
   },
   emptyCard: {
     minHeight: 98,
