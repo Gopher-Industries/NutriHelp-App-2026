@@ -12,22 +12,53 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { post } from "../../api/baseApi";
-import { saveScannedMeal } from "../../api/mealLogApi";
 import { useUser } from "../../context/UserContext";
+import { addScanEntry } from "../../utils/scanHistoryStorage";
 
-function normalizeBarcodeResult(response) {
-  const payload = response?.data || response;
-  const scan = payload?.scan || {};
-  const item = scan?.item || {};
-  const allergens = scan?.allergens || {};
-  const detection = payload?.detectionResult || {};
+const OFF_FIELDS = "product_name,allergens_tags,allergens_from_ingredients,ingredients_text";
+
+async function fetchFromOpenFoodFacts(barcode) {
+  const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=${OFF_FIELDS}`;
+  const response = await fetch(url, {
+    headers: { "User-Agent": "NutriHelp-Mobile/1.0" },
+  });
+  if (!response.ok) throw new Error("Could not reach product database. Please try again.");
+  const data = await response.json();
+  if (data.status === 0) throw new Error("Product not found. Try entering the barcode manually.");
+  return data.product;
+}
+
+function parseAllergens(product) {
+  if (product.allergens_tags?.length) {
+    return product.allergens_tags
+      .map((t) => t.replace(/^[a-z]{2}:/, ""))
+      .map((t) => t.charAt(0).toUpperCase() + t.slice(1));
+  }
+  if (product.allergens_from_ingredients) {
+    return product.allergens_from_ingredients
+      .split(",")
+      .map((s) => s.trim().replace(/^[a-z]{2}:/, ""))
+      .filter(Boolean)
+      .map((t) => t.charAt(0).toUpperCase() + t.slice(1));
+  }
+  return [];
+}
+
+function parseIngredients(product) {
+  if (!product.ingredients_text) return [];
+  return product.ingredients_text
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+}
+
+function normalizeBarcodeResult(product, barcode) {
   return {
-    name: item?.name || payload?.productName || "Product",
-    barcode: item?.barcode || scan?.query?.barcode || null,
-    hasUserAllergen: detection?.hasUserAllergen ?? allergens?.hasMatch ?? false,
-    matchingAllergens: detection?.matchingAllergens || allergens?.matchingIngredients || [],
-    detectedIngredients: payload?.barcodeIngredients || allergens?.detectedIngredients || [],
+    name: product.product_name || "Unknown Product",
+    barcode,
+    productAllergens: parseAllergens(product),
+    detectedIngredients: parseIngredients(product),
   };
 }
 
@@ -41,7 +72,7 @@ function LoadingOverlay() {
 }
 
 function ResultSheet({ result, onClose, onSave, saveState }) {
-  const safeChip = !result.hasUserAllergen;
+  const hasAllergens = result.productAllergens?.length > 0;
   return (
     <View style={styles.resultSheet}>
       <View style={styles.resultHandle} />
@@ -53,19 +84,19 @@ function ResultSheet({ result, onClose, onSave, saveState }) {
       <View style={styles.allergenCard}>
         <View style={styles.allergenCardLeft}>
           <Ionicons
-            name={safeChip ? "shield-checkmark-outline" : "warning-outline"}
+            name={hasAllergens ? "warning-outline" : "shield-checkmark-outline"}
             size={22}
-            color={safeChip ? "#22C55E" : "#EF4444"}
+            color={hasAllergens ? "#F59E0B" : "#22C55E"}
           />
           <View style={{ marginLeft: 10 }}>
-            <Text style={styles.allergenCardLabel}>Allergen Check</Text>
-            <Text style={[styles.allergenCardStatus, { color: safeChip ? "#22C55E" : "#EF4444" }]}>
-              {safeChip ? "Safe for your profile" : "Allergen match found"}
+            <Text style={styles.allergenCardLabel}>Product Allergens</Text>
+            <Text style={[styles.allergenCardStatus, { color: hasAllergens ? "#F59E0B" : "#22C55E" }]}>
+              {hasAllergens ? `Contains ${result.productAllergens.length} allergen${result.productAllergens.length > 1 ? "s" : ""}` : "No allergens declared"}
             </Text>
           </View>
         </View>
-        <View style={[styles.statusChip, safeChip ? styles.chipSafe : styles.chipDanger]}>
-          <Text style={styles.statusChipText}>{safeChip ? "Safe" : "Alert"}</Text>
+        <View style={[styles.statusChip, hasAllergens ? styles.chipWarning : styles.chipSafe]}>
+          <Text style={styles.statusChipText}>{hasAllergens ? "Check" : "Clear"}</Text>
         </View>
       </View>
 
@@ -82,23 +113,23 @@ function ResultSheet({ result, onClose, onSave, saveState }) {
         </View>
         <View style={styles.metricDivider} />
         <View style={styles.metricItem}>
-          <Text style={styles.metricValue}>{result.matchingAllergens?.length || 0}</Text>
+          <Text style={styles.metricValue}>{result.productAllergens?.length || 0}</Text>
           <Text style={styles.metricLabel}>Allergens</Text>
         </View>
       </View>
 
-      {/* Matched allergens */}
-      {result.matchingAllergens?.length > 0 && (
+      {/* Product allergens */}
+      {hasAllergens && (
         <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>Matched allergens</Text>
-          <Text style={styles.infoCardText}>{result.matchingAllergens.join(", ")}</Text>
+          <Text style={styles.infoCardTitle}>Contains allergens</Text>
+          <Text style={styles.infoCardText}>{result.productAllergens.join(", ")}</Text>
         </View>
       )}
 
       {/* Detected ingredients */}
       {result.detectedIngredients?.length > 0 && (
         <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>Detected ingredients</Text>
+          <Text style={styles.infoCardTitle}>Ingredients</Text>
           <Text style={styles.infoCardText}>{result.detectedIngredients.join(", ")}</Text>
         </View>
       )}
@@ -120,7 +151,7 @@ function ResultSheet({ result, onClose, onSave, saveState }) {
       </Pressable>
 
       <Pressable style={styles.secondaryBtn} onPress={onClose}>
-        <Text style={styles.secondaryBtnText}>Scan Another Product</Text>
+        <Text style={styles.secondaryBtnText}>{saveState === "saved" ? "Done" : "Scan Another Product"}</Text>
       </Pressable>
     </View>
   );
@@ -166,10 +197,9 @@ function PermissionDeniedScreen() {
   );
 }
 
-export default function BarcodeScannerScreen() {
+export default function BarcodeScannerScreen({ navigation }) {
   const { user } = useUser();
   const [permission, requestPermission] = useCameraPermissions();
-  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -178,18 +208,14 @@ export default function BarcodeScannerScreen() {
   const [saveState, setSaveState] = useState("idle");
   const scanLocked = useRef(false);
 
-  if (!hasRequestedPermission) {
-    return (
-      <PermissionExplanationScreen
-        onRequest={async () => {
-          setHasRequestedPermission(true);
-          await requestPermission();
-        }}
-      />
-    );
-  }
+  if (!permission) return null;
 
-  if (permission && !permission.granted) {
+  if (!permission.granted) {
+    if (permission.canAskAgain) {
+      return (
+        <PermissionExplanationScreen onRequest={requestPermission} />
+      );
+    }
     return <PermissionDeniedScreen />;
   }
 
@@ -204,8 +230,8 @@ export default function BarcodeScannerScreen() {
     setLoading(true);
     scanLocked.current = true;
     try {
-      const data = await post("/api/barcode/scan", { barcode: normalizedBarcode });
-      setResult(normalizeBarcodeResult(data));
+      const product = await fetchFromOpenFoodFacts(normalizedBarcode);
+      setResult(normalizeBarcodeResult(product, normalizedBarcode));
       setSaveState("idle");
     } catch (e) {
       setError(e.message ?? "Failed to look up barcode. Please try again.");
@@ -231,6 +257,10 @@ export default function BarcodeScannerScreen() {
   };
 
   const handleCloseResult = () => {
+    if (saveState === "saved" && navigation?.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
     setResult(null);
     setManualBarcode("");
     setSaveState("idle");
@@ -241,17 +271,13 @@ export default function BarcodeScannerScreen() {
     if (!result) return;
     try {
       setSaveState("saving");
-      await saveScannedMeal({
-        user_id: user?.id || user?.user_id || user?.email || "anonymous",
-        date: new Date().toISOString().slice(0, 10),
-        meal_type: "Snacks",
+      await addScanEntry({
         label: result.name,
-        confidence: 1,
-        estimated_calories: null,
-        serving_description: result.barcode || null,
-        recommendation: "Saved from barcode scan.",
-        is_unclear: false,
+        barcode: result.barcode,
+        productAllergens: result.productAllergens || [],
+        detectedIngredients: result.detectedIngredients || [],
         source: "mobile_barcode_scan",
+        date: new Date().toISOString().slice(0, 10),
       });
       setSaveState("saved");
     } catch (saveError) {
@@ -473,6 +499,7 @@ const styles = StyleSheet.create({
   allergenCardStatus: { fontSize: 14, fontWeight: "700" },
   statusChip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   chipSafe: { backgroundColor: "#DCFCE7" },
+  chipWarning: { backgroundColor: "#FEF3C7" },
   chipDanger: { backgroundColor: "#FEE2E2" },
   statusChipText: { fontSize: 12, fontWeight: "700", color: "#374151" },
 

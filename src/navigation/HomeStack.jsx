@@ -9,7 +9,6 @@ import MealPlanOverviewScreen from "../screens/home/MealPlanOverviewScreen";
 import NutritionSummaryScreen from "../screens/home/NutritionSummaryScreen";
 import RecommendedDetailsScreen from "../screens/home/RecommendedDetailsScreen";
 import BarcodeScannerScreen from "../screens/scan/BarcodeScannerScreen";
-import ProductScanScreen from "../screens/scan/ProductScanScreen";
 import DailyPlanScreen from "../screens/meal/DailyPlanScreen";
 import WeeklyPlanScreen from "../screens/meal/WeeklyPlanScreen";
 import PlaceholderScreen from "./_PlaceholderScreen";
@@ -88,11 +87,7 @@ export default function HomeStack() {
         component={BarcodeScannerScreen}
         options={{ title: "Scan Barcode" }}
       />
-      <Stack.Screen
-        name="ProductScanScreen"
-        component={ProductScanScreen}
-        options={{ title: "Product" }}
-      />
+
     </Stack.Navigator>
   );
 }
