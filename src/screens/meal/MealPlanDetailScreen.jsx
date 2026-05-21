@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { getTodayIntake } from "../../api/waterIntakeApi";
+import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
 import { useUser } from "../../context/UserContext";
 import {
@@ -39,7 +39,7 @@ export default function MealPlanDetailScreen({ navigation, route }) {
       try {
         const [weeklyResponse, todayGlasses] = await Promise.all([
           mealPlanApi.getWeeklyPlan({ userId: user?.id }),
-          getTodayIntake(user?.id),
+          getTodayIntakeLocal(user?.id),
         ]);
 
         if (cancelled) {

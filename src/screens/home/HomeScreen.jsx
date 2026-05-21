@@ -11,12 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  getTodayIntake,
-  getTodayIntakeLocal,
-} from "../../api/waterIntakeApi";
+import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
 import { useUser } from "../../context/UserContext";
+import { useChatbot } from "../../context/ChatbotContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
 import { groupMealsByType, MEAL_TYPES } from "../meal/mealPlanUiHelpers";
 
@@ -159,6 +157,7 @@ function SkeletonCard() {
 
 export default function HomeScreen({ navigation }) {
   const { user } = useUser();
+  const { openChatbot } = useChatbot();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
     calories: 0,
@@ -181,10 +180,9 @@ export default function HomeScreen({ navigation }) {
       setLoading(true);
       const todayIso = toIsoDate(new Date());
 
-      const [localMeals, weeklyPlan, remoteWater, localWater] = await Promise.all([
+      const [localMeals, weeklyPlan, localWater] = await Promise.all([
         getDailyMeals(todayIso),
         mealPlanApi.getWeeklyPlan({ userId: user?.id }).catch(() => null),
-        getTodayIntake(user?.id).catch(() => null),
         getTodayIntakeLocal(user?.id),
       ]);
 
@@ -235,7 +233,7 @@ export default function HomeScreen({ navigation }) {
       const meals = mealSections.flatMap((section) => section.meals);
 
       const calories = meals.reduce((total, meal) => total + meal.calories, 0);
-      const water = remoteWater ?? localWater ?? 0;
+      const water = localWater ?? 0;
 
       setSummary({ calories, water, mealsCompleted: meals.length, meals, mealSections });
     } finally {
@@ -338,7 +336,7 @@ export default function HomeScreen({ navigation }) {
           <ActionButton
             icon="chat-processing-outline"
             label="Ask AI"
-            onPress={() => navigation.navigate("ChatScreen")}
+            onPress={openChatbot}
             isLast
           />
         </View>

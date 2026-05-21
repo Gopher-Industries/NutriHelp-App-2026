@@ -18,6 +18,8 @@ import notificationApi from "../../api/notificationApi";
 import useBiometric from "../../hooks/useBiometric";
 import profileApi from "../../api/profileApi";
 import { useUser } from "../../context/UserContext";
+import { useAccessibility, FONT_SIZE_OPTIONS } from "../../context/AccessibilityContext";
+import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
 
 const SETTINGS_FALLBACK_KEY = "nutrihelp.settings.local";
 
@@ -65,6 +67,8 @@ function SettingRow({
 
 export default function SettingsScreen({ navigation }) {
   const { logout, user } = useUser();
+  const { fontSizeKey, setFontSizeKey } = useAccessibility();
+  const { conditions, toggleCondition } = useHealthConditions();
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -166,6 +170,80 @@ export default function SettingsScreen({ navigation }) {
         <Text style={styles.subtitle}>
           Manage your wellness preferences and account.
         </Text>
+
+        {/* ── ACCESSIBILITY ─────────────────────────────────────────────── */}
+        <SectionTitle>ACCESSIBILITY</SectionTitle>
+        <View style={styles.sectionCard}>
+          <View style={styles.row}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>Text Size</Text>
+              <Text style={styles.rowDescription}>
+                Larger text makes reading easier.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.fontSizeRow}>
+            {FONT_SIZE_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.fontSizeChip,
+                  fontSizeKey === opt.key && styles.fontSizeChipActive,
+                ]}
+                onPress={() => setFontSizeKey(opt.key)}
+              >
+                <Text
+                  style={[
+                    styles.fontSizeChipText,
+                    fontSizeKey === opt.key && styles.fontSizeChipTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* ── HEALTH CONDITIONS ─────────────────────────────────────────── */}
+        <SectionTitle>HEALTH CONDITIONS</SectionTitle>
+        <View style={[styles.sectionCard, { paddingBottom: 14 }]}>
+          <View style={styles.row}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>My Conditions</Text>
+              <Text style={styles.rowDescription}>
+                Selected conditions personalise your meal warnings and AI health plan.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.conditionGrid}>
+            {ALL_CONDITIONS.map((c) => {
+              const active = conditions.includes(c.key);
+              return (
+                <Pressable
+                  key={c.key}
+                  style={[styles.conditionChip, active && styles.conditionChipActive]}
+                  onPress={() => toggleCondition(c.key)}
+                >
+                  <Text style={styles.conditionChipEmoji}>{c.icon}</Text>
+                  <Text
+                    style={[
+                      styles.conditionChipText,
+                      active && styles.conditionChipTextActive,
+                    ]}
+                  >
+                    {c.label}
+                  </Text>
+                  {active && (
+                    <Ionicons name="checkmark-circle" size={14} color="#0B5FA5" />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
 
         <SectionTitle>NOTIFICATIONS</SectionTitle>
         <View style={styles.sectionCard}>
@@ -495,4 +573,62 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#55627D",
   },
+
+  // Font size picker
+  fontSizeRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 12,
+  },
+  fontSizeChip: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#D9E2F4",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  fontSizeChipActive: {
+    borderColor: "#0B5FA5",
+    backgroundColor: "#EFF6FF",
+  },
+  fontSizeChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  fontSizeChipTextActive: {
+    color: "#0B5FA5",
+  },
+
+  // Health conditions
+  conditionGrid: {
+    paddingTop: 10,
+    gap: 8,
+  },
+  conditionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#D9E2F4",
+    backgroundColor: "#FFFFFF",
+  },
+  conditionChipActive: {
+    borderColor: "#0B5FA5",
+    backgroundColor: "#EFF6FF",
+  },
+  conditionChipEmoji: { fontSize: 18 },
+  conditionChipText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  conditionChipTextActive: { color: "#0B5FA5" },
 });
