@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
-import { getTodayIntake, getTodayIntakeLocal } from "../../api/waterIntakeApi";
+import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import { useUser } from "../../context/UserContext";
 import { groupMealsByType } from "../meal/mealPlanUiHelpers";
 
@@ -34,9 +34,8 @@ export default function GoalDetailsScreen({ navigation }) {
           setLoading(true);
           const today = new Date();
 
-          const [mealResponse, remoteWater, localWater] = await Promise.all([
+          const [mealResponse, localWater] = await Promise.all([
             mealPlanApi.getWeeklyPlan({ userId: user?.id }).catch(() => null),
-            getTodayIntake(user?.id).catch(() => null),
             getTodayIntakeLocal(user?.id),
           ]);
 
@@ -56,7 +55,7 @@ export default function GoalDetailsScreen({ navigation }) {
 
           setCalories(Math.round(totalCalories));
           setProtein(Math.round(totalProtein));
-          setWater(remoteWater ?? localWater ?? 0);
+          setWater(localWater ?? 0);
         } finally {
           if (!cancelled) setLoading(false);
         }

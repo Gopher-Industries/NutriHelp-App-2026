@@ -12,7 +12,7 @@ import {
 } from "react";
 
 import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from "../api/baseApi";
-import { logoutUser } from "../api/authApi";
+import { logoutUser, refreshAccessToken } from "../api/authApi";
 
 const USER_STORAGE_KEY = "nutrihelp.auth.user";
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
@@ -61,6 +61,8 @@ export function UserProvider({ children }) {
   const appStateRef = useRef(AppState.currentState);
   const backgroundAtRef = useRef(null);
   const autoLogoutTimerRef = useRef(null);
+  // Ref so the setTimeout callback always calls the latest scheduleAutoLogout.
+  const scheduleAutoLogoutRef = useRef(null);
 
   const clearAutoLogoutTimer = useCallback(() => {
     if (autoLogoutTimerRef.current) {
@@ -87,30 +89,53 @@ export function UserProvider({ children }) {
     ]);
   }, [clearAutoLogoutTimer]);
 
+  // Silently attempt a token refresh. Returns new expiresAt on success, null on failure.
+  const attemptTokenRefresh = useCallback(async () => {
+    try {
+      const storedRefresh = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      if (!storedRefresh) return null;
+      const result = await refreshAccessToken(storedRefresh);
+      if (!result?.token) return null;
+      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, result.token);
+      setToken(result.token);
+      setExpiresAt(result.expiresAt || null);
+      return result.expiresAt || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const scheduleAutoLogout = useCallback(
     (nextExpiresAt) => {
       clearAutoLogoutTimer();
-      if (!nextExpiresAt) {
-        console.log("[UserContext] No expiration time, auto-logout not scheduled");
-        return;
-      }
+      if (!nextExpiresAt) return;
 
       const remaining = nextExpiresAt - Date.now();
-      console.log("[UserContext] Auto-logout scheduled. Expires at:", new Date(nextExpiresAt).toISOString(), "Remaining ms:", remaining);
-      
+
       if (remaining <= 0) {
-        console.log("[UserContext] Token already expired, logging out immediately");
-        logout();
+        // Already expired — try to silently refresh before giving up.
+        attemptTokenRefresh().then((newExpiry) => {
+          if (newExpiry) scheduleAutoLogoutRef.current?.(newExpiry);
+          else logout();
+        });
         return;
       }
 
-      autoLogoutTimerRef.current = setTimeout(() => {
-        console.log("[UserContext] Auto-logout timer fired");
-        logout();
-      }, remaining);
+      // Fire 60 s before expiry so we can refresh proactively.
+      const delay = Math.max(remaining - 60_000, 0);
+      autoLogoutTimerRef.current = setTimeout(async () => {
+        const newExpiry = await attemptTokenRefresh();
+        if (newExpiry) scheduleAutoLogoutRef.current?.(newExpiry);
+        else logout();
+      }, delay);
     },
-    [clearAutoLogoutTimer, logout]
+    [clearAutoLogoutTimer, logout, attemptTokenRefresh]
   );
+
+  // Keep the ref pointing at the latest version so setTimeout callbacks use it.
+  useEffect(() => {
+    scheduleAutoLogoutRef.current = scheduleAutoLogout;
+  }, [scheduleAutoLogout]);
 
   const login = useCallback(
     async (authOrToken, maybeUser = null, maybeExpiresAt = null) => {
@@ -178,21 +203,25 @@ export function UserProvider({ children }) {
           return;
         }
 
-        const nextExpiresAt = getTokenExpiryMs(storedToken);
-        console.log("[UserContext] Token expiry:", nextExpiresAt ? new Date(nextExpiresAt).toISOString() : null);
-        
+        let activeToken = storedToken;
+        let nextExpiresAt = getTokenExpiryMs(storedToken);
+
         if (nextExpiresAt && nextExpiresAt <= Date.now()) {
-          console.log("[UserContext] Stored token already expired");
-          await logout();
+          // Stored token expired — try refresh before forcing a new login.
+          const refreshed = await attemptTokenRefresh();
+          if (!refreshed) {
+            await logout();
+            return;
+          }
+          // attemptTokenRefresh already updated SecureStore + state, just reschedule.
+          if (isMounted) scheduleAutoLogout(refreshed);
           return;
         }
 
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
-        setToken(storedToken);
+        setToken(activeToken);
         setRefreshToken(storedRefresh || null);
         setUser(parsedUser);
         setExpiresAt(nextExpiresAt || null);
@@ -210,7 +239,7 @@ export function UserProvider({ children }) {
       isMounted = false;
       clearAutoLogoutTimer();
     };
-  }, [clearAutoLogoutTimer, logout, scheduleAutoLogout]);
+  }, [clearAutoLogoutTimer, logout, scheduleAutoLogout, attemptTokenRefresh]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {

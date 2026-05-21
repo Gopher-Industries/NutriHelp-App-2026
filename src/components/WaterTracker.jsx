@@ -1,9 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,19 +16,57 @@ import {
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
-import {
-  getTodayIntake,
-  getTodayIntakeLocal,
-  logWaterIntake,
-  saveTodayIntakeLocal,
-} from "../api/waterIntakeApi";
+import { getTodayIntakeLocal, saveTodayIntakeLocal } from "../api/waterIntakeApi";
 
 const DAILY_GOAL_CUPS = 8;
 const REMINDERS_KEY = "nutrihelp.water.dailyReminders";
+const WATER_NOTIFICATION_KEY = "nutrihelp.water.notificationId";
+const WATER_CHANNEL_ID = "water-reminders";
 
 function buildReminderKey(userId) {
   const scope = userId ? `user_${userId}` : "guest";
   return `${REMINDERS_KEY}.${scope}`;
+}
+
+async function setupAndroidChannel() {
+  if (Platform.OS !== "android") return;
+  await Notifications.setNotificationChannelAsync(WATER_CHANNEL_ID, {
+    name: "Water Reminders",
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: true,
+    vibrationPattern: [0, 250, 250, 250],
+  });
+}
+
+async function cancelWaterReminder() {
+  try {
+    const id = await AsyncStorage.getItem(WATER_NOTIFICATION_KEY);
+    if (id) {
+      await Notifications.cancelScheduledNotificationAsync(id);
+      await AsyncStorage.removeItem(WATER_NOTIFICATION_KEY);
+    }
+  } catch {}
+}
+
+async function scheduleWaterReminder() {
+  await cancelWaterReminder();
+  await setupAndroidChannel();
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Time to hydrate! 💧",
+      body: "A glass of water keeps you energized and healthy.",
+      data: { screen: "WaterIntake" },
+      ...(Platform.OS === "android" && { channelId: WATER_CHANNEL_ID }),
+    },
+    trigger: {
+      seconds: 3600,
+      repeats: true,
+    },
+  });
+
+  await AsyncStorage.setItem(WATER_NOTIFICATION_KEY, id);
+  return id;
 }
 
 function ProgressRing({ current, goal }) {
@@ -38,7 +78,7 @@ function ProgressRing({ current, goal }) {
   const cy = size / 2;
 
   const gapDeg = 5;
-  const segDeg = (360 / goal) - gapDeg;
+  const segDeg = 360 / goal - gapDeg;
   const segLength = (circumference * segDeg) / 360;
 
   return (
@@ -90,18 +130,19 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
     let cancelled = false;
 
     async function bootstrap() {
-      const [remoteGlasses, localGlasses, storedReminder] = await Promise.all([
-        userId ? getTodayIntake(userId).catch(() => null) : Promise.resolve(null),
+      const [localGlasses, storedReminder] = await Promise.all([
         getTodayIntakeLocal(userId),
         AsyncStorage.getItem(buildReminderKey(userId)),
       ]);
       if (cancelled) return;
-      setGlasses(remoteGlasses ?? localGlasses ?? 0);
+      setGlasses(localGlasses ?? 0);
       setRemindersEnabled(storedReminder === "true");
     }
 
     bootstrap();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   const progress = useMemo(
@@ -113,12 +154,25 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
     const safeValue = Math.max(0, Math.min(nextGlasses, dailyGoal));
     setGlasses(safeValue);
     await saveTodayIntakeLocal(userId, safeValue);
-    if (userId) logWaterIntake(userId, safeValue).catch(console.error);
   };
 
   const adjustGlasses = (delta) => persistIntake(glasses + delta);
 
   const handleToggleReminders = async (value) => {
+    if (value) {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "Please enable notifications in your device settings to receive water reminders."
+        );
+        return;
+      }
+      await scheduleWaterReminder();
+    } else {
+      await cancelWaterReminder();
+    }
+
     setRemindersEnabled(value);
     await AsyncStorage.setItem(buildReminderKey(userId), value ? "true" : "false");
   };
@@ -142,12 +196,10 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Progress ring */}
       <ProgressRing current={glasses} goal={dailyGoal} />
 
-      {/* Status text */}
       <Text style={styles.statusTitle}>
-        {pct >= 100 ? "Daily goal reached! 🎉" : `${pct}% of daily goal`}
+        {pct >= 100 ? "Daily goal reached!" : `${pct}% of daily goal`}
       </Text>
       <Text style={styles.statusSubtitle}>
         {remaining > 0
@@ -155,7 +207,6 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
           : "Great job staying hydrated today"}
       </Text>
 
-      {/* Counter */}
       <View style={styles.counterCard}>
         <Pressable
           style={[styles.counterBtn, glasses <= 0 && styles.counterBtnDisabled]}
@@ -179,21 +230,21 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
         </Pressable>
       </View>
 
-      {/* Quick actions */}
       <View style={styles.quickRow}>
         <QuickAction label="+1 cup" onPress={() => adjustGlasses(1)} />
         <QuickAction label="+2 cups" onPress={() => adjustGlasses(2)} />
         <QuickAction label="Custom" onPress={() => setCustomVisible(true)} />
       </View>
 
-      {/* Reminders toggle */}
       <View style={styles.remindersCard}>
         <View style={styles.remindersLeft}>
           <Ionicons name="notifications-outline" size={20} color="#2A78C5" />
           <View style={{ marginLeft: 12 }}>
-            <Text style={styles.remindersTitle}>Daily reminders</Text>
+            <Text style={styles.remindersTitle}>Hourly reminders</Text>
             <Text style={styles.remindersSubtitle}>
-              {remindersEnabled ? "Reminders are on" : "Tap to enable reminders"}
+              {remindersEnabled
+                ? "You'll be reminded every hour"
+                : "Tap to get hourly hydration reminders"}
             </Text>
           </View>
         </View>
@@ -205,15 +256,14 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
         />
       </View>
 
-      {/* Hydration tip */}
       <View style={styles.tipCard}>
         <Ionicons name="bulb-outline" size={16} color="#2A78C5" style={{ marginBottom: 6 }} />
         <Text style={styles.tipText}>
-          Drinking enough water supports digestion, energy levels, and overall health. Aim for 8 cups per day.
+          Drinking enough water supports digestion, energy levels, and overall health. Aim for 8
+          cups per day.
         </Text>
       </View>
 
-      {/* Custom modal */}
       <Modal
         transparent
         animationType="fade"
@@ -257,7 +307,13 @@ const styles = StyleSheet.create({
   ringCurrent: { fontSize: 52, fontWeight: "800", color: "#253B63" },
   ringLabel: { fontSize: 14, color: "#94A3B8", fontWeight: "500" },
 
-  statusTitle: { fontSize: 20, fontWeight: "700", color: "#253B63", textAlign: "center", marginBottom: 6 },
+  statusTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#253B63",
+    textAlign: "center",
+    marginBottom: 6,
+  },
   statusSubtitle: { fontSize: 14, color: "#667085", textAlign: "center", marginBottom: 24 },
 
   counterCard: {
