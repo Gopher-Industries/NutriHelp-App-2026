@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "scheme": "nutrihelp",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -93,6 +93,11 @@
           "color": "#2A78C5"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1913ba84-301f-4216-a14d-ff1df67468b0"
+      }
+    }
   }
 }
