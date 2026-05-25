@@ -183,7 +183,7 @@ export async function refreshAccessToken(refreshToken) {
   const response = await post(
     "/api/auth/refresh",
     { refreshToken },
-    { skipAuth: true }
+    { skipAuth: true, timeoutMs: 2500 }
   );
 
   return {

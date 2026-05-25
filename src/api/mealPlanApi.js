@@ -37,9 +37,10 @@ function isSameDay(value, date) {
   );
 }
 
-export async function getWeeklyPlan({ userId } = {}) {
+export async function getWeeklyPlan({ userId, timeoutMs = 3500 } = {}) {
   return get(MEAL_PLAN_ENDPOINTS.weeklyPlan, {
     query: { user_id: userId },
+    timeoutMs,
   });
 }
 
