@@ -1,232 +1,365 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { getScanHistory } from "../../utils/scanHistoryStorage";
 
-const METHODS = [
-  {
-    key: "barcode",
-    icon: "barcode-outline",
-    label: "Barcode",
-    description: "Scan the barcode on the product packaging",
-    routeName: "BarcodeScannerScreen",
-    accent: "#3B82F6",
-  },
-  {
-    key: "image",
-    icon: "camera-outline",
-    label: "Photo",
-    description: "Take or upload a photo of the food item",
-    routeName: "ProductScanScreen",
-    accent: "#F59E0B",
-  },
-];
+function DetailSheet({ item, onClose }) {
+  if (!item) return null;
+  const hasAllergens = item.productAllergens?.length > 0;
+  const savedAt = item.saved_at
+    ? new Date(item.saved_at).toLocaleDateString(undefined, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : item.date || "";
 
-export default function ScanProductScreen({ navigation, route }) {
-  const selectedKey = route?.params?.method === "image" ? "image" : "barcode";
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.sheet}>
+        <View style={styles.sheetHandle} />
 
-  const handleSelect = (key) => navigation.setParams({ method: key });
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.sheetEyebrow}>Scan History</Text>
+          <Text style={styles.sheetTitle} numberOfLines={2}>{item.label}</Text>
 
-  const handleGo = () => {
-    const method = METHODS.find((m) => m.key === selectedKey);
-    if (method) navigation.navigate(method.routeName);
-  };
+          {/* Allergen status */}
+          <View style={styles.allergenCard}>
+            <View style={styles.allergenCardLeft}>
+              <Ionicons
+                name={hasAllergens ? "warning-outline" : "shield-checkmark-outline"}
+                size={22}
+                color={hasAllergens ? "#F59E0B" : "#22C55E"}
+              />
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.allergenLabel}>Product Allergens</Text>
+                <Text style={[styles.allergenStatus, { color: hasAllergens ? "#F59E0B" : "#22C55E" }]}>
+                  {hasAllergens
+                    ? `Contains ${item.productAllergens.length} allergen${item.productAllergens.length > 1 ? "s" : ""}`
+                    : "No allergens declared"}
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.chip, hasAllergens ? styles.chipWarning : styles.chipSafe]}>
+              <Text style={styles.chipText}>{hasAllergens ? "Check" : "Clear"}</Text>
+            </View>
+          </View>
 
-  const selected = METHODS.find((m) => m.key === selectedKey);
+          {/* Metrics row */}
+          <View style={styles.metricRow}>
+            <View style={styles.metricItem}>
+              <Text style={styles.metricValue}>{item.barcode ?? "--"}</Text>
+              <Text style={styles.metricLabel}>Barcode</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricItem}>
+              <Text style={styles.metricValue}>{item.detectedIngredients?.length || 0}</Text>
+              <Text style={styles.metricLabel}>Ingredients</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricItem}>
+              <Text style={styles.metricValue}>{item.productAllergens?.length || 0}</Text>
+              <Text style={styles.metricLabel}>Allergens</Text>
+            </View>
+          </View>
+
+          {/* Allergens list */}
+          {hasAllergens && (
+            <View style={styles.infoCard}>
+              <Text style={styles.infoCardTitle}>Contains allergens</Text>
+              <Text style={styles.infoCardText}>{item.productAllergens.join(", ")}</Text>
+            </View>
+          )}
+
+          {/* Ingredients list */}
+          {item.detectedIngredients?.length > 0 && (
+            <View style={styles.infoCard}>
+              <Text style={styles.infoCardTitle}>Ingredients</Text>
+              <Text style={styles.infoCardText}>{item.detectedIngredients.join(", ")}</Text>
+            </View>
+          )}
+
+          {/* Saved date */}
+          <View style={styles.infoCard}>
+            <Text style={styles.infoCardTitle}>Scanned on</Text>
+            <Text style={styles.infoCardText}>{savedAt}</Text>
+          </View>
+
+          <Pressable style={styles.closeBtn} onPress={onClose}>
+            <Text style={styles.closeBtnText}>Close</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function HistoryItem({ item, onPress }) {
+  const savedAt = item.saved_at
+    ? new Date(item.saved_at).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : item.date || "";
+  const hasAllergens = item.productAllergens?.length > 0;
+
+  return (
+    <Pressable style={styles.historyItem} onPress={() => onPress(item)}>
+      <View style={styles.historyIconWrap}>
+        <Ionicons name="barcode-outline" size={18} color="#2A78C5" />
+      </View>
+      <View style={styles.historyInfo}>
+        <Text style={styles.historyName} numberOfLines={1}>{item.label}</Text>
+        <Text style={styles.historyMeta}>
+          {item.barcode ? `${item.barcode} · ` : ""}{savedAt}
+        </Text>
+      </View>
+      {hasAllergens && (
+        <View style={styles.allergenDot}>
+          <Ionicons name="warning-outline" size={14} color="#F59E0B" />
+        </View>
+      )}
+      <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+    </Pressable>
+  );
+}
+
+export default function ScanProductScreen({ navigation }) {
+  const [history, setHistory] = useState([]);
+  const [selected, setSelected] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getScanHistory().then(setHistory).catch(() => setHistory([]));
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.topRow}>
-          <Pressable style={styles.backBtn} onPress={() => navigation.canGoBack() && navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color="#667085" />
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
-          <Text style={styles.logoText}>NutriHelp</Text>
-        </View>
+      <View style={styles.content}>
+        <Text style={styles.pageTitle}>Product Scan</Text>
+        <Text style={styles.pageSubtitle}>Identify products with barcode scanning</Text>
 
-        <Text style={styles.pageTitle}>Scan Food</Text>
-        <Text style={styles.pageSubtitle}>Choose a method to identify your food</Text>
-
-        {/* Method cards */}
-        <View style={styles.methodRow}>
-          {METHODS.map((m) => {
-            const active = m.key === selectedKey;
-            return (
-              <Pressable
-                key={m.key}
-                style={[styles.methodCard, active && { borderColor: m.accent, borderWidth: 2 }]}
-                onPress={() => handleSelect(m.key)}
-              >
-                <View style={[styles.methodIconWrap, { backgroundColor: active ? m.accent + "18" : "#F1F5F9" }]}>
-                  <Ionicons name={m.icon} size={28} color={active ? m.accent : "#94A3B8"} />
-                </View>
-                <Text style={[styles.methodLabel, active && { color: m.accent }]}>{m.label}</Text>
-                <Text style={styles.methodDesc}>{m.description}</Text>
-                {active && (
-                  <View style={[styles.activeDot, { backgroundColor: m.accent }]} />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Action card */}
-        <View style={styles.actionCard}>
-          <View style={styles.actionHeader}>
-            <Ionicons name={selected.icon} size={20} color="#2A78C5" />
-            <Text style={styles.actionTitle}>
-              {selectedKey === "barcode" ? "Scan Barcode" : "Scan by Image"}
-            </Text>
+        <Pressable
+          style={styles.scanCard}
+          onPress={() => navigation.navigate("BarcodeScannerScreen")}
+        >
+          <View style={styles.scanIconWrap}>
+            <Ionicons name="barcode-outline" size={32} color="#2A78C5" />
           </View>
-          <Text style={styles.actionDesc}>
-            {selectedKey === "barcode"
-              ? "Point your camera at a barcode, or enter the number manually."
-              : "Take a clear photo of the food item for AI analysis."}
-          </Text>
-          <Pressable style={styles.goBtn} onPress={handleGo}>
-            <Ionicons name="scan-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-            <Text style={styles.goBtnText}>
-              {selectedKey === "barcode" ? "Open Scanner" : "Open Camera"}
-            </Text>
-          </Pressable>
-        </View>
+          <View style={styles.scanCardText}>
+            <Text style={styles.scanCardTitle}>Scan Barcode</Text>
+            <Text style={styles.scanCardDesc}>Point camera at a product barcode or enter manually</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+        </Pressable>
 
-        {/* How to use */}
-        <View style={styles.helpCard}>
-          <Text style={styles.helpTitle}>How to use</Text>
-          {selectedKey === "barcode" ? (
-            <>
-              <View style={styles.helpRow}>
-                <View style={styles.helpBullet} />
-                <Text style={styles.helpText}>Point camera at the barcode on the product</Text>
-              </View>
-              <View style={styles.helpRow}>
-                <View style={styles.helpBullet} />
-                <Text style={styles.helpText}>Hold steady until the barcode is detected</Text>
-              </View>
-              <View style={styles.helpRow}>
-                <View style={styles.helpBullet} />
-                <Text style={styles.helpText}>Or type the numbers under the barcode manually</Text>
-              </View>
-            </>
-          ) : (
-            <>
-              <View style={styles.helpRow}>
-                <View style={styles.helpBullet} />
-                <Text style={styles.helpText}>Take a clear, well-lit photo of the food</Text>
-              </View>
-              <View style={styles.helpRow}>
-                <View style={styles.helpBullet} />
-                <Text style={styles.helpText}>Make sure the food fills most of the frame</Text>
-              </View>
-              <View style={styles.helpRow}>
-                <View style={styles.helpBullet} />
-                <Text style={styles.helpText}>Or choose an existing photo from your library</Text>
-              </View>
-            </>
+        <View style={styles.historyHeader}>
+          <Text style={styles.historyTitle}>Recent Scans</Text>
+          {history.length > 0 && (
+            <View style={styles.historyBadge}>
+              <Text style={styles.historyBadgeText}>{history.length}</Text>
+            </View>
           )}
         </View>
-      </ScrollView>
+
+        {history.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="scan-outline" size={44} color="#CBD5E1" />
+            <Text style={styles.emptyText}>No scans yet</Text>
+            <Text style={styles.emptySubtext}>Scan a barcode to see results here</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={history}
+            keyExtractor={(_, i) => String(i)}
+            renderItem={({ item }) => (
+              <HistoryItem item={item} onPress={setSelected} />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          />
+        )}
+      </View>
+
+      <DetailSheet item={selected} onClose={() => setSelected(null)} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
-  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36 },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
 
-  topRow: {
+  pageTitle: { fontSize: 30, fontWeight: "800", color: "#253B63", marginBottom: 4 },
+  pageSubtitle: { fontSize: 14, color: "#66758F", marginBottom: 22 },
+
+  scanCard: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
-  },
-  backBtn: { flexDirection: "row", alignItems: "center" },
-  backText: { marginLeft: 6, fontSize: 16, color: "#667085" },
-  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
-
-  pageTitle: { fontSize: 32, fontWeight: "800", color: "#253B63", marginBottom: 6 },
-  pageSubtitle: { fontSize: 15, color: "#66758F", marginBottom: 24 },
-
-  methodRow: { flexDirection: "row", gap: 14, marginBottom: 20 },
-  methodCard: {
-    flex: 1,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1.5,
-    borderColor: "#E5E7EB",
+    borderColor: "#BFDBFE",
+    backgroundColor: "#EFF6FF",
     padding: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    marginBottom: 28,
+    gap: 14,
   },
-  methodIconWrap: {
+  scanIconWrap: {
     width: 56,
     height: 56,
     borderRadius: 16,
+    backgroundColor: "#DBEAFE",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
   },
-  methodLabel: { fontSize: 15, fontWeight: "700", color: "#253B63", marginBottom: 4 },
-  methodDesc: { fontSize: 12, color: "#94A3B8", textAlign: "center", lineHeight: 17 },
-  activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 10,
-  },
+  scanCardText: { flex: 1 },
+  scanCardTitle: { fontSize: 16, fontWeight: "700", color: "#253B63", marginBottom: 3 },
+  scanCardDesc: { fontSize: 13, color: "#667085", lineHeight: 18 },
 
-  actionCard: {
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 18,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  actionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-  actionTitle: { fontSize: 16, fontWeight: "700", color: "#253B63" },
-  actionDesc: { fontSize: 14, color: "#667085", lineHeight: 21, marginBottom: 16 },
-  goBtn: {
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#2A78C5",
+  historyHeader: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  historyTitle: { fontSize: 17, fontWeight: "700", color: "#253B63" },
+  historyBadge: {
+    backgroundColor: "#EFF6FF",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  historyBadgeText: { fontSize: 12, fontWeight: "700", color: "#2A78C5" },
+
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingBottom: 80,
+  },
+  emptyText: { fontSize: 16, fontWeight: "700", color: "#94A3B8" },
+  emptySubtext: { fontSize: 13, color: "#CBD5E1" },
+
+  historyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    gap: 12,
+  },
+  historyIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
     justifyContent: "center",
   },
-  goBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  historyInfo: { flex: 1 },
+  historyName: { fontSize: 14, fontWeight: "600", color: "#253B63", marginBottom: 2 },
+  historyMeta: { fontSize: 12, color: "#94A3B8" },
+  allergenDot: { marginRight: 2 },
 
-  helpCard: {
-    borderRadius: 20,
+  // Detail sheet
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  sheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 40,
+    maxHeight: "80%",
+  },
+  sheetHandle: {
+    width: 48,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#D1D5DB",
+    alignSelf: "center",
+    marginBottom: 18,
+  },
+  sheetEyebrow: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: "#2A78C5",
+    marginBottom: 4,
+  },
+  sheetTitle: { fontSize: 24, fontWeight: "800", color: "#253B63", marginBottom: 16 },
+
+  allergenCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F8FAFC",
+    padding: 14,
+    marginBottom: 14,
+  },
+  allergenCardLeft: { flexDirection: "row", alignItems: "center" },
+  allergenLabel: { fontSize: 12, color: "#94A3B8", fontWeight: "500", marginBottom: 2 },
+  allergenStatus: { fontSize: 14, fontWeight: "700" },
+  chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  chipSafe: { backgroundColor: "#DCFCE7" },
+  chipWarning: { backgroundColor: "#FEF3C7" },
+  chipText: { fontSize: 12, fontWeight: "700", color: "#374151" },
+
+  metricRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    marginBottom: 14,
+  },
+  metricItem: { flex: 1, alignItems: "center" },
+  metricDivider: { width: 1, height: 32, backgroundColor: "#E5E7EB" },
+  metricValue: { fontSize: 16, fontWeight: "800", color: "#253B63", marginBottom: 2 },
+  metricLabel: { fontSize: 11, color: "#94A3B8", fontWeight: "500" },
+
+  infoCard: {
+    borderRadius: 14,
     backgroundColor: "#F8FAFC",
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    padding: 18,
+    padding: 14,
+    marginBottom: 10,
   },
-  helpTitle: { fontSize: 15, fontWeight: "700", color: "#253B63", marginBottom: 12 },
-  helpRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
-  helpBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#2A78C5",
+  infoCardTitle: { fontSize: 13, fontWeight: "700", color: "#253B63", marginBottom: 5 },
+  infoCardText: { fontSize: 13, color: "#667085", lineHeight: 19 },
+
+  closeBtn: {
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 6,
   },
-  helpText: { flex: 1, fontSize: 14, color: "#667085", lineHeight: 21 },
+  closeBtnText: { fontSize: 15, fontWeight: "600", color: "#667085" },
 });

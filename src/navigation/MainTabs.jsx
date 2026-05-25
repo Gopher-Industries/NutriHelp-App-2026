@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useColorScheme } from "react-native";
 
 import AccountStack from "./AccountStack";
+import HealthPlanStack from "./HealthPlanStack";
 import HomeStack from "./HomeStack";
 import MealStack from "./MealStack";
 import RecipeStack from "./RecipeStack";
@@ -17,6 +18,7 @@ const TAB_ICON_BY_ROUTE = {
   Meals: "restaurant",
   Recipes: "book",
   Scan: "barcode",
+  AIPlan: "pulse",
   Profile: "person",
 };
 
@@ -64,6 +66,11 @@ export default function MainTabs() {
         name="Scan"
         component={ScanStack}
         options={{ tabBarLabel: "Scan" }}
+      />
+      <Tab.Screen
+        name="AIPlan"
+        component={HealthPlanStack}
+        options={{ tabBarLabel: "AI Plan" }}
       />
       <Tab.Screen
         name="Profile"

@@ -12,9 +12,14 @@ import {
 } from "react-native";
 
 import { UserProvider, useUser } from "../context/UserContext";
+import { AccessibilityProvider } from "../context/AccessibilityContext";
+import { HealthConditionsProvider } from "../context/HealthConditionsContext";
+import { ChatbotProvider } from "../context/ChatbotContext";
+import FloatingChatbot from "../components/FloatingChatbot/FloatingChatbot";
 
 import AuthStack from "./AuthStack";
 import MainTabs from "./MainTabs";
+
 function AuthGateSplash() {
   return (
     <View className="flex-1 items-center justify-center bg-white dark:bg-[#0B1220]">
@@ -39,13 +44,22 @@ export default function AppNavigator() {
   const navTheme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
-    // Additional context providers (e.g. a future ThemeProvider) should
-    // wrap NavigationContainer alongside UserProvider here.
     <UserProvider>
+      <AccessibilityProvider>
+      <HealthConditionsProvider>
+      <ChatbotProvider>
       <NavigationContainer theme={navTheme}>
         <RootNavigator />
+        {/* FloatingChatbot must be INSIDE NavigationContainer so it shares
+            the same native view layer as react-native-screens. Placing it
+            after RootNavigator gives it a higher z-order, keeping it visible
+            above all screens. */}
+        <FloatingChatbot />
         <StatusBar style={colorScheme === "dark" ? "light" : "auto"} />
       </NavigationContainer>
+      </ChatbotProvider>
+      </HealthConditionsProvider>
+      </AccessibilityProvider>
     </UserProvider>
   );
 }
