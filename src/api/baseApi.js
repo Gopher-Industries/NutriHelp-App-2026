@@ -4,6 +4,7 @@ export const AUTH_TOKEN_KEY = "nutrihelp.auth.token";
 export const REFRESH_TOKEN_KEY = "nutrihelp.auth.refreshToken";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const DEFAULT_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS) || 8000;
 
 if (!API_BASE_URL) {
   throw new Error(
@@ -56,6 +57,13 @@ export function setUnauthorizedHandler(handler) {
   onUnauthorized = typeof handler === "function" ? handler : null;
 }
 
+function getRequestTimeout(timeoutMs) {
+  if (typeof timeoutMs !== "number" || Number.isNaN(timeoutMs)) {
+    return DEFAULT_TIMEOUT_MS;
+  }
+  return Math.max(0, timeoutMs);
+}
+
 function toAbsoluteUrl(path, query) {
   const normalizedPath = String(path || "").startsWith("/") ? path : `/${path || ""}`;
   const url = new URL(`${API_BASE_URL}${normalizedPath}`);
@@ -102,7 +110,7 @@ async function triggerUnauthorizedHandler() {
 }
 
 export async function request(method, path, options = {}) {
-  const { body, headers = {}, query, skipAuth = false, signal } = options;
+  const { body, headers = {}, query, skipAuth = false, signal, timeoutMs } = options;
 
   const requestHeaders = { ...headers };
 
@@ -129,18 +137,57 @@ export async function request(method, path, options = {}) {
 
   const url = toAbsoluteUrl(path, query);
   console.log(`[baseApi] ${method} ${url}`, { body });
+  const resolvedTimeoutMs = getRequestTimeout(timeoutMs);
+  const controller = new AbortController();
+  let timeoutReached = false;
+  let timeoutId = null;
 
-  const response = await fetch(url, {
-    method,
-    headers: requestHeaders,
-    body: requestBody,
-    signal,
-  });
+  const forwardAbort = () => controller.abort();
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener("abort", forwardAbort, { once: true });
+    }
+  }
+
+  if (resolvedTimeoutMs > 0) {
+    timeoutId = setTimeout(() => {
+      timeoutReached = true;
+      controller.abort();
+    }, resolvedTimeoutMs);
+  }
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: requestHeaders,
+      body: requestBody,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (timeoutReached) {
+      throw new ApiError(
+        `Request timed out after ${resolvedTimeoutMs}ms`,
+        408,
+        { code: "REQUEST_TIMEOUT" }
+      );
+    }
+    throw error;
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    if (signal) {
+      signal.removeEventListener("abort", forwardAbort);
+    }
+  }
 
   const data = await parseResponseBody(response);
 
-  console.log(`[baseApi] Response status: ${response.status}`, { 
-    data: data ? JSON.stringify(data) : null 
+  console.log(`[baseApi] Response status: ${response.status}`, {
+    data: data ? JSON.stringify(data) : null
   });
 
   if (response.status === 401) {

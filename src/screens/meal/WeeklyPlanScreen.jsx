@@ -832,7 +832,8 @@ const styles = StyleSheet.create({
     borderColor: "#86EFAC",
     backgroundColor: "#ECFDF5",
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    gap: 12,
   },
   aiHeroIconWrap: {
     width: 44,
@@ -945,6 +946,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A78C5",
   },
   slotPrimaryButtonText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+
+  sheetLoading: { alignItems: "center", paddingVertical: 32 },
+  sheetLoadingText: { marginTop: 10, fontSize: 14, color: "#98A2B3" },
 
   sheetOverlay: {
     flex: 1,

@@ -24,31 +24,14 @@
       }
     },
     "android": {
+      "newArchEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#22c55e"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "nutrihelp",
-              "host": "auth-callback"
-            },
-            {
-              "scheme": "https",
-              "host": "*.exp.direct"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        },
         {
           "action": "VIEW",
           "autoVerify": true,
@@ -96,7 +79,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "1913ba84-301f-4216-a14d-ff1df67468b0"
+        "projectId": "2d9203de-8e7a-443d-8223-47618dc6a9c0"
       }
     }
   }
