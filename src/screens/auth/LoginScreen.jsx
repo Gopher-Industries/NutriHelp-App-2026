@@ -14,6 +14,7 @@ import { ApiError, toErrorMessage } from "../../api/baseApi";
 import { exchangeGoogleToken, loginUser } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 import useFormValidation from "../../hooks/useFormValidation";
+import useAppTheme from "../../hooks/useAppTheme";
 import supabase from "../../utils/supabase";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -40,6 +41,10 @@ const loginSchema = {
 
 export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
   const { login } = useUser();
+
+  // FE-24: Get light/dark theme colours
+  const { colors } = useAppTheme();
+
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
@@ -80,17 +85,24 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
           setErrors({ password: "Email or password incorrect." });
           return;
         }
+
         if (error.status === 403) {
-          setGeneralError("Your account has been deactivated. Contact support.");
+          setGeneralError(
+            "Your account has been deactivated. Contact support."
+          );
           return;
         }
       }
-      setGeneralError(toErrorMessage(error, "Login failed. Please try again."));
+
+      setGeneralError(
+        toErrorMessage(error, "Login failed. Please try again.")
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Google login ---
   const handleGoogleSignIn = async () => {
     setGeneralError("");
     setGoogleLoading(true);
@@ -103,23 +115,38 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
         options: {
           redirectTo,
           skipBrowserRedirect: true,
-          queryParams: { access_type: "offline", prompt: "consent" },
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
         },
       });
 
       if (error) throw error;
-      if (!data?.url) throw new Error("Google sign-in URL was not returned.");
 
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (!data?.url) {
+        throw new Error("Google sign-in URL was not returned.");
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectTo
+      );
 
       if (result.type !== "success" || !result.url) {
-        if (result.type === "cancel" || result.type === "dismiss") return;
+        if (result.type === "cancel" || result.type === "dismiss") {
+          return;
+        }
+
         throw new Error("Google sign-in was not completed.");
       }
 
-      // Implicit flow: access_token is in the URL hash fragment
-      // nutrihelp://auth-callback#access_token=xxx&refresh_token=xxx
-      const fragment = result.url.includes("#") ? result.url.split("#")[1] : "";
+      // Implicit flow:
+      // access_token is contained in the URL hash fragment
+      const fragment = result.url.includes("#")
+        ? result.url.split("#")[1]
+        : "";
+
       const params = new URLSearchParams(fragment);
       const supabaseAccessToken = params.get("access_token");
 
@@ -127,10 +154,17 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
         throw new Error("Missing Google session token.");
       }
 
-      const backendSession = await exchangeGoogleToken(supabaseAccessToken);
+      const backendSession =
+        await exchangeGoogleToken(supabaseAccessToken);
+
       await login(backendSession);
     } catch (error) {
-      setGeneralError(toErrorMessage(error, "Google sign-in failed. Please try again."));
+      setGeneralError(
+        toErrorMessage(
+          error,
+          "Google sign-in failed. Please try again."
+        )
+      );
     } finally {
       setGoogleLoading(false);
     }
@@ -148,34 +182,79 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
           showsVerticalScrollIndicator={false}
         >
           <AuthCard>
-            <View style={styles.titleBlock}>
-              <Text style={styles.title}>Login</Text>
+            {/* TITLE */}
 
-              <Text style={styles.subtitle}>
+            <View style={styles.titleBlock}>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                Login
+              </Text>
+
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 Welcome back! Sign in to continue using NutriHelp.
               </Text>
             </View>
 
+            {/* GENERAL ERROR */}
+
             {generalError ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorBoxText}>{generalError}</Text>
+              <View
+                style={[
+                  styles.errorBox,
+                  {
+                    borderColor: colors.error,
+                    backgroundColor: colors.errorBackground,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.errorBoxText,
+                    {
+                      color: colors.error,
+                    },
+                  ]}
+                >
+                  {generalError}
+                </Text>
               </View>
             ) : null}
+
+            {/* EMAIL */}
 
             <AuthInput
               label="Email Address"
               value={values.email}
-              onChangeText={(text) => handleChange("email", text)}
+              onChangeText={(text) =>
+                handleChange("email", text)
+              }
               placeholder="Enter Your Email"
               error={errors.email}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
+            {/* PASSWORD */}
+
             <AuthInput
               label="Password"
               value={values.password}
-              onChangeText={(text) => handleChange("password", text)}
+              onChangeText={(text) =>
+                handleChange("password", text)
+              }
               placeholder="Enter Your Password"
               error={errors.password}
               secureTextEntry
@@ -187,27 +266,79 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               }
             />
 
+            {/* REMEMBER ME */}
+
             <Pressable
               style={styles.rememberRow}
-              onPress={() => setRememberMe((previous) => !previous)}
+              onPress={() =>
+                setRememberMe((previous) => !previous)
+              }
             >
               <View
                 style={[
                   styles.checkbox,
-                  rememberMe && styles.checkboxSelected,
+                  {
+                    borderColor: rememberMe
+                      ? colors.primary
+                      : colors.border,
+
+                    backgroundColor: rememberMe
+                      ? colors.primary
+                      : colors.inputBackground,
+                  },
                 ]}
               >
-                {rememberMe ? <Text style={styles.checkmark}>✓</Text> : null}
+                {rememberMe ? (
+                  <Text style={styles.checkmark}>✓</Text>
+                ) : null}
               </View>
 
-              <Text style={styles.rememberText}>Remember me</Text>
+              <Text
+                style={[
+                  styles.rememberText,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                Remember me
+              </Text>
             </Pressable>
 
+            {/* DIVIDER */}
+
             <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.divider} />
+              <View
+                style={[
+                  styles.divider,
+                  {
+                    backgroundColor: colors.border,
+                  },
+                ]}
+              />
+
+              <Text
+                style={[
+                  styles.dividerText,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                or
+              </Text>
+
+              <View
+                style={[
+                  styles.divider,
+                  {
+                    backgroundColor: colors.border,
+                  },
+                ]}
+              />
             </View>
+
+            {/* GOOGLE SIGN IN */}
 
             <GoogleButton
               onPress={handleGoogleSignIn}
@@ -215,17 +346,34 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               disabled={googleLoading}
             />
 
+            {/* LOGIN BUTTON */}
+
             <AuthButton
               title="Login"
               onPress={handleLogin}
               loading={loading || googleLoading}
             />
 
+            {/* FOOTER */}
+
             <View style={styles.footer}>
-              <Text style={styles.footerText}>
+              <Text
+                style={[
+                  styles.footerText,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 {"Don't have an account? "}
+
                 <Text
-                  style={styles.footerLinkDark}
+                  style={[
+                    styles.footerLinkDark,
+                    {
+                      color: colors.text,
+                    },
+                  ]}
                   onPress={() => goTo("signup")}
                 >
                   Create Account.
@@ -263,7 +411,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 24,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   subtitle: {
@@ -271,15 +418,12 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
     maxWidth: 280,
   },
 
   errorBox: {
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -288,7 +432,6 @@ const styles = StyleSheet.create({
   errorBoxText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#EF4444",
   },
 
   rememberRow: {
@@ -303,15 +446,8 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 3,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-  },
-
-  checkboxSelected: {
-    borderColor: "#1F73B7",
-    backgroundColor: "#1F73B7",
   },
 
   checkmark: {
@@ -324,7 +460,6 @@ const styles = StyleSheet.create({
 
   rememberText: {
     fontSize: 12,
-    color: "#6B7280",
   },
 
   dividerRow: {
@@ -336,13 +471,11 @@ const styles = StyleSheet.create({
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E5E7EB",
   },
 
   dividerText: {
     marginHorizontal: 12,
     fontSize: 12,
-    color: "#9CA3AF",
   },
 
   footer: {
@@ -352,11 +485,9 @@ const styles = StyleSheet.create({
   footerText: {
     textAlign: "center",
     fontSize: 12,
-    color: "#6B7280",
   },
 
   footerLinkDark: {
     fontWeight: "700",
-    color: "#18233D",
   },
 });
