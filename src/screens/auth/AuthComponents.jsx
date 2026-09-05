@@ -87,6 +87,8 @@ export function AuthScreen({ children, onBack }) {
             style={styles.backButton}
             onPress={onBack}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <ChevronLeftIcon />
           </Pressable>
@@ -98,6 +100,7 @@ export function AuthScreen({ children, onBack }) {
           source={nutriHelpLogo}
           style={styles.nutriLogo}
           resizeMode="contain"
+          accessible={false}
         />
       </View>
 
@@ -199,6 +202,8 @@ export function AuthInput({
             style={styles.eyeButton}
             onPress={onTogglePassword}
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
           >
             <EyeIcon crossed={passwordVisible} />
           </Pressable>
@@ -222,6 +227,9 @@ export function AuthButton({
       onPress={onPress}
       disabled={disabled || loading}
       android_ripple={{ color: "rgba(255,255,255,0.25)", borderless: false }}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
@@ -246,6 +254,9 @@ export function GoogleButton({ onPress, loading = false, disabled = false }) {
       onPress={onPress}
       disabled={disabled || loading}
       android_ripple={{ color: "rgba(0,0,0,0.05)", borderless: false }}
+      accessibilityRole="button"
+      accessibilityLabel="Sign in with Google"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color="#18233D" />
@@ -265,7 +276,12 @@ export function GoogleButton({ onPress, loading = false, disabled = false }) {
 
 export function HelperLink({ title, onPress }) {
   return (
-    <Pressable style={styles.linkWrapper} onPress={onPress}>
+    <Pressable
+      style={styles.linkWrapper}
+      onPress={onPress}
+      accessibilityRole="link"
+      accessibilityLabel={title}
+    >
       <Text style={styles.linkText}>{title}</Text>
     </Pressable>
   );
