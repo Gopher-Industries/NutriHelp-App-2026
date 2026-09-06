@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,8 @@ import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import recipeApi from "../../api/recipeApi";
+import RecipeSourceSearch from "../../components/RecipeSourceSearch";
+import buildSourcePrefill from "./buildSourcePrefill";
 import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -153,6 +155,8 @@ export default function CreateRecipeScreen({ navigation }) {
   const userId = useMemo(() => extractUserId(user), [user]);
   const effectiveUserId = userId ?? 0;
 
+  const sourceApplied = useRef(false);
+  const [sourceReview, setSourceReview] = useState(null);
   const [recipeName, setRecipeName] = useState("");
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
   const [timeMinutes, setTimeMinutes] = useState("");
@@ -191,6 +195,20 @@ export default function CreateRecipeScreen({ navigation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
+  const applySource = (mapped) => {
+    const prefill = buildSourcePrefill(mapped);
+    sourceApplied.current = true;
+    setRecipeName(prefill.fields.recipeName);
+    setCuisine(prefill.fields.cuisine);
+    setCookingMethod(prefill.fields.cookingMethod);
+    setTimeMinutes(prefill.fields.timeMinutes);
+    setServings(prefill.fields.servings);
+    setIngredients(prefill.ingredients.length ? prefill.ingredients : [{ id: 1, category: "", ingredientId: null, name: "", quantity: "", unit: "", cost: "" }]);
+    setSteps(prefill.steps.length ? prefill.steps : [{ id: 1, text: "" }]);
+    setSourceReview(prefill.missing);
+    setShowErrors(false);
+  };
+
   const ingredientCategories = useMemo(() => {
     const list = ingredientCatalog
       .map((item) => item.category)
@@ -228,7 +246,7 @@ export default function CreateRecipeScreen({ navigation }) {
       if (cuisineResult.status === "fulfilled") {
         const rows = normalizeCuisineRows(cuisineResult.value);
         setCuisineOptions(rows);
-        if (rows.length > 0) {
+        if (rows.length > 0 && !sourceApplied.current) {
           setCuisine((prev) => (prev ? prev : rows[0].name));
         }
       } else {
@@ -244,7 +262,7 @@ export default function CreateRecipeScreen({ navigation }) {
       if (cookingMethodResult.status === "fulfilled") {
         const rows = normalizeCookingMethodRows(cookingMethodResult.value);
         setCookingMethodOptions(rows);
-        if (rows.length > 0) {
+        if (rows.length > 0 && !sourceApplied.current) {
           setCookingMethod((prev) => (prev ? prev : rows[0].name));
         }
       } else {
@@ -379,6 +397,10 @@ export default function CreateRecipeScreen({ navigation }) {
   };
 
   const handleSubmit = async () => {
+    if (sourceReview) {
+      Alert.alert("Imported recipe saving is not available yet", "Your draft is preserved. Unmatched ingredients need resolution when saving, and the mobile save format must first be connected to the canonical API. No ingredients have been created during preview.");
+      return;
+    }
     setShowErrors(true);
     if (!isValid) {
       return;
@@ -467,6 +489,12 @@ export default function CreateRecipeScreen({ navigation }) {
           contentContainerStyle={styles.scrollContent}
           {...verticalScrollProps}
         >
+          <RecipeSourceSearch onPrefill={applySource} disabled={isSubmitting} />
+          {sourceReview && <View style={[styles.card, { marginBottom: 16 }]}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>Review source recipe</Text>
+            <Text accessibilityLiveRegion="polite" style={styles.lookupWarning}>Missing or needs review: {sourceReview.join(", ")}. Existing photo and nutrition values have been kept; verify they belong to this recipe.</Text>
+            <Text style={styles.lookupWarning}>Unmatched ingredients will need resolution when saving. Saving imported drafts is unavailable in this preview while the mobile save format is connected. Preview does not create ingredients.</Text>
+          </View>}
           <View style={styles.card}>
             {isLookupLoading ? (
               <View style={styles.lookupLoadingRow}>
@@ -498,6 +526,7 @@ export default function CreateRecipeScreen({ navigation }) {
             {cuisineOptions.length > 0 ? (
               <View style={styles.pickerShell}>
                 <Picker selectedValue={cuisine} onValueChange={(value) => setCuisine(value)} style={{ minHeight: 44 }}>
+                  {!cuisineOptions.some((item) => item.name === cuisine) && <Picker.Item label={cuisine || "Select cuisine"} value={cuisine} />}
                   {cuisineOptions.map((item) => (
                     <Picker.Item key={`cuisine-${item.id}`} label={item.name} value={item.name} />
                   ))}
@@ -516,6 +545,7 @@ export default function CreateRecipeScreen({ navigation }) {
                   onValueChange={(value) => setCookingMethod(value)}
                   style={{ minHeight: 44 }}
                 >
+                  {!cookingMethodOptions.some((item) => item.name === cookingMethod) && <Picker.Item label={cookingMethod || "Select cooking method"} value={cookingMethod} />}
                   {cookingMethodOptions.map((item) => (
                     <Picker.Item key={`method-${item.id}`} label={item.name} value={item.name} />
                   ))}
@@ -588,6 +618,7 @@ export default function CreateRecipeScreen({ navigation }) {
                         style={{ minHeight: 44 }}
                       >
                         <Picker.Item label="Select category" value="" />
+                        {item.category && !ingredientCategories.includes(item.category) && <Picker.Item label={item.category} value={item.category} />}
                         {ingredientCategories.map((cat) => (
                           <Picker.Item key={`cat-${cat}`} label={cat} value={cat} />
                         ))}
@@ -603,7 +634,7 @@ export default function CreateRecipeScreen({ navigation }) {
                   )}
 
                   <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>Ingredient</Text>
-                  {names.length > 0 ? (
+                  {names.length > 0 && (!sourceReview || names.includes(item.name)) ? (
                     <View style={styles.pickerShell}>
                       <Picker
                         selectedValue={item.name}
@@ -619,7 +650,7 @@ export default function CreateRecipeScreen({ navigation }) {
                   ) : (
                     <TextInput
                       value={item.name}
-                      onChangeText={(value) => updateIngredientRow(item.id, "name", value)}
+                      onChangeText={(value) => updateIngredientRow(item.id, "ingredientName", value)}
                       placeholder="Ingredient name"
                       style={styles.input}
                     />
@@ -640,6 +671,7 @@ export default function CreateRecipeScreen({ navigation }) {
                       onValueChange={(value) => updateIngredientRow(item.id, "unit", value)}
                       style={{ minHeight: 44 }}
                     >
+                      {!UNIT_OPTIONS.includes(item.unit) && <Picker.Item label={item.unit || "Review unit"} value={item.unit} />}
                       {UNIT_OPTIONS.map((u) => (
                         <Picker.Item key={u} label={u} value={u} />
                       ))}
