@@ -1,0 +1,678 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import notificationApi from "../../api/notificationApi";
+import useBiometric from "../../hooks/useBiometric";
+import profileApi from "../../api/profileApi";
+import { useUser } from "../../context/UserContext";
+import { useAccessibility, FONT_SIZE_OPTIONS } from "../../context/AccessibilityContext";
+import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
+import { useTheme, THEME_MODES } from "../../context/ThemeContext";
+import { useThemedStyles } from "../../styles/themeColors";
+
+const SETTINGS_FALLBACK_KEY = "nutrihelp.settings.local";
+
+function buildSettingsFallbackKey(userId) {
+  const scope = userId ? `user_${userId}` : "guest";
+  return `${SETTINGS_FALLBACK_KEY}.${scope}`;
+}
+
+function SectionTitle({ children }) {
+  const styles = useThemedStyles(makeStyles);
+  return <Text style={styles.sectionTitle}>{children}</Text>;
+}
+
+function SettingRow({
+  label,
+  description,
+  right,
+  labelStyle,
+  onPress,
+  danger = false,
+  last = false,
+}) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <>
+      <Pressable style={styles.row} onPress={onPress}>
+        <View style={styles.rowTextWrap}>
+          <Text
+            style={[
+              styles.rowLabel,
+              labelStyle,
+              danger ? styles.rowLabelDanger : null,
+            ]}
+          >
+            {label}
+          </Text>
+          {description ? (
+            <Text style={styles.rowDescription}>{description}</Text>
+          ) : null}
+        </View>
+        {right}
+      </Pressable>
+      {!last ? <View style={styles.rowDivider} /> : null}
+    </>
+  );
+}
+
+export default function SettingsScreen({ navigation }) {
+  const styles = useThemedStyles(makeStyles);
+  const { logout, user } = useUser();
+  const { fontSizeKey, setFontSizeKey } = useAccessibility();
+  const { conditions, toggleCondition } = useHealthConditions();
+  const { mode: themeMode, setMode: setThemeMode } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [preferences, setPreferences] = useState({
+    mealReminders: true,
+    waterReminders: true,
+  });
+
+  const { isAvailable, isEnabled, setEnabled } = useBiometric({
+    onAuthFail: logout,
+    storageScopeKey: user?.id ? `user_${user.id}` : "guest",
+  });
+
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [remoteResponse, localFallback] = await Promise.all([
+        notificationApi.getPreferences().catch(() => null),
+        AsyncStorage.getItem(buildSettingsFallbackKey(user?.id)),
+      ]);
+      const loadedProfile = await profileApi.getProfile().catch(() => null);
+
+      const remotePreferences =
+        remoteResponse?.data?.data ||
+        remoteResponse?.data?.notification_preferences ||
+        remoteResponse?.notification_preferences ||
+        null;
+
+      const localPreferences = localFallback ? JSON.parse(localFallback) : {};
+      setProfile(loadedProfile);
+
+      setPreferences({
+        mealReminders:
+          remotePreferences?.mealReminders ?? localPreferences.mealReminders ?? true,
+        waterReminders:
+          remotePreferences?.waterReminders ?? localPreferences.waterReminders ?? true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSettings();
+    }, [loadSettings])
+  );
+
+  const persistPreferences = async (nextPreferences) => {
+    setPreferences(nextPreferences);
+    await AsyncStorage.setItem(
+      buildSettingsFallbackKey(user?.id),
+      JSON.stringify(nextPreferences)
+    );
+
+    try {
+      await notificationApi.updatePreferences(nextPreferences);
+    } catch {
+      // Keep local state even if remote persistence is temporarily unavailable.
+    }
+  };
+
+  const togglePreference = async (key) => {
+    const nextPreferences = {
+      ...preferences,
+      [key]: !preferences[key],
+    };
+    await persistPreferences(nextPreferences);
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
+        <ActivityIndicator size="large" color="#0B5FA5" />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topBar}>
+          <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="menu" size={20} color="#0B5FA5" />
+          </Pressable>
+          <Text style={styles.logoText}>NutriHelp</Text>
+          <Pressable style={styles.headerAvatar}>
+            <Text style={styles.headerAvatarText}>
+              {(user?.name || user?.email || "NH").slice(0, 2).toUpperCase()}
+            </Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.subtitle}>
+          Manage your wellness preferences and account.
+        </Text>
+
+        {/* ── ACCESSIBILITY ─────────────────────────────────────────────── */}
+        <SectionTitle>ACCESSIBILITY</SectionTitle>
+        <View style={styles.sectionCard}>
+          <View style={styles.row}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>Text Size</Text>
+              <Text style={styles.rowDescription}>
+                Larger text makes reading easier.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.fontSizeRow}>
+            {FONT_SIZE_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.fontSizeChip,
+                  fontSizeKey === opt.key && styles.fontSizeChipActive,
+                ]}
+                onPress={() => setFontSizeKey(opt.key)}
+              >
+                <Text
+                  style={[
+                    styles.fontSizeChipText,
+                    fontSizeKey === opt.key && styles.fontSizeChipTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* ── APPEARANCE ────────────────────────────────────────────────── */}
+        <SectionTitle>APPEARANCE</SectionTitle>
+        <View style={styles.sectionCard}>
+          <View style={styles.row}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>Dark Mode</Text>
+              <Text style={styles.rowDescription}>
+                Choose System to follow your device, or force Light or Dark.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.fontSizeRow}>
+            {THEME_MODES.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.fontSizeChip,
+                  themeMode === opt.key && styles.fontSizeChipActive,
+                ]}
+                onPress={() => setThemeMode(opt.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`Set appearance to ${opt.label}`}
+              >
+                <Text
+                  style={[
+                    styles.fontSizeChipText,
+                    themeMode === opt.key && styles.fontSizeChipTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* ── HEALTH CONDITIONS ─────────────────────────────────────────── */}
+        <SectionTitle>HEALTH CONDITIONS</SectionTitle>
+        <View style={[styles.sectionCard, { paddingBottom: 14 }]}>
+          <View style={styles.row}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>My Conditions</Text>
+              <Text style={styles.rowDescription}>
+                Selected conditions personalise your meal warnings and AI health plan.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.conditionGrid}>
+            {ALL_CONDITIONS.map((c) => {
+              const active = conditions.includes(c.key);
+              return (
+                <Pressable
+                  key={c.key}
+                  style={[styles.conditionChip, active && styles.conditionChipActive]}
+                  onPress={() => toggleCondition(c.key)}
+                >
+                  <Text style={styles.conditionChipEmoji}>{c.icon}</Text>
+                  <Text
+                    style={[
+                      styles.conditionChipText,
+                      active && styles.conditionChipTextActive,
+                    ]}
+                  >
+                    {c.label}
+                  </Text>
+                  {active && (
+                    <Ionicons name="checkmark-circle" size={14} color="#0B5FA5" />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <SectionTitle>NOTIFICATIONS</SectionTitle>
+        <View style={styles.sectionCard}>
+          <SettingRow
+            label="Meal Reminders"
+            right={
+              <Switch
+                value={preferences.mealReminders}
+                onValueChange={() => togglePreference("mealReminders")}
+                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
+                thumbColor="#FFFFFF"
+              />
+            }
+            onPress={() => togglePreference("mealReminders")}
+          />
+          <SettingRow
+            label="Water Reminders"
+            right={
+              <Switch
+                value={preferences.waterReminders}
+                onValueChange={() => togglePreference("waterReminders")}
+                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
+                thumbColor="#FFFFFF"
+              />
+            }
+            onPress={() => togglePreference("waterReminders")}
+            last
+          />
+        </View>
+
+        <SectionTitle>SECURITY</SectionTitle>
+        <View style={styles.sectionCard}>
+          <SettingRow
+            label="Face ID"
+            description={
+              isAvailable
+                ? "Use biometric unlock after inactivity."
+                : "Biometric authentication is not available on this device."
+            }
+            right={
+              <Switch
+                value={isEnabled}
+                onValueChange={setEnabled}
+                disabled={!isAvailable}
+                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
+                thumbColor="#FFFFFF"
+              />
+            }
+            onPress={() => isAvailable && setEnabled(!isEnabled)}
+          />
+          <SettingRow
+            label="Change Password"
+            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            onPress={() =>
+              navigation.navigate("EditProfileScreen", {
+                initialProfile: profile,
+              })
+            }
+            last
+          />
+        </View>
+
+        <SectionTitle>ACCOUNT</SectionTitle>
+        <View style={styles.sectionCard}>
+          <SettingRow
+            label="Edit Profile"
+            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            onPress={() =>
+              navigation.navigate("EditProfileScreen", {
+                initialProfile: profile,
+              })
+            }
+          />
+          <SettingRow
+            label="Delete Account"
+            description="Review deletion details before taking action."
+            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            onPress={() => navigation.navigate("DeleteAccountScreen")}
+          />
+          <SettingRow
+            label="Log Out"
+            danger
+            right={<Ionicons name="log-out-outline" size={18} color="#D62828" />}
+            onPress={() => setShowLogoutModal(true)}
+            last
+          />
+        </View>
+      </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={showLogoutModal}
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.modalIconWrap}>
+              <Ionicons name="log-out-outline" size={18} color="#D62828" />
+            </View>
+            <Text style={styles.modalTitle}>Are you sure you want to log out?</Text>
+            <Text style={styles.modalSubtitle}>
+              You will need to re-enter your credentials to access your health data.
+            </Text>
+
+            <Pressable
+              style={styles.logoutButton}
+              onPress={() => {
+                setShowLogoutModal(false);
+                logout();
+              }}
+            >
+              <Text style={styles.logoutButtonText}>Log Out</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => setShowLogoutModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const makeStyles = (t) =>
+StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: t.bg("#FFFFFF"),
+  },
+
+  loadingWrap: {
+    flex: 1,
+    backgroundColor: t.bg("#FFFFFF"),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  screen: {
+    flex: 1,
+    backgroundColor: t.bg("#FFFFFF"),
+  },
+
+  content: {
+    paddingHorizontal: 22,
+    paddingBottom: 34,
+  },
+
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+
+  iconButton: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logoText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: t.fg("#18233D"),
+  },
+
+  headerAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: t.bg("#E7EEFB"),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  headerAvatarText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: t.fg("#173E6A"),
+  },
+
+  title: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: t.fg("#18233D"),
+    marginBottom: 6,
+  },
+
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: t.fg("#6B7280"),
+    marginBottom: 20,
+  },
+
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: t.fg("#9CA3AF"),
+    marginBottom: 8,
+  },
+
+  sectionCard: {
+    borderRadius: 16,
+    backgroundColor: t.bg("#EEF3FF"),
+    paddingHorizontal: 16,
+    marginBottom: 18,
+  },
+
+  row: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  rowTextWrap: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingRight: 12,
+  },
+
+  rowLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: t.fg("#18233D"),
+  },
+
+  rowLabelDanger: {
+    color: t.fg("#D62828"),
+  },
+
+  rowDescription: {
+    marginTop: 4,
+    fontSize: 11,
+    lineHeight: 16,
+    color: t.fg("#6B7280"),
+  },
+
+  rowDivider: {
+    height: 1,
+    backgroundColor: t.bg("#D9E2F4"),
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.35)",
+    justifyContent: "flex-end",
+  },
+
+  modalSheet: {
+    backgroundColor: t.bg("#FFFFFF"),
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 28,
+  },
+
+  sheetHandle: {
+    alignSelf: "center",
+    width: 42,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: t.bg("#E5E7EB"),
+    marginBottom: 18,
+  },
+
+  modalIconWrap: {
+    alignSelf: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: t.bg("#FFF1F1"),
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+
+  modalTitle: {
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "800",
+    color: t.fg("#18233D"),
+    marginBottom: 8,
+  },
+
+  modalSubtitle: {
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    color: t.fg("#6B7280"),
+    marginBottom: 22,
+  },
+
+  logoutButton: {
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: t.bg("#C81E1E"),
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+
+  logoutButtonText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: t.fg("#FFFFFF"),
+  },
+
+  cancelButton: {
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: t.bg("#E1E8F7"),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: t.fg("#55627D"),
+  },
+
+  // Font size picker
+  fontSizeRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 12,
+  },
+  fontSizeChip: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: t.bd("#D9E2F4"),
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: t.bg("#FFFFFF"),
+  },
+  fontSizeChipActive: {
+    borderColor: t.bd("#0B5FA5"),
+    backgroundColor: t.bg("#EFF6FF"),
+  },
+  fontSizeChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: t.fg("#6B7280"),
+  },
+  fontSizeChipTextActive: {
+    color: t.fg("#0B5FA5"),
+  },
+
+  // Health conditions
+  conditionGrid: {
+    paddingTop: 10,
+    gap: 8,
+  },
+  conditionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: t.bd("#D9E2F4"),
+    backgroundColor: t.bg("#FFFFFF"),
+  },
+  conditionChipActive: {
+    borderColor: t.bd("#0B5FA5"),
+    backgroundColor: t.bg("#EFF6FF"),
+  },
+  conditionChipEmoji: { fontSize: 18 },
+  conditionChipText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: t.fg("#374151"),
+  },
+  conditionChipTextActive: { color: t.fg("#0B5FA5") },
+});
