@@ -9,8 +9,12 @@ import {
   View,
 } from "react-native";
 
-import { verifyPasswordResetCode, requestPasswordReset } from "../../api/authApi";
+import {
+  verifyPasswordResetCode,
+  requestPasswordReset,
+} from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
+import useAppTheme from "../../hooks/useAppTheme";
 
 import {
   AuthButton,
@@ -23,6 +27,8 @@ export default function ForgotPasswordStep2Screen({
   email = "",
   goTo = (_nextScreen, _params) => {},
 }) {
+  const { colors } = useAppTheme();
+
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(60);
@@ -64,7 +70,12 @@ export default function ForgotPasswordStep2Screen({
         resetToken: response?.resetToken,
       });
     } catch (error) {
-      setError(toErrorMessage(error, "Invalid or expired code. Please try again."));
+      setError(
+        toErrorMessage(
+          error,
+          "Invalid or expired code. Please try again."
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -81,7 +92,12 @@ export default function ForgotPasswordStep2Screen({
     try {
       await requestPasswordReset(email);
     } catch (error) {
-      setError(toErrorMessage(error, "Unable to resend code right now. Please try again later."));
+      setError(
+        toErrorMessage(
+          error,
+          "Unable to resend code right now. Please try again later."
+        )
+      );
     }
   };
 
@@ -97,36 +113,112 @@ export default function ForgotPasswordStep2Screen({
           showsVerticalScrollIndicator={false}
         >
           <AuthCard>
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>✉</Text>
+            <View
+              style={[
+                styles.iconCircle,
+                {
+                  backgroundColor: colors.surfaceSecondary,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.iconText,
+                  {
+                    color: colors.primary,
+                  },
+                ]}
+              >
+                ✓
+              </Text>
             </View>
 
             <View style={styles.titleBlock}>
-              <Text style={styles.title}>Verification</Text>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                Verification
+              </Text>
 
-              <Text style={styles.subtitle}>
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 Enter the 6-digit code sent to your email.
               </Text>
 
-              <Text style={styles.emailText}>{email || "your email"}</Text>
+              <Text
+                style={[
+                  styles.emailText,
+                  {
+                    color: colors.primary,
+                  },
+                ]}
+              >
+                {email || "your email"}
+              </Text>
             </View>
 
-            <View style={styles.otpBox}>
+            <View
+              style={[
+                styles.otpBox,
+                {
+                  borderColor: colors.primary,
+                  backgroundColor: colors.inputBackground,
+                },
+              ]}
+            >
               <TextInput
-                style={styles.otpInput}
+                style={[
+                  styles.otpInput,
+                  {
+                    color: colors.text,
+                  },
+                ]}
                 value={code}
                 onChangeText={handleCodeChange}
                 placeholder="000000"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="number-pad"
                 maxLength={6}
                 textAlign="center"
               />
             </View>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? (
+              <Text
+                style={[
+                  styles.errorText,
+                  {
+                    color: colors.error,
+                  },
+                ]}
+              >
+                {error}
+              </Text>
+            ) : null}
 
-            <Text style={styles.resendText} onPress={handleResend}>
+            <Text
+              style={[
+                styles.resendText,
+                {
+                  color:
+                    resendSeconds > 0
+                      ? colors.textSecondary
+                      : colors.primary,
+                },
+              ]}
+              onPress={handleResend}
+            >
               {resendSeconds > 0
                 ? `Resend code in ${resendSeconds}s`
                 : "Resend code"}
@@ -144,7 +236,10 @@ export default function ForgotPasswordStep2Screen({
                 onPress={() => goTo("forgot1")}
               />
 
-              <HelperLink title="Back to Login" onPress={() => goTo("login")} />
+              <HelperLink
+                title="Back to Login"
+                onPress={() => goTo("login")}
+              />
             </View>
           </AuthCard>
         </ScrollView>
@@ -168,7 +263,6 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 999,
-    backgroundColor: "#EEF6FF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 24,
@@ -176,7 +270,6 @@ const styles = StyleSheet.create({
 
   iconText: {
     fontSize: 30,
-    color: "#1F73B7",
     fontWeight: "800",
   },
 
@@ -189,7 +282,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 22,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   subtitle: {
@@ -197,22 +289,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
   },
 
   emailText: {
     marginTop: 6,
     fontSize: 12,
     fontWeight: "700",
-    color: "#1F73B7",
   },
 
   otpBox: {
     height: 56,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: "#1F73B7",
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     marginBottom: 10,
   },
@@ -221,7 +309,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: 4,
-    color: "#18233D",
   },
 
   errorText: {
@@ -230,14 +317,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     fontWeight: "500",
-    color: "#EF4444",
   },
 
   resendText: {
     textAlign: "center",
     fontSize: 12,
     fontWeight: "700",
-    color: "#1F73B7",
     marginBottom: 8,
   },
 

@@ -13,6 +13,7 @@ import {
 import { resendMFA, verifyMFA } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
 import { useUser } from "../../context/UserContext";
+import useAppTheme from "../../hooks/useAppTheme";
 
 import {
   AuthButton,
@@ -27,6 +28,7 @@ function maskEmail(email) {
   }
 
   const [name, domain] = email.split("@");
+
   if (!name || !domain) {
     return email;
   }
@@ -45,6 +47,7 @@ export default function MFAScreen({
 }) {
   const hiddenInputRef = useRef(null);
   const { login } = useUser();
+  const { colors } = useAppTheme();
 
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -97,7 +100,12 @@ export default function MFAScreen({
       const response = await verifyMFA(email, password, code);
       await login(response);
     } catch (verifyError) {
-      setError(toErrorMessage(verifyError, "Invalid MFA code. Please try again."));
+      setError(
+        toErrorMessage(
+          verifyError,
+          "Invalid MFA code. Please try again."
+        )
+      );
       setCode("");
       hiddenInputRef.current?.focus();
     } finally {
@@ -123,7 +131,9 @@ export default function MFAScreen({
       await resendMFA(email, password);
       setResendSeconds(60);
       setCode("");
-      setInfoMessage(`A new verification code was sent to ${maskEmail(email)}.`);
+      setInfoMessage(
+        `A new verification code was sent to ${maskEmail(email)}.`
+      );
       hiddenInputRef.current?.focus();
     } catch (resendError) {
       setError(
@@ -149,40 +159,132 @@ export default function MFAScreen({
           showsVerticalScrollIndicator={false}
         >
           <AuthCard>
+            {/* HERO ICON */}
+
             <View style={styles.heroIconWrap}>
-              <View style={styles.heroIconCard}>
-                <Text style={styles.heroIcon}>✉</Text>
+              <View
+                style={[
+                  styles.heroIconCard,
+                  {
+                    backgroundColor: colors.surfaceSecondary,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.heroIcon,
+                    {
+                      color: colors.primary,
+                    },
+                  ]}
+                >
+                  ✉
+                </Text>
               </View>
-              <View style={styles.successBadge}>
-                <Text style={styles.successBadgeText}>✓</Text>
+
+              <View
+                style={[
+                  styles.successBadge,
+                  {
+                    backgroundColor: colors.success,
+                    borderColor: colors.surface,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.successBadgeText,
+                    {
+                      color: colors.primaryText,
+                    },
+                  ]}
+                >
+                  ✓
+                </Text>
               </View>
             </View>
 
+            {/* TITLE */}
+
             <View style={styles.titleBlock}>
-              <Text style={styles.title}>Verification</Text>
-              <Text style={styles.subtitle}>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                Verification
+              </Text>
+
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 Enter the 6-digit code we sent to your email inbox.
               </Text>
-              <Text style={styles.emailText}>{maskEmail(email)}</Text>
+
+              <Text
+                style={[
+                  styles.emailText,
+                  {
+                    color: colors.primary,
+                  },
+                ]}
+              >
+                {maskEmail(email)}
+              </Text>
             </View>
+
+            {/* OTP INPUT */}
 
             <Pressable
               style={styles.otpRow}
               onPress={() => hiddenInputRef.current?.focus()}
             >
               {otpSlots.map((digit, index) => {
-                const isActive = index === Math.min(code.length, 5);
+                const isActive =
+                  index === Math.min(code.length, 5);
+
+                const borderColor =
+                  digit || isActive
+                    ? colors.primary
+                    : colors.border;
+
+                const backgroundColor =
+                  digit || isActive
+                    ? colors.inputBackground
+                    : colors.surfaceSecondary;
+
                 return (
                   <View
                     key={`otp-${index}`}
                     style={[
                       styles.otpSlot,
-                      index < otpSlots.length - 1 ? styles.otpSlotSpacing : null,
-                      digit ? styles.otpSlotFilled : null,
-                      isActive ? styles.otpSlotActive : null,
+                      index < otpSlots.length - 1
+                        ? styles.otpSlotSpacing
+                        : null,
+                      {
+                        borderColor,
+                        backgroundColor,
+                      },
                     ]}
                   >
-                    <Text style={styles.otpSlotText}>{digit || ""}</Text>
+                    <Text
+                      style={[
+                        styles.otpSlotText,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
+                    >
+                      {digit || ""}
+                    </Text>
                   </View>
                 );
               })}
@@ -200,16 +302,50 @@ export default function MFAScreen({
               style={styles.hiddenInput}
             />
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            {!error && infoMessage ? (
-              <Text style={styles.infoText}>{infoMessage}</Text>
+            {/* ERROR / INFO */}
+
+            {error ? (
+              <Text
+                style={[
+                  styles.errorText,
+                  {
+                    color: colors.error,
+                  },
+                ]}
+              >
+                {error}
+              </Text>
             ) : null}
 
-            <Text style={styles.resendHint}>
+            {!error && infoMessage ? (
+              <Text
+                style={[
+                  styles.infoText,
+                  {
+                    color: colors.success,
+                  },
+                ]}
+              >
+                {infoMessage}
+              </Text>
+            ) : null}
+
+            {/* RESEND TIMER */}
+
+            <Text
+              style={[
+                styles.resendHint,
+                {
+                  color: colors.textSecondary,
+                },
+              ]}
+            >
               {resendSeconds > 0
                 ? `Resend in 0:${String(resendSeconds).padStart(2, "0")}`
                 : "Didn't receive a code?"}
             </Text>
+
+            {/* VERIFY */}
 
             <AuthButton
               title="Verify"
@@ -219,12 +355,19 @@ export default function MFAScreen({
             />
 
             <HelperLink
-              title={resending ? "Sending a new code..." : "Resend code"}
+              title={
+                resending
+                  ? "Sending a new code..."
+                  : "Resend code"
+              }
               onPress={handleResend}
             />
 
             <View style={styles.footer}>
-              <HelperLink title="Back to Login" onPress={() => goTo("login")} />
+              <HelperLink
+                title="Back to Login"
+                onPress={() => goTo("login")}
+              />
             </View>
           </AuthCard>
         </ScrollView>
@@ -252,14 +395,12 @@ const styles = StyleSheet.create({
     width: 86,
     height: 86,
     borderRadius: 24,
-    backgroundColor: "#EEF4FF",
     alignItems: "center",
     justifyContent: "center",
   },
 
   heroIcon: {
     fontSize: 34,
-    color: "#1F73B7",
   },
 
   successBadge: {
@@ -269,15 +410,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 999,
-    backgroundColor: "#10703E",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
   },
 
   successBadgeText: {
-    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "800",
   },
@@ -291,7 +429,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 30,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   subtitle: {
@@ -299,7 +436,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     lineHeight: 21,
-    color: "#6B7280",
     maxWidth: 290,
   },
 
@@ -307,7 +443,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 13,
     fontWeight: "700",
-    color: "#1F73B7",
   },
 
   otpRow: {
@@ -320,9 +455,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 54,
     borderRadius: 10,
-    backgroundColor: "#F3F7FF",
     borderWidth: 1.5,
-    borderColor: "#D4DDED",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -331,20 +464,9 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 
-  otpSlotActive: {
-    borderColor: "#1F73B7",
-    backgroundColor: "#FFFFFF",
-  },
-
-  otpSlotFilled: {
-    borderColor: "#1F73B7",
-    backgroundColor: "#FFFFFF",
-  },
-
   otpSlotText: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   hiddenInput: {
@@ -359,7 +481,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     fontWeight: "600",
-    color: "#EF4444",
   },
 
   infoText: {
@@ -367,7 +488,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     fontWeight: "600",
-    color: "#10703E",
   },
 
   resendHint: {
@@ -375,7 +495,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     fontWeight: "600",
-    color: "#6B7280",
   },
 
   footer: {
