@@ -15,11 +15,10 @@ import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
 import { useUser } from "../../context/UserContext";
 import { useChatbot } from "../../context/ChatbotContext";
+import { useNutritionTargets } from "../../context/NutritionTargetsContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
 import { groupMealsByType, MEAL_TYPES } from "../meal/mealPlanUiHelpers";
 
-const CALORIE_TARGET = 2000;
-const WATER_TARGET = 8;
 const MEAL_TARGET = 3;
 
 const MEAL_ACCENTS_MAP = { breakfast: "#F59E0B", lunch: "#22C55E", dinner: "#3B82F6" };
@@ -158,6 +157,7 @@ function SkeletonCard() {
 export default function HomeScreen({ navigation }) {
   const { user } = useUser();
   const { openChatbot } = useChatbot();
+  const { calorieTarget, waterTarget } = useNutritionTargets();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
     calories: 0,
@@ -295,7 +295,7 @@ export default function HomeScreen({ navigation }) {
             <StatCard
               icon="🔥"
               value={summary.calories}
-              maxValue={CALORIE_TARGET}
+              maxValue={calorieTarget}
               unit="kcal"
               label="Energy"
               accent="#F59E0B"
@@ -304,7 +304,7 @@ export default function HomeScreen({ navigation }) {
             <StatCard
               icon="💧"
               value={summary.water}
-              maxValue={WATER_TARGET}
+              maxValue={waterTarget}
               unit="cups water"
               label="Hydration"
               accent="#2B78C5"
