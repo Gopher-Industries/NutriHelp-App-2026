@@ -69,16 +69,17 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
 
     try {
       const response = await loginUser(values.email, values.password);
-
+       // Keep the Remember Me choice when the user continues to MFA.
       if (response.mfaRequired) {
         goTo("mfa", {
           email: response.email,
           password: values.password,
+          rememberMe: rememberMe,
         });
         return;
       }
 
-      await login(response);
+      await login(response, null, null, rememberMe);
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 401) {
@@ -154,10 +155,8 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
         throw new Error("Missing Google session token.");
       }
 
-      const backendSession =
-        await exchangeGoogleToken(supabaseAccessToken);
-
-      await login(backendSession);
+      const backendSession = await exchangeGoogleToken(supabaseAccessToken);
+      await login(backendSession, null, null, rememberMe);
     } catch (error) {
       setGeneralError(
         toErrorMessage(
