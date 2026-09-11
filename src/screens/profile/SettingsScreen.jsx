@@ -67,7 +67,12 @@ function SettingRow({
 
 export default function SettingsScreen({ navigation }) {
   const { logout, user } = useUser();
-  const { fontSizeKey, setFontSizeKey } = useAccessibility();
+  const {
+    fontSizeKey,
+    setFontSizeKey,
+    elderlyModeEnabled,
+    setElderlyModeEnabled,
+  } = useAccessibility();
   const { conditions, toggleCondition } = useHealthConditions();
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -204,6 +209,21 @@ export default function SettingsScreen({ navigation }) {
               </Pressable>
             ))}
           </View>
+          <View style={styles.rowDivider} />
+          <SettingRow
+            label="Simplified Home Layout"
+            description="Larger tiles and a simpler home screen, designed for easier one-handed use."
+            right={
+              <Switch
+                value={elderlyModeEnabled}
+                onValueChange={setElderlyModeEnabled}
+                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
+                thumbColor="#FFFFFF"
+              />
+            }
+            onPress={() => setElderlyModeEnabled(!elderlyModeEnabled)}
+            last
+          />
         </View>
 
         {/* ── HEALTH CONDITIONS ─────────────────────────────────────────── */}
