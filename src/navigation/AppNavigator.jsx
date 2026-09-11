@@ -14,6 +14,7 @@ import {
 import { UserProvider, useUser } from "../context/UserContext";
 import { AccessibilityProvider } from "../context/AccessibilityContext";
 import { HealthConditionsProvider } from "../context/HealthConditionsContext";
+import { NutritionTargetsProvider } from "../context/NutritionTargetsContext";
 import { ChatbotProvider } from "../context/ChatbotContext";
 import FloatingChatbot from "../components/FloatingChatbot/FloatingChatbot";
 
@@ -47,6 +48,7 @@ export default function AppNavigator() {
     <UserProvider>
       <AccessibilityProvider>
       <HealthConditionsProvider>
+      <NutritionTargetsProvider>
       <ChatbotProvider>
       <NavigationContainer theme={navTheme}>
         <RootNavigator />
@@ -58,6 +60,7 @@ export default function AppNavigator() {
         <StatusBar style={colorScheme === "dark" ? "light" : "auto"} />
       </NavigationContainer>
       </ChatbotProvider>
+      </NutritionTargetsProvider>
       </HealthConditionsProvider>
       </AccessibilityProvider>
     </UserProvider>

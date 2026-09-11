@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import mealPlanApi from "../../api/mealPlanApi";
 import profileApi from "../../api/profileApi";
 import { useUser } from "../../context/UserContext";
+import { useNutritionTargets } from "../../context/NutritionTargetsContext";
 
 const CALORIE_OPTIONS = [1500, 1800, 2000, 2200, 2500];
 const GOAL_OPTIONS = ["Lose Weight", "Maintain Weight", "Build Muscle", "Improve Health"];
@@ -45,11 +46,13 @@ function PlanDayCard({ day }) {
 
 export default function AIWeeklyPlanScreen({ navigation }) {
   const { user } = useUser();
+  const { calorieTarget: sharedCalorieTarget, setCalorieTarget: setSharedCalorieTarget } =
+    useNutritionTargets();
   const [step, setStep] = useState("configure");
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState(null);
-  const [calorieTarget, setCalorieTarget] = useState(2000);
+  const [calorieTarget, setCalorieTarget] = useState(sharedCalorieTarget);
   const [goal, setGoal] = useState("Maintain Weight");
   const [dietaryPreference, setDietaryPreference] = useState("");
 
@@ -84,6 +87,10 @@ export default function AIWeeklyPlanScreen({ navigation }) {
         response?.plan ||
         response?.data ||
         null;
+
+      // Generating a plan is the point the user commits to this calorie
+      // target, so this is where it becomes the app-wide shared value.
+      await setSharedCalorieTarget(calorieTarget);
 
       if (plan) {
         setGeneratedPlan(plan);
