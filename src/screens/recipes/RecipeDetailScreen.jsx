@@ -912,6 +912,14 @@ export default function RecipeDetailScreen({ navigation, route }) {
           <View style={styles.titleRow}>
             <Text style={styles.recipeTitle}>{recipe.title}</Text>
             <Pressable
+              onPress={() => navigation.navigate("TimerScreen")}
+              style={styles.shareBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Open cooking timer"
+            >
+              <Ionicons name="timer-outline" size={22} color={C.primary} />
+            </Pressable>
+            <Pressable
               onPress={handleShare}
               style={styles.shareBtn}
               accessibilityRole="button"

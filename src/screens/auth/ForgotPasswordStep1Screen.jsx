@@ -11,6 +11,7 @@ import {
 import { requestPasswordReset } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
 import useFormValidation from "../../hooks/useFormValidation";
+import useAppTheme from "../../hooks/useAppTheme";
 
 import {
   AuthButton,
@@ -27,7 +28,11 @@ const forgotPasswordSchema = {
   },
 };
 
-export default function ForgotPasswordStep1Screen({ goTo = (_nextScreen, _params) => {} }) {
+export default function ForgotPasswordStep1Screen({
+  goTo = (_nextScreen, _params) => {},
+}) {
+  const { colors } = useAppTheme();
+
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
@@ -54,7 +59,12 @@ export default function ForgotPasswordStep1Screen({ goTo = (_nextScreen, _params
         email: values.email.trim(),
       });
     } catch (error) {
-      setGeneralError(toErrorMessage(error, "We could not send the reset email. Please try again."));
+      setGeneralError(
+        toErrorMessage(
+          error,
+          "We could not send the reset email. Please try again."
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -72,21 +82,71 @@ export default function ForgotPasswordStep1Screen({ goTo = (_nextScreen, _params
           showsVerticalScrollIndicator={false}
         >
           <AuthCard>
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>↻</Text>
+            <View
+              style={[
+                styles.iconCircle,
+                {
+                  backgroundColor: colors.surfaceSecondary,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.iconText,
+                  {
+                    color: colors.primary,
+                  },
+                ]}
+              >
+                ✉
+              </Text>
             </View>
 
             <View style={styles.titleBlock}>
-              <Text style={styles.title}>Forgot your password?</Text>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                Forgot your password?
+              </Text>
 
-              <Text style={styles.subtitle}>
-                No worries. Enter your email below and we will send you a code to reset it.
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                No worries. Enter your email below and we will send you a code
+                to reset it.
               </Text>
             </View>
 
             {generalError ? (
-              <View style={styles.infoBox}>
-                <Text style={styles.infoText}>{generalError}</Text>
+              <View
+                style={[
+                  styles.infoBox,
+                  {
+                    borderColor: colors.error,
+                    backgroundColor: colors.errorBackground,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.infoText,
+                    {
+                      color: colors.error,
+                    },
+                  ]}
+                >
+                  {generalError}
+                </Text>
               </View>
             ) : null}
 
@@ -107,7 +167,10 @@ export default function ForgotPasswordStep1Screen({ goTo = (_nextScreen, _params
             />
 
             <View style={styles.footer}>
-              <HelperLink title="Back to Login" onPress={() => goTo("login")} />
+              <HelperLink
+                title="Back to Login"
+                onPress={() => goTo("login")}
+              />
             </View>
           </AuthCard>
         </ScrollView>
@@ -131,7 +194,6 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 999,
-    backgroundColor: "#EEF6FF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 24,
@@ -139,7 +201,6 @@ const styles = StyleSheet.create({
 
   iconText: {
     fontSize: 30,
-    color: "#1F73B7",
     fontWeight: "800",
   },
 
@@ -152,7 +213,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 22,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   subtitle: {
@@ -160,15 +220,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
     maxWidth: 290,
   },
 
   infoBox: {
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#BFD7EA",
-    backgroundColor: "#F7FBFF",
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -177,7 +234,6 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#1F73B7",
   },
 
   footer: {
