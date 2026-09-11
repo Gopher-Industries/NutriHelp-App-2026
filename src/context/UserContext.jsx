@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 
-import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, setUnauthorizedHandler } from "../api/baseApi";
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY,   setAuthToken, setUnauthorizedHandler } from "../api/baseApi";
 import { logoutUser, refreshAccessToken } from "../api/authApi";
 
 const USER_STORAGE_KEY = "nutrihelp.auth.user";
@@ -56,7 +56,15 @@ export function UserProvider({ children }) {
   const [token, setToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
+// Track whether the current login should persist across app relaunches.
+  const persistSessionRef = useRef(false);
+// Keep the latest refresh token available to stable callbacks.
+   const refreshTokenRef = useRef(null);
   const [loading, setLoading] = useState(true);
+ 
+  useEffect(() => {
+  refreshTokenRef.current = refreshToken;
+}, [refreshToken]);
 
   const appStateRef = useRef(AppState.currentState);
   const backgroundAtRef = useRef(null);
@@ -73,14 +81,23 @@ export function UserProvider({ children }) {
 
   const logout = useCallback(async () => {
     clearAutoLogoutTimer();
+  // Temporary sessions may only have the refresh token in memory.
+   const currentRefreshToken =
+    refreshTokenRef.current ||
+    (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
 
-    const storedRefreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-    await logoutUser(storedRefreshToken);
+    await logoutUser(currentRefreshToken);
 
     setUser(null);
     setToken(null);
     setRefreshToken(null);
     setExpiresAt(null);
+    
+    // Remove the token used by API requests.
+    setAuthToken(null);
+// Clear session flags after logout.
+     persistSessionRef.current = false;
+     refreshTokenRef.current = null;
 
     await Promise.all([
       SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
@@ -92,13 +109,22 @@ export function UserProvider({ children }) {
   // Silently attempt a token refresh. Returns new expiresAt on success, null on failure.
   const attemptTokenRefresh = useCallback(async () => {
     try {
-      const storedRefresh = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-      if (!storedRefresh) return null;
-      const result = await refreshAccessToken(storedRefresh);
+      // Use the in-memory refresh token first so temporary sessions can still refresh.
+   const storedRefresh = refreshTokenRef.current ||
+       (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
+   if (!storedRefresh) return null;
+  const result = await refreshAccessToken(storedRefresh);
+
       if (!result?.token) return null;
-      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, result.token);
+     // Only persist refreshed access tokens for remembered sessions.
+      if (persistSessionRef.current) {
+         await SecureStore.setItemAsync(AUTH_TOKEN_KEY, result.token);
+      }
+      // Update the token used by API requests after a successful refresh.
+      setAuthToken(result.token);
       setToken(result.token);
       setExpiresAt(result.expiresAt || null);
+      
       return result.expiresAt || null;
     } catch {
       return null;
@@ -138,7 +164,11 @@ export function UserProvider({ children }) {
   }, [scheduleAutoLogout]);
 
   const login = useCallback(
-    async (authOrToken, maybeUser = null, maybeExpiresAt = null) => {
+    async (authOrToken,
+       maybeUser = null, 
+       maybeExpiresAt = null,
+       rememberMe = true
+      ) => {
       console.log("[UserContext] login() called with:", { authOrToken, maybeUser, maybeExpiresAt });
       
       const authObject =
@@ -156,24 +186,51 @@ export function UserProvider({ children }) {
           ? authObject.expiresAt
           : maybeExpiresAt || getTokenExpiryMs(nextToken);
 
+      // Make sure a valid token exists before creating the session.
       if (!nextToken) {
         throw new Error("login() requires a JWT token.");
       }
 
+      // Do not start a session with an already expired token.
       if (nextExpiresAt && nextExpiresAt <= Date.now()) {
-        await logout();
-        return false;
+      await logout();
+      return false;
       }
+       // Save the user's Remember Me choice for this session.
+          persistSessionRef.current = rememberMe;
+          refreshTokenRef.current = nextRefreshToken;
+       // Keep the token available for API requests during the current session.
+          setAuthToken(nextToken);
 
-      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, nextToken);
-      if (nextRefreshToken) {
-        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, nextRefreshToken);
-      }
-      if (nextUser) {
-        await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
-      } else {
-        await AsyncStorage.removeItem(USER_STORAGE_KEY);
-      }
+     // Persist auth data only when Remember Me is enabled.
+  if (rememberMe) {
+    await SecureStore.setItemAsync(AUTH_TOKEN_KEY, nextToken);
+
+  if (nextRefreshToken) {
+    await SecureStore.setItemAsync(
+      REFRESH_TOKEN_KEY,
+      nextRefreshToken
+    );
+  } else {
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  }
+
+  if (nextUser) {
+    await AsyncStorage.setItem(
+      USER_STORAGE_KEY,
+      JSON.stringify(nextUser)
+    );
+  } else {
+    await AsyncStorage.removeItem(USER_STORAGE_KEY);
+  }
+} else {
+  // Temporary sessions should not remain after the app is relaunched.
+  await Promise.all([
+    SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
+    SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
+    AsyncStorage.removeItem(USER_STORAGE_KEY),
+  ]);
+}
 
       setToken(nextToken);
       setRefreshToken(nextRefreshToken);
@@ -202,6 +259,9 @@ export function UserProvider({ children }) {
           console.log("[UserContext] No stored token");
           return;
         }
+        // A session restored from SecureStore is a remembered session.
+        persistSessionRef.current = true;
+        refreshTokenRef.current = storedRefresh || null;
 
         let activeToken = storedToken;
         let nextExpiresAt = getTokenExpiryMs(storedToken);
@@ -220,7 +280,8 @@ export function UserProvider({ children }) {
 
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
         if (!isMounted) return;
-
+        // Restore the token used by API requests for remembered sessions.
+        setAuthToken(activeToken);
         setToken(activeToken);
         setRefreshToken(storedRefresh || null);
         setUser(parsedUser);
