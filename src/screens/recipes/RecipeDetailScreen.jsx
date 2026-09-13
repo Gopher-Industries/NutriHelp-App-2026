@@ -1,3 +1,4 @@
+import recipeIngredientRows from "./recipeIngredientRows";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -359,14 +360,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
   );
 
   function normalizeRecipe(raw) {
-    const rawIngredients = Array.isArray(raw?.ingredients)
-      ? raw.ingredients
-      : typeof raw?.ingredients === "string"
-        ? raw.ingredients
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean)
-        : [];
+    const rawIngredients = recipeIngredientRows(raw?.ingredients);
     const rawInstructions = Array.isArray(raw?.instructions)
       ? raw.instructions
       : typeof raw?.instructions === "string"
@@ -394,8 +388,8 @@ export default function RecipeDetailScreen({ navigation, route }) {
             raw?.rating_by_user ??
             0
         ) || 0,
-      timeMinutes: Number(raw?.timeMinutes ?? raw?.time_minutes ?? raw?.time ?? 0),
-      servings: Number(raw?.servings ?? raw?.serving_count ?? 1),
+      timeMinutes: Number(raw?.timeMinutes ?? raw?.time_minutes ?? raw?.preparation_time ?? raw?.time ?? 0),
+      servings: Number(raw?.servings ?? raw?.serving_count ?? raw?.total_servings ?? 1),
       difficulty: raw?.difficulty ?? raw?.level ?? "",
       source: pickFirstText(raw?.source, raw?.sourceType),
       sourceType: pickFirstText(raw?.sourceType, raw?.source),
