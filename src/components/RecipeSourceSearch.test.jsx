@@ -55,3 +55,14 @@ test("cancelled mapping cannot apply a late response", async () => {
   await act(async () => pending.resolve({ draft: {} }));
   expect(apply).not.toHaveBeenCalled(); expect(content()).not.toContain("Apply recipe to form");
 });
+test("a late input change during selection cannot leave preparation stuck", async () => {
+  expect(tree.root.findByType("TextInput").props.autoCorrect).toBe(false);
+  input("soup"); await tick();
+  const pending = deferred(); mapRecipeSource.mockReturnValueOnce(pending.promise);
+  act(() => { tree.root.findByType("Pressable").props.onPress(); });
+  input("soups"); await tick();
+  await act(async () => pending.resolve({ draft: {} }));
+  expect(content()).not.toContain("Cancel preparation");
+  expect(content()).not.toContain("Apply recipe to form");
+  expect(tree.root.findByType("TextInput").props.editable).toBe(true);
+});

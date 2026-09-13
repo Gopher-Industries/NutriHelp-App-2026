@@ -56,14 +56,16 @@ export default function RecipeSourceSearch({ onPrefill, disabled = false }) {
       // Let the user finish typing before explicitly replacing their form.
       setDraft(mapped);
       setResults([]);
-      setStatus("Recipe ready. Apply it to replace the recipe name, cuisine, cooking method, cooking time, servings, ingredients and instructions. Other fields stay as entered.");
+      setStatus("Recipe ready. Apply it to replace the recipe name, cuisine, cooking method, cooking time, servings, photo, ingredients and instructions.");
     } catch (err) {
       if (version !== generation.current) return;
       setStatus("");
       setError("Could not prepare this recipe. Your form is unchanged. Try again or continue manually.");
     } finally {
-      if (version === generation.current) setMapping(false);
-      if (mapController.current === controller) mapController.current = null;
+      if (mapController.current === controller) {
+        setMapping(false);
+        mapController.current = null;
+      }
     }
   };
 
@@ -71,7 +73,7 @@ export default function RecipeSourceSearch({ onPrefill, disabled = false }) {
     <Text accessibilityRole="header" style={styles.title}>Start from a real recipe</Text>
     <Text style={styles.text}>Optional · Search TheMealDB with at least 3 characters.</Text>
     <TextInput accessibilityLabel="Start from a real recipe" accessibilityHint="Enter at least three characters, then select a recipe below"
-      placeholder="Search recipes" value={query} editable={!mapping && !disabled}
+      placeholder="Search recipes" autoCorrect={false} autoCapitalize="none" value={query} editable={!mapping && !disabled}
       onChangeText={(value) => { generation.current++; setDraft(null); setQuery(value); }} style={styles.input} />
     {mapping ? <ActivityIndicator accessibilityLabel="Preparing recipe" /> : null}
     {status ? <Text accessibilityLiveRegion="polite" style={styles.text}>{status}</Text> : null}

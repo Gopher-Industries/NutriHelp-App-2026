@@ -23,3 +23,9 @@ export async function mapRecipeSource(source, externalId, { signal } = {}) {
   }
   return response.data;
 }
+
+export async function resolveRecipeIngredients(ingredients) {
+  const response = await baseApi.post('/api/recipe-sources/resolve-ingredients', { ingredients }, { timeoutMs: 120000 });
+  if (!Array.isArray(response?.data?.resolved)) throw new Error('Invalid ingredient resolution response.');
+  return response.data.resolved;
+}
