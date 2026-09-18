@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useColorScheme } from "react-native";
 
 import AccountStack from "./AccountStack";
+import CommunityStack from "./CommunityStack";
 import HealthPlanStack from "./HealthPlanStack";
 import HomeStack from "./HomeStack";
 import MealStack from "./MealStack";
@@ -19,6 +20,7 @@ const TAB_ICON_BY_ROUTE = {
   Recipes: "book",
   Scan: "barcode",
   AIPlan: "pulse",
+  Community: "people",
   Profile: "person",
 };
 
@@ -71,6 +73,14 @@ export default function MainTabs() {
         name="AIPlan"
         component={HealthPlanStack}
         options={{ tabBarLabel: "AI Plan" }}
+      />
+      <Tab.Screen
+        name="Community"
+        component={CommunityStack}
+        options={{
+          tabBarLabel: "Community",
+          popToTopOnBlur: true,
+        }}
       />
       <Tab.Screen
         name="Profile"
