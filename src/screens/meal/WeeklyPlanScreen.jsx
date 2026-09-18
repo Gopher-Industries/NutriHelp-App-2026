@@ -200,7 +200,7 @@ function FilledMealCard({ meal, accentColor, onViewDetail, onRemove }) {
         <Ionicons name="close" size={16} color="#64748B" />
       </Pressable>
       <View style={styles.filledRow}>
-        <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} resizeMode="cover" />
+        <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} resizeMode="cover" accessible={false} />
         <View style={styles.mealInfo}>
           <Text style={styles.mealTitle} numberOfLines={2}>
             {meal.title}
@@ -213,7 +213,12 @@ function FilledMealCard({ meal, accentColor, onViewDetail, onRemove }) {
       </View>
 
       <View style={styles.slotActionRow}>
-        <Pressable style={styles.slotOutlineButton} onPress={onViewDetail}>
+        <Pressable
+          style={styles.slotOutlineButton}
+          onPress={onViewDetail}
+          accessibilityRole="button"
+          accessibilityLabel={`View details for ${meal.title}`}
+        >
           <Text style={styles.slotOutlineButtonText}>View detail</Text>
         </Pressable>
       </View>
@@ -561,6 +566,8 @@ export default function WeeklyPlanScreen({ navigation }) {
           style={styles.aiHeroCard}
           onPress={() => navigation.navigate("AIWeeklyPlanScreen")}
           android_ripple={{ color: "#A7F3D0" }}
+          accessibilityRole="button"
+          accessibilityLabel="Generate AI 7-day meal plan"
         >
           <View style={styles.aiHeroIconWrap}>
             <Text style={styles.aiHeroIconEmoji}>✨</Text>
@@ -679,7 +686,12 @@ export default function WeeklyPlanScreen({ navigation }) {
                         </Text>
                         <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} kcal</Text>
                       </View>
-                      <Pressable style={styles.optionAddButton} onPress={() => handleSelectMeal(meal)}>
+                      <Pressable
+                        style={styles.optionAddButton}
+                        onPress={() => handleSelectMeal(meal)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Add ${meal.title}`}
+                      >
                         <Text style={styles.optionAddButtonText}>Add</Text>
                       </Pressable>
                     </View>
