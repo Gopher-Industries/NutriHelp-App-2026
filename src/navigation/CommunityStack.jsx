@@ -1,32 +1,45 @@
 import { createStackNavigator } from "@react-navigation/stack";
 
-import PlaceholderScreen from "./_PlaceholderScreen";
+import { CommunityProvider } from "../context/CommunityContext";
+import CommunityFeedScreen from "../screens/community/CommunityFeedScreen";
+import CreatePostScreen from "../screens/community/CreatePostScreen";
+import LeaderboardScreen from "../screens/community/LeaderboardScreen";
+import PostDetailScreen from "../screens/community/PostDetailScreen";
 
 const Stack = createStackNavigator();
 
 export default function CommunityStack() {
   return (
-    <Stack.Navigator initialRouteName="FeedScreen">
-      <Stack.Screen
-        name="FeedScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Community" }}
-      />
-      <Stack.Screen
-        name="PostDetailScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Post" }}
-      />
-      <Stack.Screen
-        name="CreatePostScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Create Post" }}
-      />
-      <Stack.Screen
-        name="LeaderboardScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Leaderboard" }}
-      />
-    </Stack.Navigator>
+    <CommunityProvider>
+      <Stack.Navigator
+        initialRouteName="FeedScreen"
+        screenOptions={{
+          headerShown: false,
+          cardStyle: {
+            backgroundColor: "#F4F7FB",
+          },
+        }}
+      >
+        <Stack.Screen
+          name="FeedScreen"
+          component={CommunityFeedScreen}
+        />
+
+        <Stack.Screen
+          name="PostDetailScreen"
+          component={PostDetailScreen}
+        />
+
+        <Stack.Screen
+          name="CreatePostScreen"
+          component={CreatePostScreen}
+        />
+
+        <Stack.Screen
+          name="LeaderboardScreen"
+          component={LeaderboardScreen}
+        />
+      </Stack.Navigator>
+    </CommunityProvider>
   );
 }
