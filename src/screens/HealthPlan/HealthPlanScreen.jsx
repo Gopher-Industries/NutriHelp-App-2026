@@ -275,8 +275,7 @@ export default function HealthPlanScreen({ navigation }) {
           Tell us about your health and we'll generate a personalised 8-week plan.
         </Text>
 
-        <ConditionWarningBanner activeWarnings={activeWarnings} />
-                
+                <ConditionWarningBanner activeWarnings={activeWarnings} />      
          {hasDiabetes && (
           <Pressable
             style={styles.diabetesPersonalisationCard}
