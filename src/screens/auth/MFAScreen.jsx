@@ -39,11 +39,12 @@ function maskEmail(email) {
 
   return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`;
 }
-
+ 
 export default function MFAScreen({
   email = "",
   password = "",
   goTo = (_nextScreen, _params) => {},
+    rememberMe = false,
 }) {
   const hiddenInputRef = useRef(null);
   const { login } = useUser();
@@ -98,7 +99,8 @@ export default function MFAScreen({
 
     try {
       const response = await verifyMFA(email, password, code);
-      await login(response);
+      // Preserve the Remember Me choice after MFA verification.
+      await login(response, null, null, rememberMe);
     } catch (verifyError) {
       setError(
         toErrorMessage(

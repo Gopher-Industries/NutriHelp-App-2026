@@ -11,6 +11,12 @@ if (!API_BASE_URL) {
     "Missing EXPO_PUBLIC_API_BASE_URL. Set it in .env before making API calls."
   );
 }
+// Keep the current session token available for non-persistent logins.
+let runtimeAuthToken = null;
+
+export function setAuthToken(token) {
+  runtimeAuthToken = token || null;
+}
 
 let onUnauthorized = null;
 let unauthorizedInProgress = false;
@@ -115,11 +121,15 @@ export async function request(method, path, options = {}) {
   const requestHeaders = { ...headers };
 
   if (!skipAuth) {
-    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-    if (token) {
-      requestHeaders.Authorization = `Bearer ${token}`;
-    }
+  // Use the current in-memory token first, then fall back to stored login.
+  const token =
+    runtimeAuthToken ||
+    (await SecureStore.getItemAsync(AUTH_TOKEN_KEY));
+
+  if (token) {
+    requestHeaders.Authorization = `Bearer ${token}`;
   }
+}
 
   let requestBody = body;
   const isJsonBody =
