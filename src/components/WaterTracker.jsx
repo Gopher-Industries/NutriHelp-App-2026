@@ -17,6 +17,7 @@ import {
 import Svg, { Circle } from "react-native-svg";
 
 import { getTodayIntakeLocal, saveTodayIntakeLocal } from "../api/waterIntakeApi";
+import { useToast } from "../context/ToastContext";
 
 const DAILY_GOAL_CUPS = 8;
 const REMINDERS_KEY = "nutrihelp.water.dailyReminders";
@@ -121,6 +122,7 @@ function QuickAction({ label, onPress }) {
 }
 
 export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
+  const { showToast } = useToast();
   const [glasses, setGlasses] = useState(0);
   const [remindersEnabled, setRemindersEnabled] = useState(false);
   const [customVisible, setCustomVisible] = useState(false);
@@ -179,8 +181,8 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
 
   const applyCustomAmount = async () => {
     const parsed = parseInt(customValue, 10);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      Alert.alert("Custom intake", "Please enter a valid number of cups.");
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+      showToast("Please enter a valid number of cups.", "error");
       return;
     }
     await persistIntake(glasses + parsed);
