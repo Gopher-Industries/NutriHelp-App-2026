@@ -208,6 +208,13 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="settings-outline" size={16} color="#3C4A63" />
           <Text style={styles.secondaryButtonText}>Settings</Text>
         </Pressable>
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate("ShoppingListScreen")}
+      >
+          <Ionicons name="cart-outline" size={16} color="#3C4A63" />
+          <Text style={styles.secondaryButtonText}>Shopping List</Text>
+        </Pressable>
 
         <View style={styles.streakCard}>
           <View style={styles.streakBadge}>
