@@ -1,3 +1,4 @@
+import recipeIngredientRows from "./recipeIngredientRows";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -225,26 +226,23 @@ export function normalizeRecipe(raw, index) {
     category: String(raw?.category ?? raw?.meal_type ?? "").trim() || "Recommended",
     cuisine: pickRecipeCuisine(raw),
     cuisine_name: pickRecipeCuisine(raw),
-    timeMinutes: Number(raw?.timeMinutes ?? raw?.time_minutes ?? raw?.time ?? 10),
-    servings: Number(raw?.servings ?? raw?.serving_count ?? 1),
+    timeMinutes: Number(raw?.timeMinutes ?? raw?.time_minutes ?? raw?.preparation_time ?? raw?.time ?? 10),
+    servings: Number(raw?.servings ?? raw?.serving_count ?? raw?.total_servings ?? 1),
     difficulty: raw?.difficulty ?? raw?.level ?? "Easy",
     calories: extractCaloriesFromRecipe(raw),
     rating,
     totalRatings,
-    ingredients: Array.isArray(raw?.ingredients)
-      ? raw.ingredients.map((item) => ({
-          quantity: String(item?.quantity ?? item?.amount ?? ""),
-          unit: String(item?.unit ?? "").trim(),
-          name: item?.name ?? item?.ingredient ?? "Ingredient",
-        }))
-      : [],
-    instructions: Array.isArray(raw?.instructions)
-      ? raw.instructions.map((step, stepIndex) => ({
-          number: Number(step?.number ?? step?.step ?? stepIndex + 1),
-          title: step?.title ?? `Step ${stepIndex + 1}`,
-          description: step?.description ?? step?.content ?? "",
-        }))
-      : [],
+    ingredients: recipeIngredientRows(raw?.ingredients).map((item) => typeof item === "string" ? { name: item, quantity: "", unit: "" } : ({
+      quantity: String(item?.quantity ?? item?.amount ?? ""),
+      unit: String(item?.unit ?? "").trim(),
+      name: item?.name ?? item?.ingredient ?? "Ingredient",
+    })),
+    instructions: (Array.isArray(raw?.instructions) ? raw.instructions : String(raw?.instructions || "").split(/\n+/).filter(Boolean))
+      .map((step, index) => ({
+        number: Number(step?.number ?? step?.step ?? index + 1),
+        title: step?.title ?? `Step ${index + 1}`,
+        description: typeof step === "string" ? step : step?.description ?? step?.content ?? "",
+      })),
     nutrition: normalizedNutrition,
     imageUrl: pickRecipeImageUrl(raw),
     source: raw?.source ?? raw?.sourceType ?? "",
