@@ -205,6 +205,14 @@ export default function ProfileScreen({ navigation }) {
 
         <Pressable
           style={styles.secondaryButton}
+          onPress={() => navigation.navigate("AppointmentsScreen")}
+        >
+          <Ionicons name="calendar-outline" size={16} color={colors.textMutedNavy} />
+          <Text style={styles.secondaryButtonText}>Appointments</Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.secondaryButton}
           onPress={() => navigation.navigate("SettingsScreen")}
         >
           <Ionicons name="settings-outline" size={16} color={colors.textMutedNavy} />
