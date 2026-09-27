@@ -1,12 +1,15 @@
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+
+import { colors } from "../../theme";
 export default function RecommendedDetailsScreen() {
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Recommended for you</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { fontSize: 30 }]}>Recommended for you</Text>
+        <Text style={[styles.subtitle, { fontSize: 16, lineHeight: 23 }]}>
           Based on your current nutrition goals, this smoothie is a strong fit.
         </Text>
 
@@ -18,23 +21,23 @@ export default function RecommendedDetailsScreen() {
         />
 
         <View style={styles.infoCard}>
-          <Text style={styles.foodTitle}>Berry Protein Smoothie</Text>
-          <Text style={styles.foodDescription}>
+          <Text style={[styles.foodTitle, { fontSize: 24 }]}>Berry Protein Smoothie</Text>
+          <Text style={[styles.foodDescription, { fontSize: 16, lineHeight: 23 }]}>
             A balanced high-protein option with banana, berries, oats, and Greek
             yogurt to support your daily macro target.
           </Text>
 
           <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Calories</Text>
-            <Text style={styles.metricValue}>420 kcal</Text>
+            <Text style={[styles.metricLabel, { fontSize: 16 }]}>Calories</Text>
+            <Text style={[styles.metricValue, { fontSize: 17 }]}>420 kcal</Text>
           </View>
           <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Protein</Text>
-            <Text style={styles.metricValue}>31 g</Text>
+            <Text style={[styles.metricLabel, { fontSize: 16 }]}>Protein</Text>
+            <Text style={[styles.metricValue, { fontSize: 17 }]}>31 g</Text>
           </View>
           <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Best for</Text>
-            <Text style={styles.metricValue}>Post-workout recovery</Text>
+            <Text style={[styles.metricLabel, { fontSize: 16 }]}>Best for</Text>
+            <Text style={[styles.metricValue, { fontSize: 17 }]}>Post-workout recovery</Text>
           </View>
         </View>
       </ScrollView>
@@ -43,26 +46,27 @@ export default function RecommendedDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { padding: 20, paddingBottom: 32 },
-  title: { fontSize: 30, fontWeight: "800", color: "#111111", marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: "#555555", marginBottom: 20 },
+  title: { fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
+  subtitle: { color: colors.textGray, marginBottom: 20 },
   heroImage: { width: "100%", height: 220, borderRadius: 28, marginBottom: 18 },
   infoCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 28,
     padding: 20,
   },
-  foodTitle: { fontSize: 24, fontWeight: "800", color: "#111111", marginBottom: 10 },
-  foodDescription: { fontSize: 16, lineHeight: 23, color: "#444444", marginBottom: 18 },
+  foodTitle: { fontWeight: "800", color: colors.textNearBlack, marginBottom: 10 },
+  foodDescription: { color: colors.c_444444, marginBottom: 18 },
   metricRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
+    flexWrap: "wrap",
   },
-  metricLabel: { fontSize: 16, color: "#555555" },
-  metricValue: { fontSize: 17, fontWeight: "700", color: "#111111" },
+  metricLabel: { color: colors.textGray },
+  metricValue: { fontWeight: "700", color: colors.textNearBlack },
 });

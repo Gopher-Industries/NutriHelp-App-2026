@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAccessibility } from "../../context/AccessibilityContext";
 import { sendChatMessage } from "../../services/chatbotApi";
 
+import { colors } from "../../theme";
 const STORAGE_KEY = "nh-chat-messages";
 
 function formatTime(iso) {
@@ -91,7 +92,7 @@ function AiBubble({ message, speakingId, onSpeak, onStop, fs, sh }) {
             <Ionicons
               name={isThisSpeaking ? "stop-circle" : "volume-high-outline"}
               size={fs(15)}
-              color={isThisSpeaking ? "#EF4444" : "#0B5FA5"}
+              color={isThisSpeaking ? colors.danger : colors.primary}
             />
           </Pressable>
         </View>
@@ -104,7 +105,7 @@ function ThinkingBubble({ fs }) {
   return (
     <View style={styles.aiRow}>
       <View style={[styles.aiBubble, styles.thinkingBubble]}>
-        <ActivityIndicator size="small" color="#0B5FA5" />
+        <ActivityIndicator size="small" color={colors.primary} />
         <Text style={[styles.thinkingText, { fontSize: fs(14) }]}>Thinking…</Text>
       </View>
     </View>
@@ -219,14 +220,14 @@ export default function ChatModal({ visible, onClose }) {
         {/* Header */}
         <View style={[styles.header, { minHeight: sh(52) }]}>
           <Pressable onPress={onClose} style={styles.headerBtn} hitSlop={12}>
-            <Ionicons name="chevron-down" size={sh(26)} color="#64748B" />
+            <Ionicons name="chevron-down" size={sh(26)} color={colors.textSlate500} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <Ionicons name="sparkles" size={fs(17)} color="#0B5FA5" />
+            <Ionicons name="sparkles" size={fs(17)} color={colors.primary} />
             <Text style={[styles.headerTitle, { fontSize: fs(17) }]}> NutriHelp AI</Text>
           </View>
           <Pressable onPress={handleClear} style={styles.headerBtn} hitSlop={12}>
-            <Ionicons name="trash-outline" size={fs(20)} color="#94A3B8" />
+            <Ionicons name="trash-outline" size={fs(20)} color={colors.textSlate400} />
           </Pressable>
         </View>
 
@@ -245,7 +246,7 @@ export default function ChatModal({ visible, onClose }) {
             onLayout={scrollToBottom}
             ListEmptyComponent={
               <View style={styles.empty}>
-                <Ionicons name="chatbubbles-outline" size={sh(52)} color="#CBD5E1" />
+                <Ionicons name="chatbubbles-outline" size={sh(52)} color={colors.borderSlate} />
                 <Text style={[styles.emptyTitle, { fontSize: fs(17) }]}>Ask NutriHelp AI</Text>
                 <Text style={[styles.emptyBody, { fontSize: fs(14) }]}>
                   Get personalised advice on nutrition, meals, and health goals. Tap the speaker icon to hear replies aloud.
@@ -259,10 +260,10 @@ export default function ChatModal({ visible, onClose }) {
           {/* Error */}
           {error ? (
             <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle-outline" size={fs(14)} color="#EF4444" />
+              <Ionicons name="alert-circle-outline" size={fs(14)} color={colors.danger} />
               <Text style={[styles.errorText, { fontSize: fs(13) }]}> {error}</Text>
               <Pressable onPress={() => setError(null)} hitSlop={8}>
-                <Ionicons name="close" size={fs(14)} color="#94A3B8" />
+                <Ionicons name="close" size={fs(14)} color={colors.textSlate400} />
               </Pressable>
             </View>
           ) : null}
@@ -274,7 +275,7 @@ export default function ChatModal({ visible, onClose }) {
               value={input}
               onChangeText={setInput}
               placeholder="Type a message…"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textSlate400}
               multiline
               maxLength={500}
             />
@@ -288,7 +289,7 @@ export default function ChatModal({ visible, onClose }) {
               onPress={handleSend}
               disabled={!input.trim() || loading}
             >
-              <Ionicons name="send" size={fs(17)} color="#FFFFFF" />
+              <Ionicons name="send" size={fs(17)} color={colors.white} />
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -299,7 +300,7 @@ export default function ChatModal({ visible, onClose }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
 
   header: {
     flexDirection: "row",
@@ -308,49 +309,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.surfaceSlate,
   },
   headerBtn: { padding: 4, minWidth: 32 },
   headerCenter: { flexDirection: "row", alignItems: "center" },
-  headerTitle: { fontWeight: "700", color: "#253B63" },
+  headerTitle: { fontWeight: "700", color: colors.textNavy },
 
   listContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, flexGrow: 1 },
 
   empty: { flex: 1, alignItems: "center", paddingTop: 64, paddingHorizontal: 32 },
-  emptyTitle: { fontWeight: "700", color: "#253B63", marginTop: 16 },
-  emptyBody: { color: "#94A3B8", textAlign: "center", lineHeight: 21, marginTop: 8 },
+  emptyTitle: { fontWeight: "700", color: colors.textNavy, marginTop: 16 },
+  emptyBody: { color: colors.textSlate400, textAlign: "center", lineHeight: 21, marginTop: 8 },
 
   // User bubble
   userRow: { alignItems: "flex-end", marginBottom: 10 },
   userBubble: {
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  userText: { color: "#FFFFFF", lineHeight: 22 },
+  userText: { color: colors.white, lineHeight: 22 },
   userTimestamp: { color: "rgba(255,255,255,0.55)", marginTop: 4, textAlign: "right" },
 
   // AI bubble
   aiRow: { alignItems: "flex-start", marginBottom: 10 },
   aiBubble: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: colors.surfaceSlate,
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  aiText: { color: "#253B63", lineHeight: 22 },
+  aiText: { color: colors.textNavy, lineHeight: 22 },
   aiBubbleFooter: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 6,
   },
-  aiTimestamp: { color: "#94A3B8" },
+  aiTimestamp: { color: colors.textSlate400 },
   speakBtn: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 8,
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
 
   // Thinking
   thinkingBubble: { flexDirection: "row", alignItems: "center", gap: 8 },
-  thinkingText: { color: "#94A3B8", fontStyle: "italic" },
+  thinkingText: { color: colors.textSlate400, fontStyle: "italic" },
 
   // Error
   errorBanner: {
@@ -369,10 +370,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: colors.surfaceRed,
     borderRadius: 10,
   },
-  errorText: { color: "#EF4444", flex: 1, lineHeight: 18 },
+  errorText: { color: colors.danger, flex: 1, lineHeight: 18 },
 
   // Input bar
   inputBar: {
@@ -382,25 +383,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
-    backgroundColor: "#FFFFFF",
+    borderTopColor: colors.surfaceSlate,
+    backgroundColor: colors.white,
   },
   input: {
     flex: 1,
     maxHeight: 120,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: colors.borderSlateSoft,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingTop: Platform.OS === "ios" ? 12 : 10,
     paddingBottom: Platform.OS === "ios" ? 12 : 10,
-    color: "#253B63",
-    backgroundColor: "#F8FAFC",
+    color: colors.textNavy,
+    backgroundColor: colors.surface,
   },
   sendBtn: {
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  sendBtnDisabled: { backgroundColor: "#CBD5E1" },
+  sendBtnDisabled: { backgroundColor: colors.borderSlate },
 });

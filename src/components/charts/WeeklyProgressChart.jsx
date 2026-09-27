@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, useColorScheme } from 'react-native';
 import { CartesianChart, Bar } from 'victory-native';
 
+import { colors } from "../../theme";
 export default function WeeklyProgressChart({ data }) {
   const isDark = useColorScheme() === 'dark';
   
@@ -18,7 +19,7 @@ export default function WeeklyProgressChart({ data }) {
   return (
     <View 
       className={`rounded-2xl overflow-hidden ${isDark ? 'border border-slate-700' : 'border border-slate-200'}`}
-      style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}
+      style={{ backgroundColor: isDark ? colors.textSlate800 : colors.white }}
     >
       {/* Header */}
       <View className="px-5 pt-5 pb-2">
@@ -53,7 +54,7 @@ export default function WeeklyProgressChart({ data }) {
                 <Bar
                   chartBounds={chartBounds}
                   points={points.y}
-                  color={isDark ? "#22c55e" : "#16a34a"}
+                  color={isDark ? colors.successBright : colors.successStrong}
                   roundedCorners={{ topLeft: 6, topRight: 6 }}
                 />
               )}

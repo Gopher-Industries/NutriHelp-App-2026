@@ -13,6 +13,7 @@ import {
   UIManager,
   View,
 } from "react-native";
+import { colors } from "../../../theme";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -92,7 +93,7 @@ function SelectInput({ label, value, options, onChange }) {
     <>
       <Pressable style={styles.selectBtn} onPress={() => setOpen(true)}>
         <Text style={styles.selectValue}>{selected?.label ?? "Select..."}</Text>
-        <Ionicons name="chevron-down" size={16} color="#6B7280" />
+        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
       </Pressable>
 
       <Modal
@@ -124,7 +125,7 @@ function SelectInput({ label, value, options, onChange }) {
                     >
                       {opt.label}
                     </Text>
-                    {active && <Ionicons name="checkmark" size={16} color="#047857" />}
+                    {active && <Ionicons name="checkmark" size={16} color={colors.success} />}
                   </Pressable>
                 );
               })}
@@ -191,7 +192,7 @@ function AccordionSection({ title, open, onToggle, children }) {
         <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
           size={18}
-          color="#374151"
+          color={colors.textGray700}
         />
       </Pressable>
       {open ? <View style={styles.sectionBody}>{children}</View> : null}
@@ -266,7 +267,7 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
     >
       <View style={styles.header}>
         <Pressable onPress={onBack} style={styles.backBtn} hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color="#253B63" />
+          <Ionicons name="arrow-back" size={22} color={colors.textNavy} />
         </Pressable>
         <Text style={styles.headerTitle}>AI Meal Plan</Text>
         <View style={styles.headerSpacer} />
@@ -315,7 +316,7 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             keyboardType="number-pad"
             maxLength={4}
             placeholder="1800"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textMuted}
           />
           {calorieError ? (
             <Text style={styles.errorText}>{calorieError}</Text>
@@ -366,7 +367,7 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             multiline
             numberOfLines={3}
             placeholder="e.g. On warfarin, prefer low-sodium meals..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textMuted}
           />
           <Text style={styles.charCount}>{additionalNotes.length}/300</Text>
         </AccordionSection>
@@ -399,7 +400,7 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
         </AccordionSection>
 
         <Pressable style={styles.submitBtn} onPress={handleSubmit}>
-          <Ionicons name="sparkles-outline" size={18} color="#FFFFFF" />
+          <Ionicons name="sparkles-outline" size={18} color={colors.white} />
           <Text style={styles.submitBtnText}>Generate My 7-Day Plan</Text>
         </Pressable>
       </ScrollView>
@@ -415,8 +416,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   backBtn: {
     width: 44,
@@ -429,19 +430,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   headerSpacer: { width: 44 },
-  scroll: { flex: 1, backgroundColor: "#F8FAFC" },
+  scroll: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 },
-  pageTitle: { fontSize: 24, fontWeight: "800", color: "#253B63", marginBottom: 6 },
-  pageSubtitle: { fontSize: 14, color: "#6B7280", marginBottom: 20, lineHeight: 20 },
+  pageTitle: { fontSize: 24, fontWeight: "800", color: colors.textNavy, marginBottom: 6 },
+  pageSubtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, lineHeight: 20 },
 
   section: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     marginBottom: 14,
     overflow: "hidden",
   },
@@ -452,13 +453,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  sectionTitle: { fontSize: 15, fontWeight: "700", color: "#253B63" },
+  sectionTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
   sectionBody: { paddingHorizontal: 16, paddingBottom: 16 },
 
   fieldLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#374151",
+    color: colors.textGray700,
     marginTop: 14,
     marginBottom: 6,
   },
@@ -468,42 +469,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: colors.surfaceSoft,
     minHeight: 44,
   },
-  selectValue: { fontSize: 14, color: "#111827", flex: 1 },
+  selectValue: { fontSize: 14, color: colors.textGray900, flex: 1 },
 
   textInput: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 14,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    color: colors.textGray900,
+    backgroundColor: colors.surfaceSoft,
     minHeight: 44,
   },
-  textInputError: { borderColor: "#EF4444" },
-  errorText: { fontSize: 12, color: "#EF4444", marginTop: 4 },
+  textInputError: { borderColor: colors.danger },
+  errorText: { fontSize: 12, color: colors.danger, marginTop: 4 },
 
   notesInput: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 14,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    color: colors.textGray900,
+    backgroundColor: colors.surfaceSoft,
     minHeight: 80,
     textAlignVertical: "top",
   },
-  charCount: { fontSize: 11, color: "#9CA3AF", textAlign: "right", marginTop: 4 },
+  charCount: { fontSize: 11, color: colors.textMuted, textAlign: "right", marginTop: 4 },
 
   chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 2 },
   chip: {
@@ -511,34 +512,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#F9FAFB",
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceSoft,
     minHeight: 36,
     alignItems: "center",
     justifyContent: "center",
   },
-  chipActive: { borderColor: "#047857", backgroundColor: "#ECFDF5" },
-  chipText: { fontSize: 13, color: "#374151", fontWeight: "500" },
-  chipTextActive: { color: "#047857", fontWeight: "600" },
+  chipActive: { borderColor: colors.success, backgroundColor: colors.surfaceGreen },
+  chipText: { fontSize: 13, color: colors.textGray700, fontWeight: "500" },
+  chipTextActive: { color: colors.success, fontWeight: "600" },
 
   btnGroup: { flexDirection: "row", gap: 8 },
   groupBtn: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 8,
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: colors.surfaceSoft,
     minHeight: 52,
     justifyContent: "center",
   },
-  groupBtnActive: { borderColor: "#047857", backgroundColor: "#ECFDF5" },
-  groupBtnTitle: { fontSize: 13, fontWeight: "600", color: "#374151" },
-  groupBtnTitleActive: { color: "#047857" },
-  groupBtnSub: { fontSize: 10, color: "#9CA3AF", marginTop: 2 },
-  groupBtnSubActive: { color: "#059669" },
+  groupBtnActive: { borderColor: colors.success, backgroundColor: colors.surfaceGreen },
+  groupBtnTitle: { fontSize: 13, fontWeight: "600", color: colors.textGray700 },
+  groupBtnTitleActive: { color: colors.success },
+  groupBtnSub: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
+  groupBtnSubActive: { color: colors.successTeal },
 
   submitBtn: {
     flexDirection: "row",
@@ -548,9 +549,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     height: 54,
     borderRadius: 16,
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
   },
-  submitBtnText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+  submitBtnText: { fontSize: 16, fontWeight: "700", color: colors.white },
 
   modalOverlay: {
     flex: 1,
@@ -558,7 +559,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalSheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 12,
@@ -568,11 +569,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     textAlign: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.surfaceGray,
     marginBottom: 4,
   },
   modalOption: {
@@ -583,7 +584,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     minHeight: 44,
   },
-  modalOptionActive: { backgroundColor: "#F0FDF4" },
-  modalOptionText: { fontSize: 15, color: "#374151" },
-  modalOptionTextActive: { color: "#047857", fontWeight: "600" },
+  modalOptionActive: { backgroundColor: colors.surfaceGreenSoft },
+  modalOptionText: { fontSize: 15, color: colors.textGray700 },
+  modalOptionTextActive: { color: colors.success, fontWeight: "600" },
 });

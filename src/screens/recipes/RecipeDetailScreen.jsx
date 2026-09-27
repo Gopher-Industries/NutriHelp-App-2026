@@ -26,23 +26,24 @@ import {
   removeRecipeBookmark,
 } from "../../utils/recipeBookmarks";
 
+import { colors } from "../../theme";
 const C = {
-  primary: "#1A6DB5",
-  navy: "#0f2454",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  slate700: "#334155",
-  slate600: "#475569",
-  slate500: "#64748b",
-  gray100: "#f3f4f6",
-  gray300: "#d1d5db",
-  gray500: "#6b7280",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  navy: colors.c_0f2454,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  slate700: colors.c_334155,
+  slate600: colors.c_475569,
+  slate500: colors.textSlate500,
+  gray100: colors.surfaceGray,
+  gray300: colors.borderStrong,
+  gray500: colors.textSecondary,
+  white: colors.white,
 };
 
 /** Home mealsCard-style */
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -50,7 +51,7 @@ const SURFACE_SHADOW = {
 };
 /** Home statCard-style (compact metrics) */
 const STAT_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
@@ -874,7 +875,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
               />
             ) : (
               <View style={styles.heroPlaceholder} accessibilityRole="image" accessibilityLabel="No recipe image">
-                <Ionicons name="image-outline" size={56} color="#a8a29e" />
+                <Ionicons name="image-outline" size={56} color={colors.c_a8a29e} />
               </View>
             )}
             <Pressable
@@ -884,7 +885,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
               accessibilityLabel="Go back"
               hitSlop={8}
             >
-              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={22} color={colors.white} />
             </Pressable>
             <Pressable
               onPress={handleToggleBookmark}
@@ -1029,8 +1030,8 @@ export default function RecipeDetailScreen({ navigation, route }) {
                 rating={Number(reviewRating) || 0}
                 maxStars={5}
                 starSize={30}
-                color="#F59E0B"
-                emptyColor="#D1D5DB"
+                color={colors.warning}
+                emptyColor={colors.borderStrong}
                 enableHalfStar={false}
                 onChange={(value) => setReviewRating(Math.round(value))}
                 enableSwiping={false}
@@ -1040,7 +1041,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
               value={reviewDraft}
               onChangeText={setReviewDraft}
               placeholder="Share your experience with this recipe..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textSlate400}
               style={styles.reviewInput}
               multiline
               maxLength={1200}
@@ -1053,7 +1054,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
               style={[styles.reviewSubmitBtn, isSubmittingReview ? styles.reviewSubmitBtnDisabled : null]}
             >
               {isSubmittingReview ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <Text style={styles.reviewSubmitBtnText}>Submit review</Text>
               )}
@@ -1104,9 +1105,9 @@ export default function RecipeDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   pageChrome: { flex: 1 },
-  scrollViewport: { backgroundColor: "#FFFFFF" },
+  scrollViewport: { backgroundColor: colors.white },
   flex1: { flex: 1 },
   scrollContent: { paddingBottom: 24 },
   heroPad: { paddingHorizontal: 18, paddingTop: 8 },
@@ -1116,7 +1117,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
   },
   heroPlaceholder: {
     height: 256,
@@ -1125,8 +1126,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#E5E7EB",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.border,
   },
   heroBackBtn: {
     position: "absolute",
@@ -1172,7 +1173,7 @@ const styles = StyleSheet.create({
     paddingRight: 4,
     fontSize: 30,
     fontWeight: "600",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   shareBtn: {
     marginTop: 4,
@@ -1182,9 +1183,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -1206,8 +1207,8 @@ const styles = StyleSheet.create({
   badge: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
@@ -1221,7 +1222,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -1239,7 +1240,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 8,
     paddingVertical: 8,
@@ -1251,7 +1252,7 @@ const styles = StyleSheet.create({
     ...SURFACE_SHADOW,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -1268,7 +1269,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   servingsBlock: { marginTop: 12, alignItems: "center" },
@@ -1280,7 +1281,7 @@ const styles = StyleSheet.create({
     ...SURFACE_SHADOW,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 12,
   },
@@ -1288,7 +1289,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 4,
   },
@@ -1323,7 +1324,7 @@ const styles = StyleSheet.create({
   stepLabel: { fontSize: 16, fontWeight: "600", color: C.primary },
   stepTitle: { marginTop: 4, fontSize: 18, fontWeight: "600", color: C.slate800 },
   stepDesc: { marginTop: 4, fontSize: 16, lineHeight: 24, color: C.slate600 },
-  nutritionShell: { borderRadius: 12, backgroundColor: "#F9FAFB", padding: 12 },
+  nutritionShell: { borderRadius: 12, backgroundColor: colors.surfaceSoft, padding: 12 },
   nutritionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
   nutritionRowBorder: { borderBottomWidth: 1, borderBottomColor: C.gray300 },
   nutritionName: { fontSize: 16, color: C.slate600 },
@@ -1334,11 +1335,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 12,
   },
-  reviewComposerTitle: { fontSize: 18, fontWeight: "700", color: "#253B63" },
+  reviewComposerTitle: { fontSize: 18, fontWeight: "700", color: colors.textNavy },
   reviewComposerHint: { marginTop: 2, fontSize: 13, color: C.slate500 },
   reviewStarsWrap: { marginTop: 8, alignItems: "flex-start" },
   reviewInput: {
@@ -1346,8 +1347,8 @@ const styles = StyleSheet.create({
     minHeight: 96,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
@@ -1374,14 +1375,14 @@ const styles = StyleSheet.create({
   reviewSubmitBtnText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   reviewListCard: {
     ...SURFACE_SHADOW,
     marginTop: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -1391,7 +1392,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  reviewListTitle: { fontSize: 18, fontWeight: "700", color: "#253B63" },
+  reviewListTitle: { fontSize: 18, fontWeight: "700", color: colors.textNavy },
   reviewListCount: {
     minWidth: 26,
     textAlign: "center",
@@ -1399,8 +1400,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: C.primary,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.surfaceInfoStrong,
+    backgroundColor: colors.surfaceBlue,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -1426,7 +1427,7 @@ const styles = StyleSheet.create({
   },
   reviewItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.surfaceSlate,
   },
   reviewItemTop: {
     flexDirection: "row",
@@ -1453,7 +1454,7 @@ const styles = StyleSheet.create({
   reviewStarsText: {
     marginTop: 6,
     fontSize: 14,
-    color: "#F59E0B",
+    color: colors.warning,
     letterSpacing: 1.2,
   },
   reviewComment: {

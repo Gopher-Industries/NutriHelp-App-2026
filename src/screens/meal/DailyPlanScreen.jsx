@@ -19,6 +19,7 @@ import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
 import { formatDisplayName, groupMealsByType, MEAL_TYPES, normalizeRecipe } from "./mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const FALLBACK_MEALS = [
   { id: "oatmeal", title: "Oatmeal", calories: 320 },
   { id: "greek-yogurt-bowl", title: "Greek Yogurt Bowl", calories: 280 },
@@ -28,9 +29,9 @@ const FALLBACK_MEALS = [
 ];
 
 const MEAL_ACCENTS = {
-  breakfast: "#F59E0B",
-  lunch: "#22C55E",
-  dinner: "#3B82F6",
+  breakfast: colors.warning,
+  lunch: colors.successBright,
+  dinner: colors.info,
 };
 
 function formatLongDate(value) {
@@ -219,7 +220,7 @@ export default function DailyPlanScreen({ navigation, route }) {
       >
         <View style={styles.topRow}>
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color="#667085" />
+            <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
             <Text style={styles.backText}>Back</Text>
           </Pressable>
           <Text style={styles.logoText}>NutriHelp</Text>
@@ -290,14 +291,14 @@ export default function DailyPlanScreen({ navigation, route }) {
             <TextInput
               style={styles.searchInput}
               placeholder="Search meals"
-              placeholderTextColor="#98A2B3"
+              placeholderTextColor={colors.textMutedAlt}
               value={searchText}
               onChangeText={setSearchText}
             />
 
             {recipesLoading ? (
               <View style={styles.sheetLoading}>
-                <ActivityIndicator size="large" color="#2A78C5" />
+                <ActivityIndicator size="large" color={colors.primaryMuted} />
                 <Text style={styles.sheetLoadingText}>Loading meals...</Text>
               </View>
             ) : (
@@ -317,7 +318,7 @@ export default function DailyPlanScreen({ navigation, route }) {
                         style={styles.optionAddButton}
                         onPress={() => handleAddMeal(meal)}
                       >
-                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                        <Ionicons name="add" size={18} color={colors.white} />
                       </Pressable>
                     </View>
                   ))
@@ -332,8 +333,8 @@ export default function DailyPlanScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32 },
   topRow: {
     flexDirection: "row",
@@ -348,22 +349,22 @@ const styles = StyleSheet.create({
   backText: {
     marginLeft: 6,
     fontSize: 16,
-    color: "#667085",
+    color: colors.textSecondaryAlt,
   },
   logoText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
   dayTitle: {
     fontSize: 34,
     fontWeight: "800",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 6,
   },
   dayDate: {
     fontSize: 16,
-    color: "#667085",
+    color: colors.textSecondaryAlt,
     marginBottom: 18,
   },
   sectionBlock: {
@@ -385,8 +386,8 @@ const styles = StyleSheet.create({
     minHeight: 78,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.borderSlate,
+    backgroundColor: colors.white,
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 4,
   },
   recipeTypeLabel: {
@@ -414,15 +415,15 @@ const styles = StyleSheet.create({
   },
   recipeCal: {
     fontSize: 14,
-    color: "#9CA3AF",
+    color: colors.textMuted,
     marginRight: 14,
   },
   emptyCard: {
     minHeight: 98,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.borderSlate,
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -431,37 +432,37 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
     textAlign: "center",
   },
   solidAddButton: {
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },
   solidAddButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   outlineAddButton: {
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },
   outlineAddButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     maxHeight: "62%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 18,
@@ -488,23 +489,23 @@ const styles = StyleSheet.create({
     width: 52,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#D0D5DD",
+    backgroundColor: colors.c_d0d5dd,
     marginBottom: 16,
   },
   sheetTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#E17A00",
+    color: colors.warningOrange,
     marginBottom: 14,
   },
   searchInput: {
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: colors.borderSlate,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 10,
   },
   sheetLoading: {
@@ -514,7 +515,7 @@ const styles = StyleSheet.create({
   sheetLoadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
   },
   emptyResults: {
     alignItems: "center",
@@ -522,12 +523,12 @@ const styles = StyleSheet.create({
   },
   emptyResultsText: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
   },
   optionRow: {
     minHeight: 68,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: colors.border,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -540,18 +541,18 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 4,
   },
   optionCalories: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
   },
   optionAddButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },

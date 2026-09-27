@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { getScanHistory } from "../../utils/scanHistoryStorage";
+import { colors } from "../../theme";
 
 function DetailSheet({ item, onClose }) {
   if (!item) return null;
@@ -40,11 +41,11 @@ function DetailSheet({ item, onClose }) {
               <Ionicons
                 name={hasAllergens ? "warning-outline" : "shield-checkmark-outline"}
                 size={22}
-                color={hasAllergens ? "#F59E0B" : "#22C55E"}
+                color={hasAllergens ? colors.warning : colors.successBright}
               />
               <View style={{ marginLeft: 10 }}>
                 <Text style={styles.allergenLabel}>Product Allergens</Text>
-                <Text style={[styles.allergenStatus, { color: hasAllergens ? "#F59E0B" : "#22C55E" }]}>
+                <Text style={[styles.allergenStatus, { color: hasAllergens ? colors.warning : colors.successBright }]}>
                   {hasAllergens
                     ? `Contains ${item.productAllergens.length} allergen${item.productAllergens.length > 1 ? "s" : ""}`
                     : "No allergens declared"}
@@ -118,7 +119,7 @@ function HistoryItem({ item, onPress }) {
   return (
     <Pressable style={styles.historyItem} onPress={() => onPress(item)}>
       <View style={styles.historyIconWrap}>
-        <Ionicons name="barcode-outline" size={18} color="#2A78C5" />
+        <Ionicons name="barcode-outline" size={18} color={colors.primaryMuted} />
       </View>
       <View style={styles.historyInfo}>
         <Text style={styles.historyName} numberOfLines={1}>{item.label}</Text>
@@ -128,10 +129,10 @@ function HistoryItem({ item, onPress }) {
       </View>
       {hasAllergens && (
         <View style={styles.allergenDot}>
-          <Ionicons name="warning-outline" size={14} color="#F59E0B" />
+          <Ionicons name="warning-outline" size={14} color={colors.warning} />
         </View>
       )}
-      <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+      <Ionicons name="chevron-forward" size={16} color={colors.borderSlate} />
     </Pressable>
   );
 }
@@ -157,13 +158,13 @@ export default function ScanProductScreen({ navigation }) {
           onPress={() => navigation.navigate("BarcodeScannerScreen")}
         >
           <View style={styles.scanIconWrap}>
-            <Ionicons name="barcode-outline" size={32} color="#2A78C5" />
+            <Ionicons name="barcode-outline" size={32} color={colors.primaryMuted} />
           </View>
           <View style={styles.scanCardText}>
             <Text style={styles.scanCardTitle}>Scan Barcode</Text>
             <Text style={styles.scanCardDesc}>Point camera at a product barcode or enter manually</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+          <Ionicons name="chevron-forward" size={20} color={colors.textSlate400} />
         </Pressable>
 
         <View style={styles.historyHeader}>
@@ -177,7 +178,7 @@ export default function ScanProductScreen({ navigation }) {
 
         {history.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="scan-outline" size={44} color="#CBD5E1" />
+            <Ionicons name="scan-outline" size={44} color={colors.borderSlate} />
             <Text style={styles.emptyText}>No scans yet</Text>
             <Text style={styles.emptySubtext}>Scan a barcode to see results here</Text>
           </View>
@@ -200,19 +201,19 @@ export default function ScanProductScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
 
-  pageTitle: { fontSize: 30, fontWeight: "800", color: "#253B63", marginBottom: 4 },
-  pageSubtitle: { fontSize: 14, color: "#66758F", marginBottom: 22 },
+  pageTitle: { fontSize: 30, fontWeight: "800", color: colors.textNavy, marginBottom: 4 },
+  pageSubtitle: { fontSize: 14, color: colors.c_66758f, marginBottom: 22 },
 
   scanCard: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: "#BFDBFE",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.surfaceInfoStrong,
+    backgroundColor: colors.surfaceBlue,
     padding: 16,
     marginBottom: 28,
     gap: 14,
@@ -221,13 +222,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: colors.surfaceInfo,
     alignItems: "center",
     justifyContent: "center",
   },
   scanCardText: { flex: 1 },
-  scanCardTitle: { fontSize: 16, fontWeight: "700", color: "#253B63", marginBottom: 3 },
-  scanCardDesc: { fontSize: 13, color: "#667085", lineHeight: 18 },
+  scanCardTitle: { fontSize: 16, fontWeight: "700", color: colors.textNavy, marginBottom: 3 },
+  scanCardDesc: { fontSize: 13, color: colors.textSecondaryAlt, lineHeight: 18 },
 
   historyHeader: {
     flexDirection: "row",
@@ -235,14 +236,14 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  historyTitle: { fontSize: 17, fontWeight: "700", color: "#253B63" },
+  historyTitle: { fontSize: 17, fontWeight: "700", color: colors.textNavy },
   historyBadge: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  historyBadgeText: { fontSize: 12, fontWeight: "700", color: "#2A78C5" },
+  historyBadgeText: { fontSize: 12, fontWeight: "700", color: colors.primaryMuted },
 
   emptyState: {
     flex: 1,
@@ -251,28 +252,28 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingBottom: 80,
   },
-  emptyText: { fontSize: 16, fontWeight: "700", color: "#94A3B8" },
-  emptySubtext: { fontSize: 13, color: "#CBD5E1" },
+  emptyText: { fontSize: 16, fontWeight: "700", color: colors.textSlate400 },
+  emptySubtext: { fontSize: 13, color: colors.borderSlate },
 
   historyItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.surfaceSlate,
     gap: 12,
   },
   historyIconWrap: {
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     alignItems: "center",
     justifyContent: "center",
   },
   historyInfo: { flex: 1 },
-  historyName: { fontSize: 14, fontWeight: "600", color: "#253B63", marginBottom: 2 },
-  historyMeta: { fontSize: 12, color: "#94A3B8" },
+  historyName: { fontSize: 14, fontWeight: "600", color: colors.textNavy, marginBottom: 2 },
+  historyMeta: { fontSize: 12, color: colors.textSlate400 },
   allergenDot: { marginRight: 2 },
 
   // Detail sheet
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#D1D5DB",
+    backgroundColor: colors.borderStrong,
     alignSelf: "center",
     marginBottom: 18,
   },
@@ -302,10 +303,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase",
-    color: "#2A78C5",
+    color: colors.primaryMuted,
     marginBottom: 4,
   },
-  sheetTitle: { fontSize: 24, fontWeight: "800", color: "#253B63", marginBottom: 16 },
+  sheetTitle: { fontSize: 24, fontWeight: "800", color: colors.textNavy, marginBottom: 16 },
 
   allergenCard: {
     flexDirection: "row",
@@ -313,53 +314,53 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 14,
     marginBottom: 14,
   },
   allergenCardLeft: { flexDirection: "row", alignItems: "center" },
-  allergenLabel: { fontSize: 12, color: "#94A3B8", fontWeight: "500", marginBottom: 2 },
+  allergenLabel: { fontSize: 12, color: colors.textSlate400, fontWeight: "500", marginBottom: 2 },
   allergenStatus: { fontSize: 14, fontWeight: "700" },
   chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
-  chipSafe: { backgroundColor: "#DCFCE7" },
-  chipWarning: { backgroundColor: "#FEF3C7" },
-  chipText: { fontSize: 12, fontWeight: "700", color: "#374151" },
+  chipSafe: { backgroundColor: colors.c_dcfce7 },
+  chipWarning: { backgroundColor: colors.surfaceAmberSoft },
+  chipText: { fontSize: 12, fontWeight: "700", color: colors.textGray700 },
 
   metricRow: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     paddingVertical: 14,
     marginBottom: 14,
   },
   metricItem: { flex: 1, alignItems: "center" },
-  metricDivider: { width: 1, height: 32, backgroundColor: "#E5E7EB" },
-  metricValue: { fontSize: 16, fontWeight: "800", color: "#253B63", marginBottom: 2 },
-  metricLabel: { fontSize: 11, color: "#94A3B8", fontWeight: "500" },
+  metricDivider: { width: 1, height: 32, backgroundColor: colors.border },
+  metricValue: { fontSize: 16, fontWeight: "800", color: colors.textNavy, marginBottom: 2 },
+  metricLabel: { fontSize: 11, color: colors.textSlate400, fontWeight: "500" },
 
   infoCard: {
     borderRadius: 14,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 10,
   },
-  infoCardTitle: { fontSize: 13, fontWeight: "700", color: "#253B63", marginBottom: 5 },
-  infoCardText: { fontSize: 13, color: "#667085", lineHeight: 19 },
+  infoCardTitle: { fontSize: 13, fontWeight: "700", color: colors.textNavy, marginBottom: 5 },
+  infoCardText: { fontSize: 13, color: colors.textSecondaryAlt, lineHeight: 19 },
 
   closeBtn: {
     height: 50,
     borderRadius: 25,
     borderWidth: 1.5,
-    borderColor: "#CBD5E1",
+    borderColor: colors.borderSlate,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
   },
-  closeBtnText: { fontSize: 15, fontWeight: "600", color: "#667085" },
+  closeBtnText: { fontSize: 15, fontWeight: "600", color: colors.textSecondaryAlt },
 });

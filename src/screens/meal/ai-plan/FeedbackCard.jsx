@@ -12,6 +12,7 @@ import {
 
 import { toErrorMessage } from "../../../api/baseApi";
 import { submitPlanFeedback } from "../../../api/mealPlanApi";
+import { colors } from "../../../theme";
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
 const RATING_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent!"];
@@ -32,7 +33,7 @@ function StarRow({ rating, onRate }) {
           <Ionicons
             name={star <= rating ? "star" : "star-outline"}
             size={34}
-            color="#F59E0B"
+            color={colors.warning}
           />
         </Pressable>
       ))}
@@ -99,7 +100,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
   if (!planId) {
     return (
       <View style={styles.unavailableCard}>
-        <Ionicons name="information-circle-outline" size={22} color="#9CA3AF" />
+        <Ionicons name="information-circle-outline" size={22} color={colors.textMuted} />
         <Text style={styles.unavailableText}>
           Feedback is not available for this plan — plan ID was not returned by the server.
         </Text>
@@ -202,7 +203,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
         multiline
         numberOfLines={3}
         placeholder="Any comments about the plan..."
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textMuted}
         textAlignVertical="top"
       />
       <Text style={styles.charCount}>{notes.length}/500</Text>
@@ -218,7 +219,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
         disabled={rating === 0 || submitting}
       >
         {submitting ? (
-          <ActivityIndicator size="small" color="#FFFFFF" />
+          <ActivityIndicator size="small" color={colors.white} />
         ) : (
           <Text style={styles.submitBtnText}>Submit Feedback</Text>
         )}
@@ -230,10 +231,10 @@ export default function FeedbackCard({ planId, mealPlan }) {
 const styles = StyleSheet.create({
   card: {
     margin: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 18,
-    shadowColor: "#000",
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -242,10 +243,10 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 4,
   },
-  cardSub: { fontSize: 13, color: "#6B7280", marginBottom: 16, lineHeight: 18 },
+  cardSub: { fontSize: 13, color: colors.textSecondary, marginBottom: 16, lineHeight: 18 },
 
   starRow: {
     flexDirection: "row",
@@ -262,14 +263,14 @@ const styles = StyleSheet.create({
   ratingLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#F59E0B",
+    color: colors.warning,
     marginBottom: 16,
   },
 
   sectionLabel: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#374151",
+    color: colors.textGray700,
     marginTop: 18,
     marginBottom: 8,
   },
@@ -278,91 +279,91 @@ const styles = StyleSheet.create({
   toggleBtn: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: "center",
     minHeight: 44,
     justifyContent: "center",
   },
-  toggleBtnYes: { borderColor: "#047857", backgroundColor: "#ECFDF5" },
-  toggleBtnNo: { borderColor: "#EF4444", backgroundColor: "#FEF2F2" },
-  toggleBtnText: { fontSize: 13, color: "#374151", fontWeight: "500" },
+  toggleBtnYes: { borderColor: colors.success, backgroundColor: colors.surfaceGreen },
+  toggleBtnNo: { borderColor: colors.danger, backgroundColor: colors.surfaceRed },
+  toggleBtnText: { fontSize: 13, color: colors.textGray700, fontWeight: "500" },
   toggleBtnTextActive: { fontWeight: "700" },
 
-  chipHint: { fontSize: 11, color: "#9CA3AF", marginBottom: 10 },
+  chipHint: { fontSize: 11, color: colors.textMuted, marginBottom: 10 },
   chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   mealChip: {
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#F9FAFB",
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceSoft,
     minHeight: 34,
     alignItems: "center",
     justifyContent: "center",
   },
-  mealChipLiked: { borderColor: "#047857", backgroundColor: "#ECFDF5" },
-  mealChipDisliked: { borderColor: "#DC2626", backgroundColor: "#FEF2F2" },
-  mealChipText: { fontSize: 12, color: "#374151", fontWeight: "500" },
-  mealChipTextLiked: { color: "#047857", fontWeight: "600" },
-  mealChipTextDisliked: { color: "#DC2626", fontWeight: "600" },
+  mealChipLiked: { borderColor: colors.success, backgroundColor: colors.surfaceGreen },
+  mealChipDisliked: { borderColor: colors.dangerStrong, backgroundColor: colors.surfaceRed },
+  mealChipText: { fontSize: 12, color: colors.textGray700, fontWeight: "500" },
+  mealChipTextLiked: { color: colors.success, fontWeight: "600" },
+  mealChipTextDisliked: { color: colors.dangerStrong, fontWeight: "600" },
 
   notesInput: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    color: colors.textGray900,
+    backgroundColor: colors.surfaceSoft,
     minHeight: 80,
   },
-  charCount: { fontSize: 11, color: "#9CA3AF", textAlign: "right", marginTop: 4 },
-  errorText: { fontSize: 13, color: "#EF4444", marginTop: 8 },
+  charCount: { fontSize: 11, color: colors.textMuted, textAlign: "right", marginTop: 4 },
+  errorText: { fontSize: 13, color: colors.danger, marginTop: 8 },
 
   submitBtn: {
     height: 50,
     borderRadius: 14,
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 18,
   },
   submitBtnDisabled: { opacity: 0.45 },
-  submitBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  submitBtnText: { fontSize: 15, fontWeight: "700", color: colors.white },
 
   unavailableCard: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
     margin: 14,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
   },
-  unavailableText: { flex: 1, fontSize: 13, color: "#6B7280", lineHeight: 18 },
+  unavailableText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
 
   thankyouCard: {
     margin: 14,
-    backgroundColor: "#F0FDF4",
+    backgroundColor: colors.surfaceGreenSoft,
     borderRadius: 16,
     padding: 24,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#BBF7D0",
+    borderColor: colors.c_bbf7d0,
   },
   thankyouEmoji: { fontSize: 40, marginBottom: 10 },
   thankyouTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#047857",
+    color: colors.success,
     textAlign: "center",
     marginBottom: 6,
   },
-  thankyouSub: { fontSize: 13, color: "#059669", textAlign: "center" },
+  thankyouSub: { fontSize: 13, color: colors.successTeal, textAlign: "center" },
 });

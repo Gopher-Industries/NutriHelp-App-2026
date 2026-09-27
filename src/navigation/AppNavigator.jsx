@@ -23,11 +23,12 @@ import Toast from "../components/Toast";
 import AuthStack from "./AuthStack";
 import MainTabs from "./MainTabs";
 
+import { colors } from "../theme";
 function AuthGateSplash() {
   return (
-    <View className="flex-1 items-center justify-center bg-white dark:bg-[#0B1220]">
-      <Text className="mb-4 text-3xl font-bold text-[#047857]">NutriHelp</Text>
-      <ActivityIndicator size="large" color="#047857" />
+    <View className="flex-1 items-center justify-center bg-white dark:bg-nh-dark-c_0b1220">
+      <Text className="mb-4 text-3xl font-bold text-nh-success">NutriHelp</Text>
+      <ActivityIndicator size="large" color={colors.success} />
     </View>
   );
 }

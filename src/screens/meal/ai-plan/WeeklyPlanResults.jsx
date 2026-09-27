@@ -15,16 +15,17 @@ import { useUser } from "../../../context/UserContext";
 import { saveDailyMeal } from "../../../utils/dailyMealsStorage";
 import FeedbackCard from "./FeedbackCard";
 
+import { colors } from "../../../theme";
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const DAY_COLORS = [
-  "#005BBB",
-  "#2E7D32",
-  "#c05c00",
-  "#7B1FA2",
-  "#00838F",
-  "#B71C1C",
-  "#1565C0",
+  colors.accentBlue,
+  colors.successForest,
+  colors.warningOrangeDark,
+  colors.accentPurple,
+  colors.accentTeal,
+  colors.dangerDarker,
+  colors.primaryStrong,
 ];
 
 function parseNutrient(value) {
@@ -136,7 +137,7 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
               size={13}
-              color="#047857"
+              color={colors.success}
             />
           </Pressable>
           {expanded ? (
@@ -155,7 +156,7 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
 
       {saveState === "saved" ? (
         <View style={styles.savedBadge}>
-          <Ionicons name="checkmark-circle" size={15} color="#047857" />
+          <Ionicons name="checkmark-circle" size={15} color={colors.success} />
           <Text style={styles.savedBadgeText}>Added to Daily Plan</Text>
         </View>
       ) : (
@@ -168,7 +169,7 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
           disabled={saveState === "saving"}
         >
           {saveState === "saving" ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
             <Text style={styles.saveBtnText}>
               {isAuthenticated ? "Add to Daily Plan" : "Log in to save"}
@@ -228,7 +229,7 @@ export default function WeeklyPlanResults({
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={52} color="#EF4444" />
+        <Ionicons name="alert-circle-outline" size={52} color={colors.danger} />
         <Text style={styles.errorTitle}>Something went wrong</Text>
         <Text style={styles.errorMsg}>{error}</Text>
         <Pressable style={styles.retryBtn} onPress={onRegenerate}>
@@ -244,7 +245,7 @@ export default function WeeklyPlanResults({
   if (!mealPlan || mealPlan.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="restaurant-outline" size={52} color="#9CA3AF" />
+        <Ionicons name="restaurant-outline" size={52} color={colors.textMuted} />
         <Text style={styles.errorTitle}>No plan returned</Text>
         <Text style={styles.errorMsg}>
           The server did not return a meal plan. Please try again.
@@ -267,12 +268,12 @@ export default function WeeklyPlanResults({
     >
       <View style={styles.topBar}>
         <Pressable style={styles.topBarBack} onPress={onBack} hitSlop={8}>
-          <Ionicons name="arrow-back" size={18} color="#374151" />
+          <Ionicons name="arrow-back" size={18} color={colors.textGray700} />
           <Text style={styles.topBarBackText}>Edit</Text>
         </Pressable>
         <Text style={styles.topBarTitle}>Your 7-Day Plan</Text>
         <Pressable style={styles.regenBtn} onPress={onRegenerate}>
-          <Ionicons name="refresh" size={14} color="#FFFFFF" />
+          <Ionicons name="refresh" size={14} color={colors.white} />
           <Text style={styles.regenBtnText}>Regenerate</Text>
         </Pressable>
       </View>
@@ -293,7 +294,7 @@ export default function WeeklyPlanResults({
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: "#F8FAFC" },
+  scroll: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingBottom: 40 },
 
   topBar: {
@@ -302,9 +303,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: colors.border,
   },
   topBarBack: {
     flexDirection: "row",
@@ -313,27 +314,27 @@ const styles = StyleSheet.create({
     minWidth: 60,
     minHeight: 44,
   },
-  topBarBackText: { fontSize: 14, color: "#374151", fontWeight: "500" },
-  topBarTitle: { fontSize: 15, fontWeight: "700", color: "#253B63" },
+  topBarBackText: { fontSize: 14, color: colors.textGray700, fontWeight: "500" },
+  topBarTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
   regenBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     minHeight: 36,
   },
-  regenBtnText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
+  regenBtnText: { fontSize: 13, fontWeight: "600", color: colors.white },
 
   dayCard: {
     marginHorizontal: 14,
     marginTop: 14,
     borderRadius: 16,
     borderLeftWidth: 5,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
+    backgroundColor: colors.white,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -350,26 +351,26 @@ const styles = StyleSheet.create({
 
   mealCard: {
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
+    borderTopColor: colors.surfaceGray,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   mealTypeLabel: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#9CA3AF",
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 4,
   },
   mealName: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#111827",
+    color: colors.textGray900,
     marginBottom: 4,
   },
   mealDesc: {
     fontSize: 13,
-    color: "#6B7280",
+    color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -377,17 +378,17 @@ const styles = StyleSheet.create({
   badgesRow: { flexDirection: "row", gap: 6 },
   badge: {
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: colors.surfaceGray,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 5,
     minWidth: 54,
   },
-  badgeSodium: { backgroundColor: "#FEE2E2" },
-  badgeLabel: { fontSize: 10, color: "#6B7280", fontWeight: "600", marginBottom: 1 },
-  badgeLabelSodium: { color: "#DC2626" },
-  badgeValue: { fontSize: 12, color: "#111827", fontWeight: "600" },
-  badgeValueSodium: { color: "#B91C1C" },
+  badgeSodium: { backgroundColor: colors.surfaceRedSoft },
+  badgeLabel: { fontSize: 10, color: colors.textSecondary, fontWeight: "600", marginBottom: 1 },
+  badgeLabelSodium: { color: colors.dangerStrong },
+  badgeValue: { fontSize: 12, color: colors.textGray900, fontWeight: "600" },
+  badgeValueSodium: { color: colors.dangerDark },
 
   ingredientsToggle: {
     flexDirection: "row",
@@ -398,11 +399,11 @@ const styles = StyleSheet.create({
   },
   ingredientsToggleText: {
     fontSize: 12,
-    color: "#047857",
+    color: colors.success,
     fontWeight: "600",
   },
   ingredientsList: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 8,
     padding: 10,
     marginBottom: 8,
@@ -413,20 +414,20 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 6,
   },
-  ingredientDot: { fontSize: 12, color: "#9CA3AF", lineHeight: 18 },
-  ingredientItem: { flex: 1, fontSize: 12, color: "#374151", lineHeight: 18 },
-  ingredientAmount: { fontSize: 12, color: "#6B7280", lineHeight: 18 },
+  ingredientDot: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  ingredientItem: { flex: 1, fontSize: 12, color: colors.textGray700, lineHeight: 18 },
+  ingredientAmount: { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
 
   saveBtn: {
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { fontSize: 13, fontWeight: "700", color: "#FFFFFF" },
+  saveBtnText: { fontSize: 13, fontWeight: "700", color: colors.white },
   savedBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -434,26 +435,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingVertical: 8,
   },
-  savedBadgeText: { fontSize: 13, color: "#047857", fontWeight: "600" },
-  saveError: { fontSize: 12, color: "#EF4444", marginTop: 4 },
+  savedBadgeText: { fontSize: 13, color: colors.success, fontWeight: "600" },
+  saveError: { fontSize: 12, color: colors.danger, marginTop: 4 },
 
   errorContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     gap: 12,
   },
   errorTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     textAlign: "center",
   },
   errorMsg: {
     fontSize: 14,
-    color: "#6B7280",
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -461,17 +462,17 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: 32,
     borderRadius: 14,
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
   },
-  retryBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  retryBtnText: { fontSize: 15, fontWeight: "700", color: colors.white },
   editBtn: {
     height: 44,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  editBtnText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+  editBtnText: { fontSize: 14, color: colors.textSecondary, fontWeight: "500" },
 });

@@ -18,18 +18,19 @@ import recipeApi from "../../api/recipeApi";
 import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { colors } from "../../theme";
 const C = {
-  primary: "#1A6DB5",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  gray500: "#6b7280",
-  red600: "#dc2626",
-  red50: "#fef2f2",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  gray500: colors.textSecondary,
+  red600: colors.dangerStrong,
+  red50: colors.surfaceRed,
+  white: colors.white,
 };
 
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -456,7 +457,7 @@ export default function CreateRecipeScreen({ navigation }) {
       <View style={styles.pageChrome}>
         <View style={styles.header}>
           <Pressable onPress={() => navigation?.goBack?.()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="arrow-back" size={22} color="#253B63" />
+            <Ionicons name="arrow-back" size={22} color={colors.textNavy} />
           </Pressable>
           <Text style={styles.headerTitle}>Create Recipe</Text>
           <View style={styles.headerSpacer} />
@@ -728,7 +729,7 @@ export default function CreateRecipeScreen({ navigation }) {
           </View>
 
           <Pressable onPress={handleSubmit} disabled={isSubmitting} style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}>
-            {isSubmitting ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.submitBtnText}>Save Recipe</Text>}
+            {isSubmitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitBtnText}>Save Recipe</Text>}
           </Pressable>
         </ScrollView>
       </View>
@@ -737,7 +738,7 @@ export default function CreateRecipeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   pageChrome: { flex: 1 },
   header: {
     flexDirection: "row",
@@ -745,8 +746,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   backBtn: {
     width: 44,
@@ -759,17 +760,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   headerSpacer: { width: 44 },
   flex1: { flex: 1 },
-  scrollSurface: { backgroundColor: "#F8FAFC" },
+  scrollSurface: { backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 },
   card: {
     ...SURFACE_SHADOW,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 16,
   },
@@ -783,7 +784,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     fontSize: 16,
     color: C.slate900,
@@ -803,7 +804,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   primaryBtn: {
@@ -825,7 +826,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: colors.surfaceGray,
     paddingHorizontal: 12,
   },
   addBtnText: { fontSize: 16, fontWeight: "600", color: C.primary },
@@ -833,9 +834,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     padding: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   ingredientRowTitle: {
     marginBottom: 8,
@@ -848,7 +849,7 @@ const styles = StyleSheet.create({
     minHeight: 90,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,

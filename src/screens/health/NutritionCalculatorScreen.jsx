@@ -2,10 +2,11 @@ import React from 'react';
 import { View, ScrollView, Text } from 'react-native';
 import NutritionPieChart from '../../components/charts/NutritionPieChart';
 
+import { colors } from "../../theme";
 const MOCK_PIE_DATA = [
-  { label: "Protein", value: 120, colour: "#16a34a" },
-  { label: "Carbs", value: 240, colour: "#f59e0b" },
-  { label: "Fat", value: 80, colour: "#3b82f6" }
+  { label: "Protein", value: 120, colour: colors.successStrong },
+  { label: "Carbs", value: 240, colour: colors.warning },
+  { label: "Fat", value: 80, colour: colors.info }
 ];
 
 export default function NutritionCalculatorScreen() {

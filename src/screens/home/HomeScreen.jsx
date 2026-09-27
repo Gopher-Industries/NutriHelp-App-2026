@@ -18,11 +18,12 @@ import { useChatbot } from "../../context/ChatbotContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
 import { groupMealsByType, MEAL_TYPES } from "../meal/mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const CALORIE_TARGET = 2000;
 const WATER_TARGET = 8;
 const MEAL_TARGET = 3;
 
-const MEAL_ACCENTS_MAP = { breakfast: "#F59E0B", lunch: "#22C55E", dinner: "#3B82F6" };
+const MEAL_ACCENTS_MAP = { breakfast: colors.warning, lunch: colors.successBright, dinner: colors.info };
 const MEAL_LABELS_MAP = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 const FALLBACK_MEAL_IMAGES = [
   "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
@@ -131,7 +132,7 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
     >
-      <MaterialCommunityIcons name={icon} size={20} color="#FFFFFF" />
+      <MaterialCommunityIcons name={icon} size={20} color={colors.white} />
       <Text style={styles.actionLabel}>{label}</Text>
     </Pressable>
   );
@@ -280,7 +281,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.logoText}>NutriHelp</Text>
           </View>
           <View style={styles.batteryBadge}>
-            <Ionicons name="battery-charging-outline" size={18} color="#22C55E" />
+            <Ionicons name="battery-charging-outline" size={18} color={colors.successBright} />
           </View>
         </View>
 
@@ -299,7 +300,7 @@ export default function HomeScreen({ navigation }) {
             accessibilityRole="button"
             accessibilityLabel="Notifications"
           >
-            <Ionicons name="notifications-outline" size={24} color="#4B5563" />
+            <Ionicons name="notifications-outline" size={24} color={colors.textGray600} />
             <View style={styles.notificationDot} />
           </Pressable>
         </View>
@@ -318,7 +319,7 @@ export default function HomeScreen({ navigation }) {
               maxValue={CALORIE_TARGET}
               unit="kcal"
               label="Energy"
-              accent="#F59E0B"
+              accent={colors.warning}
               onPress={() => navigation.navigate("GoalDetailsScreen")}
             />
             <StatCard
@@ -327,7 +328,7 @@ export default function HomeScreen({ navigation }) {
               maxValue={WATER_TARGET}
               unit="cups water"
               label="Hydration"
-              accent="#2B78C5"
+              accent={colors.primaryMutedAlt}
               onPress={() => navigation.navigate("WaterIntakeScreen")}
             />
             <StatCard
@@ -336,7 +337,7 @@ export default function HomeScreen({ navigation }) {
               maxValue={MEAL_TARGET}
               unit="Meals"
               label="Completed"
-              accent="#22C55E"
+              accent={colors.successBright}
               onPress={() => navigation.navigate("Meals")}
             />
           </View>
@@ -430,12 +431,12 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   content: {
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   batteryBadge: {
@@ -487,29 +488,29 @@ const styles = StyleSheet.create({
     fontSize: 23,
     lineHeight: 30,
     fontWeight: "800",
-    color: "#22365D",
+    color: colors.c_22365d,
   },
 
   heroSun: {
-    color: "#F4B000",
+    color: colors.warningGold,
   },
 
   heroDate: {
     marginTop: 4,
     fontSize: 13,
-    color: "#7A7F8E",
+    color: colors.c_7a7f8e,
   },
 
   notificationButton: {
     width: 50,
     height: 50,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -523,7 +524,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#FF4D4F",
+    backgroundColor: colors.dangerSoft,
   },
 
   statsRow: {
@@ -534,13 +535,13 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 10,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -565,20 +566,20 @@ const styles = StyleSheet.create({
 
   statValueMuted: {
     fontSize: 15,
-    color: "#A0A8B6",
+    color: colors.c_a0a8b6,
   },
 
   statLabel: {
     marginTop: 4,
     fontSize: 11,
-    color: "#7A7F8E",
+    color: colors.c_7a7f8e,
   },
 
   progressTrack: {
     marginTop: 10,
     height: 4,
     borderRadius: 999,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
     overflow: "hidden",
   },
 
@@ -591,7 +592,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 11,
     fontWeight: "600",
-    color: "#7A7F8E",
+    color: colors.c_7a7f8e,
   },
 
   actionsRow: {
@@ -603,7 +604,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 58,
     borderRadius: 12,
-    backgroundColor: "#2B78C5",
+    backgroundColor: colors.primaryMutedAlt,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -622,17 +623,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   mealsCard: {
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
@@ -642,7 +643,7 @@ const styles = StyleSheet.create({
   mealsCardTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#202633",
+    color: colors.c_202633,
     marginBottom: 12,
   },
 
@@ -664,7 +665,7 @@ const styles = StyleSheet.create({
 
   mealSectionCount: {
     fontSize: 12,
-    color: "#8A94A6",
+    color: colors.textMutedBlue,
     fontWeight: "600",
   },
 
@@ -675,9 +676,9 @@ const styles = StyleSheet.create({
   mealCardHorizontal: {
     width: 188,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     marginRight: 10,
     overflow: "hidden",
   },
@@ -685,7 +686,7 @@ const styles = StyleSheet.create({
   mealThumb: {
     width: "100%",
     height: 96,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: colors.borderSlateSoft,
   },
 
   mealCardBody: {
@@ -696,7 +697,7 @@ const styles = StyleSheet.create({
   mealTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#22365D",
+    color: colors.c_22365d,
   },
 
   mealType: {
@@ -708,7 +709,7 @@ const styles = StyleSheet.create({
   mealCalories: {
     marginTop: 4,
     fontSize: 12,
-    color: "#9CA3AF",
+    color: colors.textMuted,
     fontWeight: "600",
   },
 
@@ -721,7 +722,7 @@ const styles = StyleSheet.create({
   linkButtonText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2B78C5",
+    color: colors.primaryMutedAlt,
   },
 
   emptyState: {
@@ -737,14 +738,14 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#4B5563",
+    color: colors.textGray600,
     marginBottom: 8,
   },
 
   emptyStateBody: {
     fontSize: 12,
     lineHeight: 18,
-    color: "#9CA3AF",
+    color: colors.textMuted,
     textAlign: "center",
     marginBottom: 18,
   },
@@ -753,7 +754,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#2B78C5",
+    backgroundColor: colors.primaryMutedAlt,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -761,15 +762,15 @@ const styles = StyleSheet.create({
   emptyCtaText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   skeletonStatCard: {
     flex: 1,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 10,
@@ -779,7 +780,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 6,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
     marginBottom: 10,
   },
 
@@ -787,7 +788,7 @@ const styles = StyleSheet.create({
     width: "68%",
     height: 20,
     borderRadius: 8,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
     marginBottom: 8,
   },
 
@@ -795,7 +796,7 @@ const styles = StyleSheet.create({
     width: "46%",
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#F3F5F9",
+    backgroundColor: colors.c_f3f5f9,
     marginBottom: 12,
   },
 
@@ -803,7 +804,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 4,
     borderRadius: 999,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
   },
 
   loadingBlock: {
@@ -813,7 +814,7 @@ const styles = StyleSheet.create({
   loadingLineLong: {
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
     marginBottom: 14,
   },
 
@@ -821,7 +822,7 @@ const styles = StyleSheet.create({
     width: "72%",
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#F3F5F9",
+    backgroundColor: colors.c_f3f5f9,
     marginBottom: 14,
   },
 
@@ -829,6 +830,6 @@ const styles = StyleSheet.create({
     width: "54%",
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
   },
 });

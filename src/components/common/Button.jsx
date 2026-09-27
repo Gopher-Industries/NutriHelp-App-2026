@@ -1,4 +1,5 @@
 import { TouchableOpacity, Text, ActivityIndicator } from "react-native";
+import { colors } from "../../theme";
 
 export default function Button({
   label,
@@ -9,9 +10,9 @@ export default function Button({
 }) {
   const bg =
     variant === "primary"
-      ? "#16A34A"
+      ? colors.successStrong
       : variant === "secondary"
-      ? "#6B7280"
+      ? colors.textSecondary
       : "transparent";
 
   const border = variant === "outline" ? 1 : 0;
@@ -22,7 +23,7 @@ export default function Button({
       style={{
         backgroundColor: bg,
         borderWidth: border,
-        borderColor: "#16A34A",
+        borderColor: colors.successStrong,
         padding: 14,
         borderRadius: 8,
         alignItems: "center",
@@ -30,9 +31,9 @@ export default function Button({
       }}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={colors.white} />
       ) : (
-        <Text style={{ color: variant === "outline" ? "#16A34A" : "#fff" }}>
+        <Text style={{ color: variant === "outline" ? colors.successStrong : colors.white }}>
           {label}
         </Text>
       )}

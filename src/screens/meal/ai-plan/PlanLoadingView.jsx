@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { colors } from "../../../theme";
 const MESSAGES = [
   "🔍 Searching for the best recipes for you...",
   "🥗 Analysing your dietary preferences...",
@@ -62,11 +63,16 @@ export default function PlanLoadingView({ onCancel }) {
         <View style={styles.spinnerInner} />
       </Animated.View>
 
-      <Animated.Text style={[styles.message, { opacity: fadeAnim }]}>
+      <Animated.Text
+        style={[
+          styles.message,
+          { opacity: fadeAnim, fontSize: 17, lineHeight: 26, minHeight: 54 },
+        ]}
+      >
         {MESSAGES[msgIndex]}
       </Animated.Text>
 
-      <Text style={styles.hint}>This may take 10–30 seconds</Text>
+      <Text style={[styles.hint, { fontSize: 13 }]}>This may take 10–30 seconds</Text>
 
       <View style={styles.dots}>
         {MESSAGES.map((_, i) => (
@@ -77,9 +83,9 @@ export default function PlanLoadingView({ onCancel }) {
         ))}
       </View>
 
-      <Pressable style={styles.cancelBtn} onPress={onCancel}>
-        <Ionicons name="close" size={16} color="#6B7280" />
-        <Text style={styles.cancelText}>Cancel</Text>
+      <Pressable style={[styles.cancelBtn, { minHeight: 44 }]} onPress={onCancel}>
+        <Ionicons name="close" size={16} color={colors.textSecondary} />
+        <Text style={[styles.cancelText, { fontSize: 14 }]}>Cancel</Text>
       </Pressable>
     </View>
   );
@@ -91,15 +97,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   spinner: {
     width: 72,
     height: 72,
     borderRadius: 36,
     borderWidth: 5,
-    borderColor: "#E5E7EB",
-    borderTopColor: "#047857",
+    borderColor: colors.border,
+    borderTopColor: colors.success,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 36,
@@ -108,12 +114,12 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#ECFDF5",
+    backgroundColor: colors.surfaceGreen,
   },
   message: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#253B63",
+    color: colors.textNavy,
     textAlign: "center",
     lineHeight: 26,
     minHeight: 54,
@@ -121,7 +127,7 @@ const styles = StyleSheet.create({
   hint: {
     marginTop: 10,
     fontSize: 13,
-    color: "#9CA3AF",
+    color: colors.textMuted,
   },
   dots: {
     flexDirection: "row",
@@ -132,10 +138,10 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#D1D5DB",
+    backgroundColor: colors.borderStrong,
   },
   dotActive: {
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
     width: 18,
   },
   cancelBtn: {
@@ -147,8 +153,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     minHeight: 44,
   },
-  cancelText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+  cancelText: { fontSize: 14, color: colors.textSecondary, fontWeight: "500" },
 });

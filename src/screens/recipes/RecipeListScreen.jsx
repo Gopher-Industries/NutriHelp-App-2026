@@ -19,13 +19,14 @@ import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getBookmarkedRecipes } from "../../utils/recipeBookmarks";
 
+import { colors } from "../../theme";
 export const COLUMN_GAP = 16;
 const NUM_COLUMNS = 2;
 const H_PADDING = 18;
 
 /** Home `mealsCard`-style elevated surface */
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -34,13 +35,13 @@ const SURFACE_SHADOW = {
 const SURFACE_BORDER = {
   borderRadius: 16,
   borderWidth: 1,
-  borderColor: "#E8EDF5",
-  backgroundColor: "#FFFFFF",
+  borderColor: colors.surfaceBlueWash,
+  backgroundColor: colors.white,
 };
 
 /** Home `statCard`-style lighter lift (search row, chips) */
 const SURFACE_SHADOW_SUBTLE = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
@@ -48,17 +49,17 @@ const SURFACE_SHADOW_SUBTLE = {
 };
 
 const C = {
-  primary: "#1A6DB5",
-  stone100: "#f5f5f4",
-  stone200: "#e7e5e4",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  slate600: "#475569",
-  gray200: "#e5e7eb",
-  gray300: "#d1d5db",
-  gray400: "#9ca3af",
-  gray700: "#374151",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  stone100: colors.c_f5f5f4,
+  stone200: colors.c_e7e5e4,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  slate600: colors.c_475569,
+  gray200: colors.border,
+  gray300: colors.borderStrong,
+  gray400: colors.textMuted,
+  gray700: colors.textGray700,
+  white: colors.white,
 };
 
 /** Fixed layout so every card matches; title area always reserves two lines. */
@@ -418,7 +419,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
           accessibilityRole="image"
           accessibilityLabel="No recipe image"
         >
-          <Ionicons name="image-outline" size={40} color="#a8a29e" />
+          <Ionicons name="image-outline" size={40} color={colors.c_a8a29e} />
         </View>
       )}
 
@@ -446,7 +447,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
 
         <View style={[styles.metaRow, { height: RECIPE_CARD_META_ROW_H }]}>
           <View style={styles.metaLeft}>
-            <Ionicons name="star" size={15} color="#F59E0B" />
+            <Ionicons name="star" size={15} color={colors.warning} />
             <Text style={[styles.metaRating, { marginLeft: 4 }]} numberOfLines={1}>
               {shouldShowScore ? avgRating.toFixed(1) : "—"}
             </Text>
@@ -479,7 +480,7 @@ function SearchEntryBar({ onPress }) {
       accessibilityRole="button"
       accessibilityLabel="Open recipe search"
     >
-      <Ionicons name="search-outline" size={22} color="#9ca3af" />
+      <Ionicons name="search-outline" size={22} color={colors.textMuted} />
       <Text style={styles.searchEntryText}>Search recipes…</Text>
     </Pressable>
   );
@@ -630,7 +631,7 @@ export default function RecipeListScreen({ navigation, route }) {
                   <Image source={{ uri: String(item.imageUrl).trim() }} style={styles.bookmarkImage} />
                 ) : (
                   <View style={styles.bookmarkImagePlaceholder}>
-                    <Ionicons name="image-outline" size={22} color="#A8A29E" />
+                    <Ionicons name="image-outline" size={22} color={colors.c_a8a29e} />
                   </View>
                 )}
                 <Text style={styles.bookmarkName} numberOfLines={2}>
@@ -692,7 +693,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipUnselected: {
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   chipSelected: {
@@ -716,12 +717,12 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#202633",
+    color: colors.c_202633,
   },
   metaRow: {
     flexDirection: "row",
@@ -757,7 +758,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -791,7 +792,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     overflow: "hidden",
   },
@@ -804,7 +805,7 @@ const styles = StyleSheet.create({
     height: 80,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
   },
   bookmarkName: {
     minHeight: 48,
@@ -819,7 +820,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 32,
@@ -829,7 +830,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: C.slate800,
   },
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   /** Matches Home `content.paddingTop` + Meal Plan `topRow` inset */
   pageChrome: { flex: 1, paddingTop: 8 },
   brandHeader: {
@@ -838,13 +839,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 18,
     marginBottom: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   headerSideSpacer: { width: 40 },
-  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
+  logoText: { fontSize: 14, fontWeight: "700", color: colors.textPrimary },
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     paddingHorizontal: H_PADDING,
   },
   headerRow: {
@@ -856,7 +857,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   primaryBtn: {
     minHeight: 44,

@@ -23,17 +23,18 @@ import {
 } from "./RecipeListScreen";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { colors } from "../../theme";
 const C = {
-  primary: "#1A6DB5",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  gray100: "#f3f4f6",
-  gray500: "#6b7280",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  gray100: colors.surfaceGray,
+  gray500: colors.textSecondary,
+  white: colors.white,
 };
 
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -41,7 +42,7 @@ const SURFACE_SHADOW = {
 };
 
 const SURFACE_SHADOW_SUBTLE = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
@@ -260,7 +261,7 @@ function DebouncedSearchBar({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textMuted}
           autoFocus={autoFocus}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -287,7 +288,7 @@ function FeaturedRecipeCard({ recipe, onPress }) {
         <Image source={{ uri: imageUri }} style={styles.featuredImage} resizeMode="cover" />
       ) : (
         <View style={styles.featuredImagePlaceholder}>
-          <Ionicons name="image-outline" size={30} color="#A8A29E" />
+          <Ionicons name="image-outline" size={30} color={colors.c_a8a29e} />
         </View>
       )}
       <View style={styles.featuredBody}>
@@ -625,7 +626,7 @@ export default function SearchRecipesScreen({ navigation }) {
                     {item}
                   </Text>
                   {isShowingRecentSearches ? (
-                    <Ionicons name="time-outline" size={16} color="#94A3B8" />
+                    <Ionicons name="time-outline" size={16} color={colors.textSlate400} />
                   ) : null}
                 </Pressable>
               ))}
@@ -678,7 +679,7 @@ export default function SearchRecipesScreen({ navigation }) {
       <View style={styles.pageChrome}>
         <View style={styles.header}>
           <Pressable onPress={() => navigation?.goBack?.()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="arrow-back" size={22} color="#253B63" />
+            <Ionicons name="arrow-back" size={22} color={colors.textNavy} />
           </Pressable>
           <Text style={styles.headerTitle}>Search recipes</Text>
           <Pressable
@@ -691,7 +692,7 @@ export default function SearchRecipesScreen({ navigation }) {
             <Ionicons
               name={selectedSource === "community" ? "globe" : "globe-outline"}
               size={22}
-              color={selectedSource === "community" ? C.primary : "#253B63"}
+              color={selectedSource === "community" ? C.primary : colors.textNavy}
             />
           </Pressable>
         </View>
@@ -732,7 +733,7 @@ export default function SearchRecipesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   pageChrome: { flex: 1 },
   header: {
     flexDirection: "row",
@@ -740,8 +741,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   backBtn: {
     width: 44,
@@ -754,7 +755,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   sourceToggleBtn: {
     width: 44,
@@ -762,12 +763,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   listHeader: {
     paddingTop: 20,
     paddingBottom: 8,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: colors.surface,
   },
   searchBarWrap: { marginBottom: 16 },
   searchRow: {
@@ -776,7 +777,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingRight: 8,
   },
@@ -785,7 +786,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#111827",
+    color: colors.textGray900,
     minHeight: 44,
   },
   clearBtn: {
@@ -802,7 +803,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   suggestionsHeading: {
@@ -860,7 +861,7 @@ const styles = StyleSheet.create({
     width: 236,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     overflow: "hidden",
     backgroundColor: C.white,
     marginRight: 10,
@@ -871,7 +872,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
   },
   featuredBody: { padding: 10 },
   featuredTitle: {
@@ -887,7 +888,7 @@ const styles = StyleSheet.create({
   loadingRow: { alignItems: "center", paddingVertical: 24 },
   loadingText: { marginTop: 8, fontSize: 16, color: C.primary },
   list: { flex: 1, minHeight: 0 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 24, backgroundColor: "#F8FAFC" },
+  listContent: { paddingHorizontal: 16, paddingBottom: 24, backgroundColor: colors.surface },
   cardMetaRow: {
     marginTop: 6,
     marginBottom: 2,
@@ -913,7 +914,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 32,

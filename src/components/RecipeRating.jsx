@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import StarRating from "react-native-star-rating-widget";
 import recipeApi from "../api/recipeApi";
+import { colors } from "../theme";
 
 const C = {
-  primary: "#1A6DB5",
-  slate900: "#0f172a",
-  slate500: "#64748b",
-  slate400: "#94a3b8",
+  primary: colors.primaryDeepAlt,
+  slate900: colors.textSlate,
+  slate500: colors.textSlate500,
+  slate400: colors.textSlate400,
 };
 
 function pickNumber(...candidates) {
@@ -185,8 +186,8 @@ export default function RecipeRating({
           rating={Number(currentRating) || 0}
           maxStars={5}
           starSize={32}
-          color="#F59E0B"
-          emptyColor="#D1D5DB"
+          color={colors.warning}
+          emptyColor={colors.borderStrong}
           enableHalfStar={false}
           onChange={(value) => handleRate(Math.round(value))}
           enableSwiping={false}
@@ -209,16 +210,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.white,
     padding: 16,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 2,
   },
-  title: { width: "100%", textAlign: "center", fontSize: 18, fontWeight: "600", color: "#253B63" },
+  title: { width: "100%", textAlign: "center", fontSize: 18, fontWeight: "600", color: colors.textNavy },
   helper: { marginTop: 4, width: "100%", textAlign: "center", fontSize: 14, color: C.slate500 },
   hint: { marginTop: 4, width: "100%", textAlign: "center", fontSize: 12, color: C.slate400 },
   starWrap: { marginTop: 12 },

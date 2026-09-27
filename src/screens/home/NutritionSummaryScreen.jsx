@@ -8,6 +8,7 @@ import mealPlanApi from "../../api/mealPlanApi";
 import { useUser } from "../../context/UserContext";
 import { buildNutritionSummary, groupMealsByType } from "../meal/mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 export default function NutritionSummaryScreen({ navigation }) {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,7 @@ export default function NutritionSummaryScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color="#667085" />
+          <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
           <Text style={styles.backText}>Back</Text>
         </Pressable>
         <Text style={styles.logoText}>NutriHelp</Text>
@@ -68,7 +69,7 @@ export default function NutritionSummaryScreen({ navigation }) {
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color="#1877F2" />
+            <ActivityIndicator size="large" color={colors.facebookBlue} />
           </View>
         ) : rows.length === 0 ? (
           <View style={styles.emptyState}>
@@ -109,7 +110,7 @@ export default function NutritionSummaryScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -117,20 +118,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.surfaceGray,
   },
   backButton: { flexDirection: "row", alignItems: "center", width: 60 },
-  backText: { marginLeft: 4, fontSize: 15, color: "#667085" },
-  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
+  backText: { marginLeft: 4, fontSize: 15, color: colors.textSecondaryAlt },
+  logoText: { fontSize: 14, fontWeight: "700", color: colors.textPrimary },
   headerSpacer: { width: 60 },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { padding: 20, paddingBottom: 32 },
-  title: { fontSize: 30, fontWeight: "800", color: "#111111", marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: "#555555", marginBottom: 20 },
+  title: { fontSize: 30, fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
+  subtitle: { fontSize: 16, lineHeight: 23, color: colors.textGray, marginBottom: 20 },
   loadingWrap: { alignItems: "center", paddingVertical: 60 },
   rowCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 26,
     padding: 18,
     marginBottom: 14,
@@ -142,21 +143,21 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   rowTitle: { fontSize: 22, fontWeight: "800" },
-  rowValue: { fontSize: 16, color: "#111111" },
-  track: { height: 14, borderRadius: 99, backgroundColor: "#D9D9D9", overflow: "hidden" },
+  rowValue: { fontSize: 16, color: colors.textNearBlack },
+  track: { height: 14, borderRadius: 99, backgroundColor: colors.c_d9d9d9, overflow: "hidden" },
   fill: { height: "100%", borderRadius: 99 },
-  rowProgress: { marginTop: 8, fontSize: 12, color: "#888888" },
+  rowProgress: { marginTop: 8, fontSize: 12, color: colors.textGrayLight },
   emptyState: { alignItems: "center", paddingVertical: 48 },
   emptyIcon: { fontSize: 48, marginBottom: 14 },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151", marginBottom: 8 },
-  emptyBody: { fontSize: 14, color: "#9CA3AF", textAlign: "center", lineHeight: 21, marginBottom: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: colors.textGray700, marginBottom: 8 },
+  emptyBody: { fontSize: 14, color: colors.textMuted, textAlign: "center", lineHeight: 21, marginBottom: 20 },
   planButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#2B78C5",
+    backgroundColor: colors.primaryMutedAlt,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  planButtonText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+  planButtonText: { fontSize: 14, fontWeight: "700", color: colors.white },
 });

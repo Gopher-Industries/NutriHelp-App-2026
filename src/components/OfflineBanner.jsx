@@ -1,3 +1,4 @@
+import { colors } from "../theme";
 // src/components/OfflineBanner.jsx
 import { StyleSheet, Text, View } from "react-native";
 
@@ -15,14 +16,14 @@ export default function OfflineBanner({ visible }) {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: "#F59E0B",
+    backgroundColor: colors.warning,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: "center",
   },
 
   text: {
-    color: "#FFFFFF",
+    color: colors.white,
     fontSize: 12,
     fontWeight: "600",
   },

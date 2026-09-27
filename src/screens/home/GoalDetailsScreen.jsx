@@ -9,6 +9,7 @@ import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import { useUser } from "../../context/UserContext";
 import { groupMealsByType } from "../meal/mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const CALORIE_TARGET = 2000;
 const PROTEIN_TARGET = 80;
 const WATER_TARGET = 8;
@@ -71,16 +72,16 @@ export default function GoalDetailsScreen({ navigation }) {
   const progressPercent = Math.round(calorieProgress * 100);
 
   const metricItems = [
-    { label: "Calories remaining", value: `${caloriesRemaining} kcal`, color: "#1877F2" },
-    { label: "Protein consumed", value: `${protein} / ${PROTEIN_TARGET} g`, color: "#39D353" },
-    { label: "Water intake", value: `${water} / ${WATER_TARGET} glasses`, color: "#13B5EA" },
+    { label: "Calories remaining", value: `${caloriesRemaining} kcal`, color: colors.facebookBlue },
+    { label: "Protein consumed", value: `${protein} / ${PROTEIN_TARGET} g`, color: colors.successGithub },
+    { label: "Water intake", value: `${water} / ${WATER_TARGET} glasses`, color: colors.accentCyan },
   ];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color="#667085" />
+          <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
           <Text style={styles.backText}>Back</Text>
         </Pressable>
         <Text style={styles.logoText}>NutriHelp</Text>
@@ -99,7 +100,7 @@ export default function GoalDetailsScreen({ navigation }) {
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color="#1877F2" />
+            <ActivityIndicator size="large" color={colors.facebookBlue} />
           </View>
         ) : (
           <>
@@ -122,7 +123,7 @@ export default function GoalDetailsScreen({ navigation }) {
             {metricItems.map((item) => (
               <View key={item.label} style={styles.metricCard}>
                 <View style={[styles.metricIconWrap, { backgroundColor: item.color }]}>
-                  <Ionicons name="flag-outline" size={20} color="#FFFFFF" />
+                  <Ionicons name="flag-outline" size={20} color={colors.white} />
                 </View>
                 <View style={styles.metricBody}>
                   <Text style={styles.metricLabel}>{item.label}</Text>
@@ -145,7 +146,7 @@ export default function GoalDetailsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -153,20 +154,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.surfaceGray,
   },
   backButton: { flexDirection: "row", alignItems: "center", width: 60 },
-  backText: { marginLeft: 4, fontSize: 15, color: "#667085" },
-  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
+  backText: { marginLeft: 4, fontSize: 15, color: colors.textSecondaryAlt },
+  logoText: { fontSize: 14, fontWeight: "700", color: colors.textPrimary },
   headerSpacer: { width: 60 },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { padding: 20, paddingBottom: 32 },
-  title: { fontSize: 30, fontWeight: "800", color: "#111111", marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: "#555555", marginBottom: 20 },
+  title: { fontSize: 30, fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
+  subtitle: { fontSize: 16, lineHeight: 23, color: colors.textGray, marginBottom: 20 },
   loadingWrap: { alignItems: "center", paddingVertical: 60 },
   heroCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 34,
     padding: 24,
     alignItems: "center",
@@ -177,9 +178,9 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 90,
     borderWidth: 16,
-    borderColor: "#D6D6D6",
-    borderTopColor: "#1877F2",
-    borderLeftColor: "#1877F2",
+    borderColor: colors.c_d6d6d6,
+    borderTopColor: colors.facebookBlue,
+    borderLeftColor: colors.facebookBlue,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
@@ -192,19 +193,19 @@ const styles = StyleSheet.create({
     borderRadius: 90,
     borderWidth: 16,
     borderColor: "transparent",
-    borderTopColor: "#1877F2",
-    borderRightColor: "#1877F2",
+    borderTopColor: colors.facebookBlue,
+    borderRightColor: colors.facebookBlue,
   },
   innerCircle: { transform: [{ rotate: "20deg" }], alignItems: "center" },
-  ringValue: { fontSize: 34, fontWeight: "800", color: "#111111" },
-  ringUnit: { fontSize: 16, color: "#555555" },
-  heroHeadline: { fontSize: 20, fontWeight: "700", color: "#111111", textAlign: "center" },
+  ringValue: { fontSize: 34, fontWeight: "800", color: colors.textNearBlack },
+  ringUnit: { fontSize: 16, color: colors.textGray },
+  heroHeadline: { fontSize: 20, fontWeight: "700", color: colors.textNearBlack, textAlign: "center" },
   metricCard: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     padding: 16,
     marginBottom: 14,
   },
@@ -217,8 +218,8 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   metricBody: { flex: 1 },
-  metricLabel: { fontSize: 15, color: "#555555", marginBottom: 4 },
-  metricValue: { fontSize: 22, fontWeight: "800", color: "#111111" },
+  metricLabel: { fontSize: 15, color: colors.textGray, marginBottom: 4 },
+  metricValue: { fontSize: 22, fontWeight: "800", color: colors.textNearBlack },
   nutritionLink: { alignItems: "center", paddingVertical: 12 },
-  nutritionLinkText: { fontSize: 14, fontWeight: "700", color: "#1877F2" },
+  nutritionLinkText: { fontSize: 14, fontWeight: "700", color: colors.facebookBlue },
 });
