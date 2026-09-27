@@ -17,6 +17,11 @@ import { addScanEntry } from "../../utils/scanHistoryStorage";
 
 const OFF_FIELDS = "product_name,allergens_tags,allergens_from_ingredients,ingredients_text";
 
+// FE-17: Barcode lookups deliberately use the Open Food Facts public API
+// rather than a proprietary/paid barcode service. EXPO_PUBLIC_API_BARCODE_URL
+// was audited and found unused anywhere in the codebase, so it was removed
+// from .env.example — this is the app's committed data source going forward.
+// See FE-17-barcode-source-audit.md for the audit that led to this decision.
 async function fetchFromOpenFoodFacts(barcode) {
   const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=${OFF_FIELDS}`;
   const response = await fetch(url, {
