@@ -1,12 +1,38 @@
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
 
-export default function LoadingSpinner({ message }) {
+import { colors } from "../../theme";
+
+/**
+ * Shared loading indicator (FE-02).
+ */
+export default function LoadingSpinner({
+  message,
+  size = "large",
+  color = colors.primary,
+  style,
+  textStyle,
+}) {
   return (
-    <View style={{ alignItems: "center", justifyContent: "center" }}>
-      <ActivityIndicator size="large" />
-      {message && (
-        <Text style={{ marginTop: 10 }}>{message}</Text>
-      )}
+    <View style={[styles.wrap, style]}>
+      <ActivityIndicator size={size} color={color} />
+      {message ? (
+        <Text style={[styles.message, textStyle]}>
+          {message}
+        </Text>
+      ) : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  message: {
+    marginTop: 10,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+});

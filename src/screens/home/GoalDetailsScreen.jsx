@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { groupMealsByType } from "../meal/mealPlanUiHelpers";
 
@@ -80,17 +81,20 @@ export default function GoalDetailsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Pressable
+          style={[styles.backButton, { minHeight: 44 }]}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={[styles.backText, { fontSize: 15 }]}>Back</Text>
         </Pressable>
-        <Text style={styles.logoText}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Goal Progress</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { fontSize: 30 }]}>Goal Progress</Text>
+        <Text style={[styles.subtitle, { fontSize: 16, lineHeight: 23 }]}>
           {loading
             ? "Loading today's progress..."
             : progressPercent >= 80
@@ -100,7 +104,7 @@ export default function GoalDetailsScreen({ navigation }) {
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color={colors.facebookBlue} />
+            <LoadingSpinner color={colors.facebookBlue} />
           </View>
         ) : (
           <>
@@ -113,30 +117,41 @@ export default function GoalDetailsScreen({ navigation }) {
                   ]}
                 />
                 <View style={styles.innerCircle}>
-                  <Text style={styles.ringValue}>{calories}</Text>
-                  <Text style={styles.ringUnit}>of {CALORIE_TARGET} kcal</Text>
+                  <Text style={[styles.ringValue, { fontSize: 34 }]}>{calories}</Text>
+                  <Text style={[styles.ringUnit, { fontSize: 16 }]}>
+                    of {CALORIE_TARGET} kcal
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.heroHeadline}>{progressPercent}% of your daily goal reached</Text>
+              <Text style={[styles.heroHeadline, { fontSize: 20 }]}>
+                {progressPercent}% of your daily goal reached
+              </Text>
             </View>
 
             {metricItems.map((item) => (
-              <View key={item.label} style={styles.metricCard}>
-                <View style={[styles.metricIconWrap, { backgroundColor: item.color }]}>
+              <View key={item.label} style={[styles.metricCard, { minHeight: 72 }]}>
+                <View
+                  style={[
+                    styles.metricIconWrap,
+                    { backgroundColor: item.color, width: 42, height: 42, borderRadius: 21 },
+                  ]}
+                >
                   <Ionicons name="flag-outline" size={20} color={colors.white} />
                 </View>
                 <View style={styles.metricBody}>
-                  <Text style={styles.metricLabel}>{item.label}</Text>
-                  <Text style={styles.metricValue}>{item.value}</Text>
+                  <Text style={[styles.metricLabel, { fontSize: 15 }]}>{item.label}</Text>
+                  <Text style={[styles.metricValue, { fontSize: 22 }]}>{item.value}</Text>
                 </View>
               </View>
             ))}
 
             <Pressable
-              style={styles.nutritionLink}
+              style={[styles.nutritionLink, { minHeight: 44 }]}
               onPress={() => navigation.navigate("NutritionSummaryScreen")}
             >
-              <Text style={styles.nutritionLinkText}>View Full Nutrition Summary →</Text>
+              <Text style={[styles.nutritionLinkText, { fontSize: 14 }]}>
+                View Full Nutrition Summary →
+              </Text>
             </Pressable>
           </>
         )}
@@ -157,13 +172,13 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.surfaceGray,
   },
   backButton: { flexDirection: "row", alignItems: "center", width: 60 },
-  backText: { marginLeft: 4, fontSize: 15, color: colors.textSecondaryAlt },
-  logoText: { fontSize: 14, fontWeight: "700", color: colors.textPrimary },
+  backText: { marginLeft: 4, color: colors.textSecondaryAlt },
+  logoText: { fontWeight: "700", color: colors.textPrimary },
   headerSpacer: { width: 60 },
   screen: { flex: 1, backgroundColor: colors.white },
   content: { padding: 20, paddingBottom: 32 },
-  title: { fontSize: 30, fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: colors.textGray, marginBottom: 20 },
+  title: { fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
+  subtitle: { color: colors.textGray, marginBottom: 20 },
   loadingWrap: { alignItems: "center", paddingVertical: 60 },
   heroCard: {
     borderWidth: 1.5,
@@ -197,9 +212,9 @@ const styles = StyleSheet.create({
     borderRightColor: colors.facebookBlue,
   },
   innerCircle: { transform: [{ rotate: "20deg" }], alignItems: "center" },
-  ringValue: { fontSize: 34, fontWeight: "800", color: colors.textNearBlack },
-  ringUnit: { fontSize: 16, color: colors.textGray },
-  heroHeadline: { fontSize: 20, fontWeight: "700", color: colors.textNearBlack, textAlign: "center" },
+  ringValue: { fontWeight: "800", color: colors.textNearBlack },
+  ringUnit: { color: colors.textGray },
+  heroHeadline: { fontWeight: "700", color: colors.textNearBlack, textAlign: "center" },
   metricCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -210,16 +225,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   metricIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
   },
   metricBody: { flex: 1 },
-  metricLabel: { fontSize: 15, color: colors.textGray, marginBottom: 4 },
-  metricValue: { fontSize: 22, fontWeight: "800", color: colors.textNearBlack },
+  metricLabel: { color: colors.textGray, marginBottom: 4 },
+  metricValue: { fontWeight: "800", color: colors.textNearBlack },
   nutritionLink: { alignItems: "center", paddingVertical: 12 },
-  nutritionLinkText: { fontSize: 14, fontWeight: "700", color: colors.facebookBlue },
+  nutritionLinkText: { fontWeight: "700", color: colors.facebookBlue },
 });

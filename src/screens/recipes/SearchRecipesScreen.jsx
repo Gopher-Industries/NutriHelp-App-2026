@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Platform,
@@ -15,6 +14,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import recipeApi from "../../api/recipeApi";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import {
   COLUMN_GAP,
   FilterChips,
@@ -267,11 +268,18 @@ function DebouncedSearchBar({
           onBlur={onBlur}
           onSubmitEditing={onSubmitEditing}
           returnKeyType="search"
-          style={styles.searchInput}
+          style={[
+            styles.searchInput,
+            { fontSize: 16, minHeight: 48, height: undefined },
+          ]}
         />
         {isFocused && value.trim().length > 0 ? (
-          <Pressable onPress={onClear} style={styles.clearBtn} hitSlop={8}>
-            <Text style={styles.clearBtnText}>X</Text>
+          <Pressable
+            onPress={onClear}
+            style={[styles.clearBtn, { width: 36, height: 36 }]}
+            hitSlop={8}
+          >
+            <Text style={[styles.clearBtnText, { fontSize: 18 }]}>X</Text>
           </Pressable>
         ) : null}
       </View>
@@ -292,14 +300,14 @@ function FeaturedRecipeCard({ recipe, onPress }) {
         </View>
       )}
       <View style={styles.featuredBody}>
-        <Text style={styles.featuredTitle} numberOfLines={2}>
+        <Text style={[styles.featuredTitle, { fontSize: 15 }]} numberOfLines={2}>
           {recipe?.title ?? "Untitled Recipe"}
         </Text>
-        <Text style={styles.featuredMetaText} numberOfLines={1}>
+        <Text style={[styles.featuredMetaText, { fontSize: 12 }]} numberOfLines={1}>
           {formatRatingSummary(recipe)}
         </Text>
         {getAuthorLabel(recipe) ? (
-          <Text style={styles.featuredMetaText} numberOfLines={1}>
+          <Text style={[styles.featuredMetaText, { fontSize: 12 }]} numberOfLines={1}>
             By {getAuthorLabel(recipe)}
           </Text>
         ) : null}
@@ -572,10 +580,13 @@ export default function SearchRecipesScreen({ navigation }) {
 
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyMessage}>{message}</Text>
+        <EmptyState message={message} style={styles.emptyStateInner} />
         {displayTerm.length > 0 ? (
-          <Pressable onPress={handleClearSearch} style={styles.emptyClearBtn}>
-            <Text style={styles.emptyClearText}>Clear search</Text>
+          <Pressable
+            onPress={handleClearSearch}
+            style={[styles.emptyClearBtn, { minHeight: 44 }]}
+          >
+            <Text style={[styles.emptyClearText, { fontSize: 16 }]}>Clear search</Text>
           </Pressable>
         ) : null}
       </View>
@@ -600,15 +611,17 @@ export default function SearchRecipesScreen({ navigation }) {
         }}
         onClear={handleClearSearch}
         onSubmitEditing={() => commitSearch(query)}
+
+
       />
 
       {isSearchFocused ? (
         <View style={styles.suggestionsPanel}>
           {!isShowingRecentSearches ? (
-            <Text style={styles.suggestionsHeading}>Suggestions</Text>
+            <Text style={[styles.suggestionsHeading, { fontSize: 14 }]}>Suggestions</Text>
           ) : null}
           {displayedSuggestions.length === 0 ? (
-            <Text style={styles.suggestionsEmpty}>
+            <Text style={[styles.suggestionsEmpty, { fontSize: 16 }]}>
               {isShowingRecentSearches ? "No recent searches yet." : "No matching recipes."}
             </Text>
           ) : (
@@ -621,8 +634,12 @@ export default function SearchRecipesScreen({ navigation }) {
               {...verticalScrollProps}
             >
               {displayedSuggestions.map((item) => (
-                <Pressable key={item} onPress={() => handleSuggestionPress(item)} style={styles.suggestionRow}>
-                  <Text style={styles.suggestionText} numberOfLines={1}>
+                <Pressable
+                  key={item}
+                  onPress={() => handleSuggestionPress(item)}
+                  style={[styles.suggestionRow, { minHeight: 44 }]}
+                >
+                  <Text style={[styles.suggestionText, { fontSize: 16 }]} numberOfLines={1}>
                     {item}
                   </Text>
                   {isShowingRecentSearches ? (
@@ -635,16 +652,22 @@ export default function SearchRecipesScreen({ navigation }) {
         </View>
       ) : null}
 
-      <Text style={styles.sourceHint}>{sourceHint}</Text>
+      <Text style={[styles.sourceHint, { fontSize: 13 }]}>{sourceHint}</Text>
 
-      <Text style={styles.filterHeading}>Cuisine</Text>
-      <FilterChips filters={cuisines} selectedFilter={selectedCuisine} onSelect={setSelectedCuisine} />
+      <Text style={[styles.filterHeading, { fontSize: 14 }]}>Cuisine</Text>
+      <FilterChips
+        filters={cuisines}
+        selectedFilter={selectedCuisine}
+        onSelect={setSelectedCuisine}
+
+
+      />
 
       {featuredRecipes.length > 0 ? (
         <View style={styles.featuredSection}>
           <View style={styles.featuredHeader}>
-            <Text style={styles.featuredHeading}>Featured</Text>
-            <Text style={styles.featuredSubheading}>
+            <Text style={[styles.featuredHeading, { fontSize: 18 }]}>Featured</Text>
+            <Text style={[styles.featuredSubheading, { fontSize: 13 }]}>
               {selectedSource === "community" ? "Top community picks" : "Top library picks"}
             </Text>
           </View>
@@ -659,6 +682,7 @@ export default function SearchRecipesScreen({ navigation }) {
                 key={`featured-${item.id}`}
                 recipe={item}
                 onPress={handleRecipePress}
+
               />
             ))}
           </ScrollView>
@@ -666,10 +690,13 @@ export default function SearchRecipesScreen({ navigation }) {
       ) : null}
 
       {isLoading ? (
-        <View style={styles.loadingRow}>
-          <ActivityIndicator size="small" color={C.primary} />
-          <Text style={styles.loadingText}>Searching…</Text>
-        </View>
+        <LoadingSpinner
+          size="small"
+          color={C.primary}
+          message="Searching…"
+          style={styles.loadingRow}
+          textStyle={[styles.loadingText, { fontSize: 16 }]}
+        />
       ) : null}
     </View>
   );
@@ -678,13 +705,17 @@ export default function SearchRecipesScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.pageChrome}>
         <View style={styles.header}>
-          <Pressable onPress={() => navigation?.goBack?.()} style={styles.backBtn} hitSlop={8}>
+          <Pressable
+            onPress={() => navigation?.goBack?.()}
+            style={[styles.backBtn, { width: 44, height: 44 }]}
+            hitSlop={8}
+          >
             <Ionicons name="arrow-back" size={22} color={colors.textNavy} />
           </Pressable>
-          <Text style={styles.headerTitle}>Search recipes</Text>
+          <Text style={[styles.headerTitle, { fontSize: 17 }]}>Search recipes</Text>
           <Pressable
             onPress={handleToggleSource}
-            style={styles.sourceToggleBtn}
+            style={[styles.sourceToggleBtn, { width: 44, height: 44 }]}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={`Switch source. Current: ${sourceLabel}`}
@@ -702,12 +733,18 @@ export default function SearchRecipesScreen({ navigation }) {
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={{ width: cardWidth }}>
-              <RecipeCard recipe={item} onPress={handleRecipePress} cardWidth={cardWidth} />
+              <RecipeCard
+                recipe={item}
+                onPress={handleRecipePress}
+                cardWidth={cardWidth}
+
+
+              />
               <View style={styles.cardMetaRow}>
-                <Text style={styles.cardMetaLeft} numberOfLines={1}>
+                <Text style={[styles.cardMetaLeft, { fontSize: 12 }]} numberOfLines={1}>
                   {getAuthorLabel(item) ? `By ${getAuthorLabel(item)}` : "NutriHelp"}
                 </Text>
-                <Text style={styles.cardMetaRight} numberOfLines={1}>
+                <Text style={[styles.cardMetaRight, { fontSize: 12 }]} numberOfLines={1}>
                   {formatRatingSummary(item)}
                 </Text>
               </View>
@@ -919,7 +956,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 32,
   },
-  emptyMessage: { textAlign: "center", fontSize: 18, color: C.slate800 },
+  emptyStateInner: { marginTop: 0, paddingHorizontal: 0 },
   emptyClearBtn: {
     marginTop: 16,
     minHeight: 44,

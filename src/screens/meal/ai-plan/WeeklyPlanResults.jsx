@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,8 +8,10 @@ import {
   View,
 } from "react-native";
 
-import { ApiError, toErrorMessage } from "../../../api/baseApi";
+import { ApiError } from "../../../api/baseApi";
 import { saveMealToDaily } from "../../../api/mealPlanApi";
+import Button from "../../../components/common/Button";
+import EmptyState from "../../../components/common/EmptyState";
 import { useUser } from "../../../context/UserContext";
 import { saveDailyMeal } from "../../../utils/dailyMealsStorage";
 import FeedbackCard from "./FeedbackCard";
@@ -36,10 +37,10 @@ function parseNutrient(value) {
 function NutrientBadge({ label, value, highSodium }) {
   return (
     <View style={[styles.badge, highSodium && styles.badgeSodium]}>
-      <Text style={[styles.badgeLabel, highSodium && styles.badgeLabelSodium]}>
+      <Text style={[styles.badgeLabel, highSodium && styles.badgeLabelSodium, { fontSize: 10 }]}>
         {label}
       </Text>
-      <Text style={[styles.badgeValue, highSodium && styles.badgeValueSodium]}>
+      <Text style={[styles.badgeValue, highSodium && styles.badgeValueSodium, { fontSize: 12 }]}>
         {value}
       </Text>
     </View>
@@ -105,10 +106,12 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
 
   return (
     <View style={styles.mealCard}>
-      <Text style={styles.mealTypeLabel}>{mealType.toUpperCase()}</Text>
-      <Text style={styles.mealName}>{meal.name}</Text>
+      <Text style={[styles.mealTypeLabel, { fontSize: 10 }]}>{mealType.toUpperCase()}</Text>
+      <Text style={[styles.mealName, { fontSize: 15 }]}>{meal.name}</Text>
       {meal.description ? (
-        <Text style={styles.mealDesc}>{meal.description}</Text>
+        <Text style={[styles.mealDesc, { fontSize: 13, lineHeight: 18 }]}>
+          {meal.description}
+        </Text>
       ) : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
@@ -121,6 +124,7 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
             label="Sodium"
             value={meal.sodium ?? "—"}
             highSodium={sodiumVal > 600}
+
           />
         </View>
       </ScrollView>
@@ -128,10 +132,10 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
       {meal.ingredients?.length > 0 ? (
         <>
           <Pressable
-            style={styles.ingredientsToggle}
+            style={[styles.ingredientsToggle, { minHeight: 28 }]}
             onPress={() => setExpanded((prev) => !prev)}
           >
-            <Text style={styles.ingredientsToggleText}>
+            <Text style={[styles.ingredientsToggleText, { fontSize: 12 }]}>
               {expanded ? "Hide ingredients" : "Show ingredients"}
             </Text>
             <Ionicons
@@ -144,9 +148,15 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
             <View style={styles.ingredientsList}>
               {meal.ingredients.map((ing, i) => (
                 <View key={i} style={styles.ingredientRow}>
-                  <Text style={styles.ingredientDot}>•</Text>
-                  <Text style={styles.ingredientItem}>{ing.item}</Text>
-                  <Text style={styles.ingredientAmount}>{ing.amount}</Text>
+                  <Text style={[styles.ingredientDot, { fontSize: 12, lineHeight: 18 }]}>
+                    •
+                  </Text>
+                  <Text style={[styles.ingredientItem, { fontSize: 12, lineHeight: 18 }]}>
+                    {ing.item}
+                  </Text>
+                  <Text style={[styles.ingredientAmount, { fontSize: 12, lineHeight: 18 }]}>
+                    {ing.amount}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -157,29 +167,20 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
       {saveState === "saved" ? (
         <View style={styles.savedBadge}>
           <Ionicons name="checkmark-circle" size={15} color={colors.success} />
-          <Text style={styles.savedBadgeText}>Added to Daily Plan</Text>
+          <Text style={[styles.savedBadgeText, { fontSize: 13 }]}>Added to Daily Plan</Text>
         </View>
       ) : (
-        <Pressable
-          style={[
-            styles.saveBtn,
-            saveState === "saving" && styles.saveBtnDisabled,
-          ]}
+        <Button
+          label={isAuthenticated ? "Add to Daily Plan" : "Log in to save"}
           onPress={handleSave}
-          disabled={saveState === "saving"}
-        >
-          {saveState === "saving" ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Text style={styles.saveBtnText}>
-              {isAuthenticated ? "Add to Daily Plan" : "Log in to save"}
-            </Text>
-          )}
-        </Pressable>
+          loading={saveState === "saving"}
+          style={[styles.saveBtn, { minHeight: 40, height: undefined }]}
+          textStyle={[styles.saveBtnText, { fontSize: 13 }]}
+        />
       )}
 
       {saveState === "error" && saveError ? (
-        <Text style={styles.saveError}>{saveError}</Text>
+        <Text style={[styles.saveError, { fontSize: 12 }]}>{saveError}</Text>
       ) : null}
     </View>
   );
@@ -198,13 +199,15 @@ function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated }) {
         day={dayData.day}
         isAuthenticated={isAuthenticated}
         onNotAuthenticated={onNotAuthenticated}
+
+
       />
     );
   };
 
   return (
     <View style={[styles.dayCard, { borderLeftColor: borderColor }]}>
-      <Text style={[styles.dayTitle, { color: borderColor }]}>{dayData.day}</Text>
+      <Text style={[styles.dayTitle, { color: borderColor, fontSize: 17 }]}>{dayData.day}</Text>
       {renderMeal(dayData.breakfast, "Breakfast")}
       {renderMeal(dayData.lunch, "Lunch")}
       {renderMeal(dayData.dinner, "Dinner")}
@@ -230,13 +233,17 @@ export default function WeeklyPlanResults({
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle-outline" size={52} color={colors.danger} />
-        <Text style={styles.errorTitle}>Something went wrong</Text>
-        <Text style={styles.errorMsg}>{error}</Text>
-        <Pressable style={styles.retryBtn} onPress={onRegenerate}>
-          <Text style={styles.retryBtnText}>Try Again</Text>
-        </Pressable>
-        <Pressable style={styles.editBtn} onPress={onBack}>
-          <Text style={styles.editBtnText}>Edit Preferences</Text>
+        <Text style={[styles.errorTitle, { fontSize: 20 }]}>Something went wrong</Text>
+        <Text style={[styles.errorMsg, { fontSize: 14, lineHeight: 20 }]}>{error}</Text>
+        <Button
+          label="Try Again"
+          onPress={onRegenerate}
+          variant="success"
+          style={[styles.retryBtn, { minHeight: 48, height: undefined }]}
+          textStyle={[styles.retryBtnText, { fontSize: 15 }]}
+        />
+        <Pressable style={[styles.editBtn, { minHeight: 44 }]} onPress={onBack}>
+          <Text style={[styles.editBtnText, { fontSize: 14 }]}>Edit Preferences</Text>
         </Pressable>
       </View>
     );
@@ -245,16 +252,19 @@ export default function WeeklyPlanResults({
   if (!mealPlan || mealPlan.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="restaurant-outline" size={52} color={colors.textMuted} />
-        <Text style={styles.errorTitle}>No plan returned</Text>
-        <Text style={styles.errorMsg}>
-          The server did not return a meal plan. Please try again.
-        </Text>
-        <Pressable style={styles.retryBtn} onPress={onRegenerate}>
-          <Text style={styles.retryBtnText}>Regenerate</Text>
-        </Pressable>
-        <Pressable style={styles.editBtn} onPress={onBack}>
-          <Text style={styles.editBtnText}>Edit Preferences</Text>
+        <EmptyState
+          message="No plan returned. The server did not return a meal plan. Please try again."
+          icon="restaurant-outline"
+        />
+        <Button
+          label="Regenerate"
+          onPress={onRegenerate}
+          variant="success"
+          style={[styles.retryBtn, { minHeight: 48, height: undefined }]}
+          textStyle={[styles.retryBtnText, { fontSize: 15 }]}
+        />
+        <Pressable style={[styles.editBtn, { minHeight: 44 }]} onPress={onBack}>
+          <Text style={[styles.editBtnText, { fontSize: 14 }]}>Edit Preferences</Text>
         </Pressable>
       </View>
     );
@@ -267,15 +277,18 @@ export default function WeeklyPlanResults({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.topBar}>
-        <Pressable style={styles.topBarBack} onPress={onBack} hitSlop={8}>
+        <Pressable style={[styles.topBarBack, { minHeight: 44 }]} onPress={onBack} hitSlop={8}>
           <Ionicons name="arrow-back" size={18} color={colors.textGray700} />
-          <Text style={styles.topBarBackText}>Edit</Text>
+          <Text style={[styles.topBarBackText, { fontSize: 14 }]}>Edit</Text>
         </Pressable>
-        <Text style={styles.topBarTitle}>Your 7-Day Plan</Text>
-        <Pressable style={styles.regenBtn} onPress={onRegenerate}>
-          <Ionicons name="refresh" size={14} color={colors.white} />
-          <Text style={styles.regenBtnText}>Regenerate</Text>
-        </Pressable>
+        <Text style={[styles.topBarTitle, { fontSize: 15 }]}>Your 7-Day Plan</Text>
+        <Button
+          label="Regenerate"
+          onPress={onRegenerate}
+          variant="success"
+          style={[styles.regenBtn, { minHeight: 36, height: undefined }]}
+          textStyle={[styles.regenBtnText, { fontSize: 13 }]}
+        />
       </View>
 
       {mealPlan.map((dayData, i) => (
@@ -285,6 +298,8 @@ export default function WeeklyPlanResults({
           dayIndex={i}
           isAuthenticated={isAuthenticated}
           onNotAuthenticated={handleNotAuthenticated}
+
+
         />
       ))}
 
@@ -317,14 +332,11 @@ const styles = StyleSheet.create({
   topBarBackText: { fontSize: 14, color: colors.textGray700, fontWeight: "500" },
   topBarTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
   regenBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
     backgroundColor: colors.success,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    height: 36,
     borderRadius: 20,
-    minHeight: 36,
+    minWidth: 0,
   },
   regenBtnText: { fontSize: 13, fontWeight: "600", color: colors.white },
 

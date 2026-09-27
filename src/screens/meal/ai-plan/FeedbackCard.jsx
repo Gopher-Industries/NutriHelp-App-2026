@@ -1,9 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,8 +10,10 @@ import {
 
 import { toErrorMessage } from "../../../api/baseApi";
 import { submitPlanFeedback } from "../../../api/mealPlanApi";
-import { colors } from "../../../theme";
+import Button from "../../../components/common/Button";
+import Card from "../../../components/common/Card";
 
+import { colors } from "../../../theme";
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
 const RATING_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent!"];
 const CHIP_NEUTRAL = 0;
@@ -27,7 +27,7 @@ function StarRow({ rating, onRate }) {
         <Pressable
           key={star}
           onPress={() => onRate(star === rating ? 0 : star)}
-          style={styles.starBtn}
+          style={[styles.starBtn, { minWidth: 44, minHeight: 44 }]}
           hitSlop={6}
         >
           <Ionicons
@@ -101,7 +101,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
     return (
       <View style={styles.unavailableCard}>
         <Ionicons name="information-circle-outline" size={22} color={colors.textMuted} />
-        <Text style={styles.unavailableText}>
+        <Text style={[styles.unavailableText, { fontSize: 13, lineHeight: 18 }]}>
           Feedback is not available for this plan — plan ID was not returned by the server.
         </Text>
       </View>
@@ -111,32 +111,41 @@ export default function FeedbackCard({ planId, mealPlan }) {
   if (submitted) {
     return (
       <View style={styles.thankyouCard}>
-        <Text style={styles.thankyouEmoji}>🎉</Text>
-        <Text style={styles.thankyouTitle}>Thank you for your feedback!</Text>
-        <Text style={styles.thankyouSub}>Your ratings help us improve future plans.</Text>
+        <Text style={[styles.thankyouEmoji, { fontSize: 40 }]}>🎉</Text>
+        <Text style={[styles.thankyouTitle, { fontSize: 18 }]}>Thank you for your feedback!</Text>
+        <Text style={[styles.thankyouSub, { fontSize: 13 }]}>
+          Your ratings help us improve future plans.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>How was your plan?</Text>
-      <Text style={styles.cardSub}>Rate your experience to improve future suggestions.</Text>
+    <Card style={styles.card}>
+      <Text style={[styles.cardTitle, { fontSize: 18 }]}>How was your plan?</Text>
+      <Text style={[styles.cardSub, { fontSize: 13, lineHeight: 18 }]}>
+        Rate your experience to improve future suggestions.
+      </Text>
 
       <StarRow rating={rating} onRate={setRating} />
       {rating > 0 ? (
-        <Text style={styles.ratingLabel}>{RATING_LABELS[rating]}</Text>
+        <Text style={[styles.ratingLabel, { fontSize: 14 }]}>{RATING_LABELS[rating]}</Text>
       ) : null}
 
-      <Text style={styles.sectionLabel}>Did you follow this plan?</Text>
+      <Text style={[styles.sectionLabel, { fontSize: 14 }]}>Did you follow this plan?</Text>
       <View style={styles.toggleRow}>
         <Pressable
-          style={[styles.toggleBtn, followedPlan === true && styles.toggleBtnYes]}
+          style={[
+            styles.toggleBtn,
+            { minHeight: 44 },
+            followedPlan === true && styles.toggleBtnYes,
+          ]}
           onPress={() => setFollowedPlan((prev) => (prev === true ? null : true))}
         >
           <Text
             style={[
               styles.toggleBtnText,
+              { fontSize: 13 },
               followedPlan === true && styles.toggleBtnTextActive,
             ]}
           >
@@ -144,12 +153,17 @@ export default function FeedbackCard({ planId, mealPlan }) {
           </Text>
         </Pressable>
         <Pressable
-          style={[styles.toggleBtn, followedPlan === false && styles.toggleBtnNo]}
+          style={[
+            styles.toggleBtn,
+            { minHeight: 44 },
+            followedPlan === false && styles.toggleBtnNo,
+          ]}
           onPress={() => setFollowedPlan((prev) => (prev === false ? null : false))}
         >
           <Text
             style={[
               styles.toggleBtnText,
+              { fontSize: 13 },
               followedPlan === false && styles.toggleBtnTextActive,
             ]}
           >
@@ -160,8 +174,8 @@ export default function FeedbackCard({ planId, mealPlan }) {
 
       {chipLabels.length > 0 ? (
         <>
-          <Text style={styles.sectionLabel}>Rate individual meals</Text>
-          <Text style={styles.chipHint}>
+          <Text style={[styles.sectionLabel, { fontSize: 14 }]}>Rate individual meals</Text>
+          <Text style={[styles.chipHint, { fontSize: 11 }]}>
             Tap once = liked · tap twice = disliked · tap again to reset
           </Text>
           <View style={styles.chipGrid}>
@@ -172,6 +186,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
                   key={label}
                   style={[
                     styles.mealChip,
+                    { minHeight: 34 },
                     state === CHIP_LIKED && styles.mealChipLiked,
                     state === CHIP_DISLIKED && styles.mealChipDisliked,
                   ]}
@@ -180,6 +195,7 @@ export default function FeedbackCard({ planId, mealPlan }) {
                   <Text
                     style={[
                       styles.mealChipText,
+                      { fontSize: 12 },
                       state === CHIP_LIKED && styles.mealChipTextLiked,
                       state === CHIP_DISLIKED && styles.mealChipTextDisliked,
                     ]}
@@ -193,9 +209,9 @@ export default function FeedbackCard({ planId, mealPlan }) {
         </>
       ) : null}
 
-      <Text style={styles.sectionLabel}>Additional notes (optional)</Text>
+      <Text style={[styles.sectionLabel, { fontSize: 14 }]}>Additional notes (optional)</Text>
       <TextInput
-        style={styles.notesInput}
+        style={[styles.notesInput, { fontSize: 14, minHeight: 80 }]}
         value={notes}
         onChangeText={(v) => {
           if (v.length <= 500) setNotes(v);
@@ -206,25 +222,20 @@ export default function FeedbackCard({ planId, mealPlan }) {
         placeholderTextColor={colors.textMuted}
         textAlignVertical="top"
       />
-      <Text style={styles.charCount}>{notes.length}/500</Text>
+      <Text style={[styles.charCount, { fontSize: 11 }]}>{notes.length}/500</Text>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={[styles.errorText, { fontSize: 13 }]}>{error}</Text> : null}
 
-      <Pressable
-        style={[
-          styles.submitBtn,
-          (rating === 0 || submitting) && styles.submitBtnDisabled,
-        ]}
+      <Button
+        label="Submit Feedback"
         onPress={handleSubmit}
-        disabled={rating === 0 || submitting}
-      >
-        {submitting ? (
-          <ActivityIndicator size="small" color={colors.white} />
-        ) : (
-          <Text style={styles.submitBtnText}>Submit Feedback</Text>
-        )}
-      </Pressable>
-    </View>
+        loading={submitting}
+        disabled={rating === 0}
+        variant="success"
+        style={[styles.submitBtn, { minHeight: 50, height: undefined }]}
+        textStyle={[styles.submitBtnText, { fontSize: 15 }]}
+      />
+    </Card>
   );
 }
 
@@ -234,6 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 16,
     padding: 18,
+    borderWidth: 0,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,

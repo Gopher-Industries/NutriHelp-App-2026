@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -17,6 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import notificationApi from "../../api/notificationApi";
 import useBiometric from "../../hooks/useBiometric";
 import profileApi from "../../api/profileApi";
+import Button from "../../components/common/Button";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { useAccessibility, FONT_SIZE_OPTIONS } from "../../context/AccessibilityContext";
 import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
@@ -143,7 +145,7 @@ export default function SettingsScreen({ navigation }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingSpinner />
       </SafeAreaView>
     );
   }
@@ -174,7 +176,7 @@ export default function SettingsScreen({ navigation }) {
 
         {/* ── ACCESSIBILITY ─────────────────────────────────────────────── */}
         <SectionTitle>ACCESSIBILITY</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <View style={styles.row}>
             <View style={styles.rowTextWrap}>
               <Text style={styles.rowLabel}>Text Size</Text>
@@ -205,11 +207,11 @@ export default function SettingsScreen({ navigation }) {
               </Pressable>
             ))}
           </View>
-        </View>
+        </Card>
 
         {/* ── HEALTH CONDITIONS ─────────────────────────────────────────── */}
         <SectionTitle>HEALTH CONDITIONS</SectionTitle>
-        <View style={[styles.sectionCard, { paddingBottom: 14 }]}>
+        <Card style={[styles.sectionCard, { paddingBottom: 14 }]}>
           <View style={styles.row}>
             <View style={styles.rowTextWrap}>
               <Text style={styles.rowLabel}>My Conditions</Text>
@@ -244,10 +246,10 @@ export default function SettingsScreen({ navigation }) {
               );
             })}
           </View>
-        </View>
+        </Card>
 
         <SectionTitle>NOTIFICATIONS</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <SettingRow
             label="Meal Reminders"
             right={
@@ -273,10 +275,10 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => togglePreference("waterReminders")}
             last
           />
-        </View>
+        </Card>
 
         <SectionTitle>SECURITY</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <SettingRow
             label="Face ID"
             description={
@@ -305,10 +307,10 @@ export default function SettingsScreen({ navigation }) {
             }
             last
           />
-        </View>
+        </Card>
 
         <SectionTitle>ACCOUNT</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <SettingRow
             label="Edit Profile"
             right={<Ionicons name="chevron-forward" size={18} color={colors.c_9aa4b2} />}
@@ -331,7 +333,7 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => setShowLogoutModal(true)}
             last
           />
-        </View>
+        </Card>
       </ScrollView>
 
       <Modal
@@ -351,15 +353,16 @@ export default function SettingsScreen({ navigation }) {
               You will need to re-enter your credentials to access your health data.
             </Text>
 
-            <Pressable
-              style={styles.logoutButton}
+            <Button
+              label="Log Out"
+              variant="danger"
               onPress={() => {
                 setShowLogoutModal(false);
                 logout();
               }}
-            >
-              <Text style={styles.logoutButtonText}>Log Out</Text>
-            </Pressable>
+              style={styles.logoutButton}
+              textStyle={styles.logoutButtonText}
+            />
 
             <Pressable
               style={styles.cancelButton}
@@ -456,7 +459,9 @@ const styles = StyleSheet.create({
   sectionCard: {
     borderRadius: 16,
     backgroundColor: colors.c_eef3ff,
+    borderWidth: 0,
     paddingHorizontal: 16,
+    paddingVertical: 0,
     marginBottom: 18,
   },
 

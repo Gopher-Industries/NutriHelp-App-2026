@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import StarRating from "react-native-star-rating-widget";
 import recipeApi from "../api/recipeApi";
-import { colors } from "../theme";
+import Card from "./common/Card";
+import LoadingSpinner from "./common/LoadingSpinner";
 
+import { colors } from "../theme";
 const C = {
   primary: colors.primaryDeepAlt,
   slate900: colors.textSlate,
@@ -176,10 +178,10 @@ export default function RecipeRating({
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Rate this recipe</Text>
-      <Text style={styles.helper}>{helperText}</Text>
-      <Text style={styles.hint}>{statusHint}</Text>
+    <Card style={styles.card}>
+      <Text style={[styles.title, { fontSize: 18 }]}>Rate this recipe</Text>
+      <Text style={[styles.helper, { fontSize: 14 }]}>{helperText}</Text>
+      <Text style={[styles.hint, { fontSize: 12 }]}>{statusHint}</Text>
 
       <View style={styles.starWrap} pointerEvents={isSubmitting || alreadyRated ? "none" : "auto"}>
         <StarRating
@@ -196,11 +198,13 @@ export default function RecipeRating({
 
       {isSubmitting ? (
         <View style={styles.submittingRow}>
-          <ActivityIndicator size="small" color={C.primary} />
-          <Text style={styles.submittingText}>Submitting rating...</Text>
+          <LoadingSpinner size="small" color={C.primary} />
+          <Text style={[styles.submittingText, { fontSize: 14 }]}>
+            Submitting rating...
+          </Text>
         </View>
       ) : null}
-    </View>
+    </Card>
   );
 }
 
@@ -209,10 +213,10 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     borderRadius: 16,
-    borderWidth: 1,
     borderColor: colors.surfaceBlueWash,
     backgroundColor: colors.white,
     padding: 16,
+    marginBottom: 0,
     shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 12,

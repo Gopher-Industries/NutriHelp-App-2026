@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import {
-  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -14,8 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useUser } from "../../context/UserContext";
 import { addScanEntry } from "../../utils/scanHistoryStorage";
-import { colors } from "../../theme";
+import Button from "../../components/common/Button";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
+import { colors } from "../../theme";
 const OFF_FIELDS = "product_name,allergens_tags,allergens_from_ingredients,ingredients_text";
 
 // FE-17: Barcode lookups deliberately use the Open Food Facts public API
@@ -71,8 +72,11 @@ function normalizeBarcodeResult(product, barcode) {
 function LoadingOverlay() {
   return (
     <View style={styles.loadingOverlay}>
-      <ActivityIndicator size="large" color={colors.white} />
-      <Text style={styles.loadingText}>Looking up barcode…</Text>
+      <LoadingSpinner
+        message="Looking up barcode…"
+        color={colors.white}
+        textStyle={styles.loadingText}
+      />
     </View>
   );
 }
@@ -140,21 +144,20 @@ function ResultSheet({ result, onClose, onSave, saveState }) {
         </View>
       )}
 
-      <Pressable
-        style={[styles.primaryBtn, saveState === "saved" && styles.savedBtn]}
+      <Button
+        label={
+          saveState === "saving"
+            ? "Saving…"
+            : saveState === "saved"
+            ? "Saved to History"
+            : "Save to History"
+        }
         onPress={onSave}
-        disabled={saveState === "saving" || saveState === "saved"}
-      >
-        <Ionicons
-          name={saveState === "saved" ? "checkmark-circle-outline" : "bookmark-outline"}
-          size={18}
-          color={colors.white}
-          style={{ marginRight: 8 }}
-        />
-        <Text style={styles.primaryBtnText}>
-          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved to History" : "Save to History"}
-        </Text>
-      </Pressable>
+        loading={saveState === "saving"}
+        disabled={saveState === "saved"}
+        style={[styles.primaryBtn, saveState === "saved" && styles.savedBtn]}
+        textStyle={styles.primaryBtnText}
+      />
 
       <Pressable style={styles.secondaryBtn} onPress={onClose}>
         <Text style={styles.secondaryBtnText}>{saveState === "saved" ? "Done" : "Scan Another Product"}</Text>
@@ -175,9 +178,12 @@ function PermissionExplanationScreen({ onRequest }) {
           NutriHelp needs access to your camera to scan barcodes and look up
           nutritional information for your food products.
         </Text>
-        <Pressable style={styles.primaryBtn} onPress={onRequest}>
-          <Text style={styles.primaryBtnText}>Allow Camera Access</Text>
-        </Pressable>
+        <Button
+          label="Allow Camera Access"
+          onPress={onRequest}
+          style={styles.primaryBtn}
+          textStyle={styles.primaryBtnText}
+        />
       </View>
     </SafeAreaView>
   );
@@ -195,9 +201,12 @@ function PermissionDeniedScreen() {
           To use the barcode scanner, please enable camera permissions in your
           device settings.
         </Text>
-        <Pressable style={styles.primaryBtn} onPress={() => Linking.openSettings()}>
-          <Text style={styles.primaryBtnText}>Open Settings</Text>
-        </Pressable>
+        <Button
+          label="Open Settings"
+          onPress={() => Linking.openSettings()}
+          style={styles.primaryBtn}
+          textStyle={styles.primaryBtnText}
+        />
       </View>
     </SafeAreaView>
   );
@@ -334,13 +343,13 @@ export default function BarcodeScannerScreen({ navigation }) {
             keyboardType="numeric"
             editable={!loading}
           />
-          <Pressable
-            style={[styles.manualBtn, loading && { opacity: 0.6 }]}
+          <Button
+            label="Search"
             onPress={handleManualSubmit}
             disabled={loading}
-          >
-            <Text style={styles.manualBtnText}>Search</Text>
-          </Pressable>
+            style={styles.manualBtn}
+            textStyle={styles.manualBtnText}
+          />
         </View>
         {error ? (
           <View style={styles.errorRow}>

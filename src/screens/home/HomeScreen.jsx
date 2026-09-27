@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
 import { useUser } from "../../context/UserContext";
 import { useChatbot } from "../../context/ChatbotContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
@@ -87,24 +89,24 @@ function pickMealImageUrl(meal, index) {
 function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
   const progress = clampProgress(value, maxValue);
 
-    return (
+  return (
     <Pressable
-      style={styles.statCard}
+      style={[styles.statCard, { minHeight: 120 }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value} of ${maxValue} ${unit}`}
     >
-      <Text style={styles.statIcon}>{icon}</Text>
+      <Text style={[styles.statIcon, { fontSize: 22 }]}>{icon}</Text>
       <Text
-        style={styles.statValue}
+        style={[styles.statValue, { fontSize: 15 }]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.78}
       >
-        <Text style={[styles.statValueAccent, { color: accent }]}>{value}</Text>
-        <Text style={styles.statValueMuted}>/{maxValue}</Text>
+        <Text style={[styles.statValueAccent, { color: accent, fontSize: 21 }]}>{value}</Text>
+        <Text style={[styles.statValueMuted, { fontSize: 15 }]}>/{maxValue}</Text>
       </Text>
-      <Text style={styles.statLabel}>{unit}</Text>
+      <Text style={[styles.statLabel, { fontSize: 11 }]}>{unit}</Text>
       <View style={styles.progressTrack}>
         <View
           style={[
@@ -113,7 +115,7 @@ function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
           ]}
         />
       </View>
-      <Text style={styles.statFooter}>{label}</Text>
+      <Text style={[styles.statFooter, { fontSize: 11 }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -123,6 +125,7 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
     <Pressable
       style={[
         styles.actionButton,
+        { minHeight: 58 },
         isLast ? styles.actionButtonLast : null,
         disabled ? styles.actionButtonDisabled : null,
       ]}
@@ -133,7 +136,7 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
       accessibilityState={{ disabled }}
     >
       <MaterialCommunityIcons name={icon} size={20} color={colors.white} />
-      <Text style={styles.actionLabel}>{label}</Text>
+      <Text style={[styles.actionLabel, { fontSize: 12 }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -153,11 +156,11 @@ function MealItem({ item, onPress }) {
         accessible={false}
       />
       <View style={styles.mealCardBody}>
-        <Text style={styles.mealTitle} numberOfLines={2}>
+        <Text style={[styles.mealTitle, { fontSize: 14 }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={[styles.mealType, { color: item.accent }]}>{item.mealType}</Text>
-        <Text style={styles.mealCalories}>{item.calories} kcal</Text>
+        <Text style={[styles.mealType, { color: item.accent, fontSize: 12 }]}>{item.mealType}</Text>
+        <Text style={[styles.mealCalories, { fontSize: 12 }]}>{item.calories} kcal</Text>
       </View>
     </Pressable>
   );
@@ -278,7 +281,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.topRow}>
           <View style={styles.statusSpacer} />
           <View style={styles.logoBlock}>
-            <Text style={styles.logoText}>NutriHelp</Text>
+            <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
           </View>
           <View style={styles.batteryBadge}>
             <Ionicons name="battery-charging-outline" size={18} color={colors.successBright} />
@@ -287,15 +290,18 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.heroRow}>
           <View style={styles.heroTextWrap}>
-            <Text style={styles.heroGreeting}>
+            <Text style={[styles.heroGreeting, { fontSize: 23, lineHeight: 30 }]}>
               <Text style={styles.heroSun}>☼ </Text>
               {getGreeting()}, {displayName}
             </Text>
-            <Text style={styles.heroDate}>{getTodayLabel()}</Text>
+            <Text style={[styles.heroDate, { fontSize: 13 }]}>{getTodayLabel()}</Text>
           </View>
 
           <Pressable
-            style={styles.notificationButton}
+            style={[
+              styles.notificationButton,
+              { width: 50, minHeight: 50, height: undefined },
+            ]}
             onPress={() => navigation.navigate("HealthNewsScreen")}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
@@ -321,6 +327,8 @@ export default function HomeScreen({ navigation }) {
               label="Energy"
               accent={colors.warning}
               onPress={() => navigation.navigate("GoalDetailsScreen")}
+
+
             />
             <StatCard
               icon="💧"
@@ -330,6 +338,8 @@ export default function HomeScreen({ navigation }) {
               label="Hydration"
               accent={colors.primaryMutedAlt}
               onPress={() => navigation.navigate("WaterIntakeScreen")}
+
+
             />
             <StatCard
               icon="🍽️"
@@ -339,6 +349,8 @@ export default function HomeScreen({ navigation }) {
               label="Completed"
               accent={colors.successBright}
               onPress={() => navigation.navigate("Meals")}
+
+
             />
           </View>
         )}
@@ -348,22 +360,28 @@ export default function HomeScreen({ navigation }) {
             icon="silverware-fork-knife"
             label="Log Meal"
             onPress={() => navigation.navigate("Meals")}
+
+
           />
           <ActionButton
             icon="cup-outline"
             label="Add Water"
             onPress={() => navigation.navigate("WaterIntakeScreen")}
+
+
           />
           <ActionButton
             icon="chat-processing-outline"
             label="Ask AI"
             onPress={openChatbot}
             isLast
+
+
           />
         </View>
 
         <View style={styles.mealsCard}>
-          <Text style={styles.mealsCardTitle}>Today's Meals</Text>
+          <Text style={[styles.mealsCardTitle, { fontSize: 15 }]}>Today's Meals</Text>
 
           {loading ? (
             <View style={styles.loadingBlock}>
@@ -379,10 +397,12 @@ export default function HomeScreen({ navigation }) {
                 .map((section) => (
                   <View key={section.type} style={styles.mealSection}>
                     <View style={styles.mealSectionHeader}>
-                      <Text style={[styles.mealSectionTitle, { color: section.accent }]}>
+                      <Text style={[styles.mealSectionTitle, { color: section.accent, fontSize: 14 }]}>
                         {section.label}
                       </Text>
-                      <Text style={styles.mealSectionCount}>{section.meals.length} items</Text>
+                      <Text style={[styles.mealSectionCount, { fontSize: 12 }]}>
+                        {section.meals.length} items
+                      </Text>
                     </View>
                     <ScrollView
                       horizontal
@@ -394,6 +414,7 @@ export default function HomeScreen({ navigation }) {
                           key={meal.id}
                           item={meal}
                           onPress={() => navigation.navigate("Meals")}
+
                         />
                       ))}
                     </ScrollView>
@@ -401,25 +422,27 @@ export default function HomeScreen({ navigation }) {
                 ))}
 
               <Pressable
-                style={styles.linkButton}
+                style={[styles.linkButton, { minHeight: 36 }]}
                 onPress={() => navigation.navigate("Meals")}
               >
-                <Text style={styles.linkButtonText}>View Full Meal Plan →</Text>
+                <Text style={[styles.linkButtonText, { fontSize: 13 }]}>
+                  View Full Meal Plan →
+                </Text>
               </Pressable>
             </>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>🍽️</Text>
-              <Text style={styles.emptyStateTitle}>No meals planned yet</Text>
-              <Text style={styles.emptyStateBody}>
-                Get started by setting up your meals for today.
-              </Text>
-              <Pressable
-                style={styles.emptyCta}
+              <EmptyState
+                icon="restaurant-outline"
+                message="No meals planned yet. Get started by setting up your meals for today."
+                style={styles.emptyStateInner}
+              />
+              <Button
+                label="Set Up Today's Meals"
                 onPress={() => navigation.navigate("Meals")}
-              >
-                <Text style={styles.emptyCtaText}>Set Up Today's Meals</Text>
-              </Pressable>
+                style={[styles.emptyCta, { minHeight: 48, height: undefined }]}
+                textStyle={[styles.emptyCtaText, { fontSize: 14 }]}
+              />
             </View>
           )}
         </View>
@@ -502,8 +525,6 @@ const styles = StyleSheet.create({
   },
 
   notificationButton: {
-    width: 50,
-    height: 50,
     borderRadius: 14,
     backgroundColor: colors.white,
     borderWidth: 1,
@@ -602,7 +623,6 @@ const styles = StyleSheet.create({
 
   actionButton: {
     flex: 1,
-    minHeight: 58,
     borderRadius: 12,
     backgroundColor: colors.primaryMutedAlt,
     alignItems: "center",
@@ -730,37 +750,18 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
 
-  emptyStateIcon: {
-    fontSize: 34,
-    marginBottom: 10,
-  },
-
-  emptyStateTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.textGray600,
-    marginBottom: 8,
-  },
-
-  emptyStateBody: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.textMuted,
-    textAlign: "center",
+  emptyStateInner: {
+    marginTop: 0,
     marginBottom: 18,
   },
 
   emptyCta: {
     width: "100%",
-    height: 48,
     borderRadius: 12,
     backgroundColor: colors.primaryMutedAlt,
-    alignItems: "center",
-    justifyContent: "center",
   },
 
   emptyCtaText: {
-    fontSize: 14,
     fontWeight: "700",
     color: colors.white,
   },

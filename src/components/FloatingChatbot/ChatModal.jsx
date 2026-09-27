@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   KeyboardAvoidingView,
@@ -17,6 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import LoadingSpinner from "../common/LoadingSpinner";
 import { useAccessibility } from "../../context/AccessibilityContext";
 import { sendChatMessage } from "../../services/chatbotApi";
 
@@ -105,7 +105,7 @@ function ThinkingBubble({ fs }) {
   return (
     <View style={styles.aiRow}>
       <View style={[styles.aiBubble, styles.thinkingBubble]}>
-        <ActivityIndicator size="small" color={colors.primary} />
+        <LoadingSpinner size="small" color={colors.primary} />
         <Text style={[styles.thinkingText, { fontSize: fs(14) }]}>Thinking…</Text>
       </View>
     </View>

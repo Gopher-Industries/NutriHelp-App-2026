@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -14,6 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import profileApi from "../../api/profileApi";
+import Button from "../../components/common/Button";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
 
@@ -220,7 +221,7 @@ export default function EditProfileScreen({ navigation, route }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingSpinner />
       </SafeAreaView>
     );
   }
@@ -364,18 +365,13 @@ export default function EditProfileScreen({ navigation, route }) {
           error={errors.confirmPassword}
         />
 
-        <Pressable
-          style={[styles.saveButton, saving ? styles.buttonDisabled : null]}
+        <Button
+          label="Save Changes"
           onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : null}
-          <Text style={styles.saveButtonText}>
-            {saving ? "  Saving..." : "Save Changes"}
-          </Text>
-        </Pressable>
+          loading={saving}
+          style={styles.saveButton}
+          textStyle={styles.saveButtonText}
+        />
 
         <Pressable style={styles.cancelButton} onPress={() => navigation.goBack()}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -510,7 +506,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cancelButtonText: { fontSize: 15, fontWeight: "700", color: colors.c_55627d },
-  buttonDisabled: { opacity: 0.7 },
   pickerOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.3)" },
   pickerBackdrop: { flex: 1 },
   pickerSheet: {

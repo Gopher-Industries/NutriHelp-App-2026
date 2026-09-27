@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -15,6 +14,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import recipeApi from "../../api/recipeApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getBookmarkedRecipes } from "../../utils/recipeBookmarks";
@@ -360,9 +362,18 @@ export function FilterChips({ filters, selectedFilter, onSelect }) {
           <Pressable
             key={filter}
             onPress={() => onSelect(filter)}
-            style={[styles.chip, isSelected ? styles.chipSelected : styles.chipUnselected]}
+            style={[
+              styles.chip,
+              isSelected ? styles.chipSelected : styles.chipUnselected,
+              { minHeight: 44 },
+            ]}
           >
-            <Text style={[styles.chipText, isSelected ? styles.chipTextSelected : null]}>
+            <Text
+              style={[
+                styles.chipText,
+                isSelected ? styles.chipTextSelected : null,
+              ]}
+            >
               {filter}
             </Text>
           </Pressable>
@@ -378,6 +389,16 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
   const shouldShowScore = avgRating > 0 || reviewCount > 0;
   const title = recipe?.title ?? "";
   const imageUri = String(recipe?.imageUrl ?? "").trim();
+  const titleLineHeight = RECIPE_CARD_TITLE_LINE_HEIGHT;
+  const titleBlockMinH = titleLineHeight * RECIPE_CARD_TITLE_MAX_LINES;
+  const metaRowMinH = RECIPE_CARD_META_ROW_H;
+  const cardMinHeight =
+    RECIPE_CARD_IMAGE_H +
+    RECIPE_CARD_CONTENT_PAD_V +
+    titleBlockMinH +
+    RECIPE_CARD_TITLE_META_GAP +
+    metaRowMinH +
+    RECIPE_CARD_CONTENT_PAD_V;
 
   const showFullTitle = () => {
     if (!title.trim()) {
@@ -399,7 +420,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
         SURFACE_BORDER,
         {
           width: cardWidth,
-          height: RECIPE_CARD_HEIGHT,
+          minHeight: cardMinHeight,
           minWidth: 44,
           alignSelf: "flex-start",
           flexShrink: 0,
@@ -432,32 +453,56 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
       >
         <View
           style={{
-            height: RECIPE_CARD_TITLE_BLOCK_H,
+            minHeight: titleBlockMinH,
             marginBottom: RECIPE_CARD_TITLE_META_GAP,
           }}
         >
           <Text
             numberOfLines={RECIPE_CARD_TITLE_MAX_LINES}
             ellipsizeMode="tail"
-            style={[styles.cardTitle, { lineHeight: RECIPE_CARD_TITLE_LINE_HEIGHT }]}
+            style={[
+              styles.cardTitle,
+              {
+                fontSize: 16,
+                lineHeight: titleLineHeight,
+              },
+            ]}
           >
             {title}
           </Text>
         </View>
 
-        <View style={[styles.metaRow, { height: RECIPE_CARD_META_ROW_H }]}>
+        <View style={[styles.metaRow, { minHeight: metaRowMinH }]}>
           <View style={styles.metaLeft}>
             <Ionicons name="star" size={15} color={colors.warning} />
-            <Text style={[styles.metaRating, { marginLeft: 4 }]} numberOfLines={1}>
+            <Text
+              style={[
+                styles.metaRating,
+                { marginLeft: 4, fontSize: 14 },
+              ]}
+              numberOfLines={1}
+            >
               {shouldShowScore ? avgRating.toFixed(1) : "—"}
             </Text>
             {reviewCount > 0 ? (
-              <Text style={[styles.metaCount, { marginLeft: 4 }]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.metaCount,
+                  { marginLeft: 4, fontSize: 12 },
+                ]}
+                numberOfLines={1}
+              >
                 ({reviewCount})
               </Text>
             ) : null}
           </View>
-          <Text style={[styles.kcalText, { flexShrink: 0 }]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.kcalText,
+              { flexShrink: 0, fontSize: 14 },
+            ]}
+            numberOfLines={1}
+          >
             {recipe?.calories != null ? `${recipe.calories} kcal` : "—"}
           </Text>
         </View>
@@ -476,12 +521,12 @@ function SearchEntryBar({ onPress }) {
   return (
     <Pressable
       onPress={onPress}
-      style={styles.searchEntryBar}
+      style={[styles.searchEntryBar, { minHeight: 48 }]}
       accessibilityRole="button"
       accessibilityLabel="Open recipe search"
     >
       <Ionicons name="search-outline" size={22} color={colors.textMuted} />
-      <Text style={styles.searchEntryText}>Search recipes…</Text>
+      <Text style={[styles.searchEntryText, { fontSize: 16 }]}>Search recipes…</Text>
     </Pressable>
   );
 }
@@ -583,9 +628,7 @@ export default function RecipeListScreen({ navigation, route }) {
   };
 
   const renderBrowseEmpty = () => (
-    <View style={styles.emptyBox}>
-      <Text style={styles.emptyText}>No recipes found.</Text>
-    </View>
+    <EmptyState message="No recipes found." style={styles.emptyBox} />
   );
 
   return (
@@ -593,27 +636,31 @@ export default function RecipeListScreen({ navigation, route }) {
       <View style={styles.pageChrome}>
       <View style={styles.brandHeader}>
         <View style={styles.headerSideSpacer} />
-        <Text style={styles.logoText}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
         <View style={styles.headerSideSpacer} />
       </View>
       <View style={styles.screen}>
       <View style={styles.headerRow}>
-        <Text style={styles.pageTitle}>My recipe</Text>
-        <Pressable
+        <Text style={[styles.pageTitle, { fontSize: 24 }]}>My recipe</Text>
+        <Button
+          label="Create recipe"
           onPress={() => navigation?.navigate?.("CreateRecipeScreen")}
-          style={styles.primaryBtn}
-        >
-          <Text style={styles.primaryBtnText}>Create recipe</Text>
-        </Pressable>
+          style={[styles.primaryBtn, { minHeight: 44 }]}
+          textStyle={[styles.primaryBtnText, { fontSize: 16 }]}
+        />
       </View>
 
-      <SearchEntryBar onPress={() => navigation?.navigate?.("SearchRecipesScreen", {})} />
+      <SearchEntryBar
+        onPress={() => navigation?.navigate?.("SearchRecipesScreen", {})}
+
+
+      />
 
       {bookmarkedRecipes.length > 0 ? (
         <View style={styles.bookmarksSection}>
           <View style={styles.bookmarksHeader}>
             <Ionicons name="bookmark" size={18} color={C.primary} />
-            <Text style={styles.bookmarksTitle}>Bookmarked</Text>
+            <Text style={[styles.bookmarksTitle, { fontSize: 15 }]}>Bookmarked</Text>
           </View>
           <ScrollView
             horizontal
@@ -634,7 +681,10 @@ export default function RecipeListScreen({ navigation, route }) {
                     <Ionicons name="image-outline" size={22} color={colors.c_a8a29e} />
                   </View>
                 )}
-                <Text style={styles.bookmarkName} numberOfLines={2}>
+                <Text
+                  style={[styles.bookmarkName, { fontSize: 13, minHeight: 48 }]}
+                  numberOfLines={2}
+                >
                   {item.title}
                 </Text>
               </Pressable>
@@ -644,17 +694,26 @@ export default function RecipeListScreen({ navigation, route }) {
       ) : null}
 
       {browseLoading ? (
-        <View style={styles.loadingBox}>
-          <ActivityIndicator size="small" color={C.primary} />
-          <Text style={styles.loadingText}>Loading recipes…</Text>
-        </View>
+        <LoadingSpinner
+          size="small"
+          color={C.primary}
+          message="Loading recipes…"
+          style={styles.loadingBox}
+          textStyle={[styles.loadingText, { fontSize: 16 }]}
+        />
       ) : null}
 
       <FlatList
         data={browseLoading ? [] : browseRecipes}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <RecipeCard recipe={item} onPress={handleRecipePress} cardWidth={cardWidth} />
+          <RecipeCard
+            recipe={item}
+            onPress={handleRecipePress}
+            cardWidth={cardWidth}
+
+
+          />
         )}
         numColumns={2}
         {...flatListScrollProps}
@@ -817,6 +876,7 @@ const styles = StyleSheet.create({
   },
   emptyBox: {
     ...SURFACE_SHADOW,
+    marginTop: 0,
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
@@ -824,11 +884,6 @@ const styles = StyleSheet.create({
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 32,
-  },
-  emptyText: {
-    textAlign: "center",
-    fontSize: 18,
-    color: C.slate800,
   },
   safeArea: { flex: 1, backgroundColor: colors.white },
   /** Matches Home `content.paddingTop` + Meal Plan `topRow` inset */

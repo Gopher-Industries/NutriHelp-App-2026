@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { generateHealthPlan, HEALTH_GOALS } from "../../services/healthPlanApi";
+import Button from "../../components/common/Button";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
 import { useAccessibility } from "../../context/AccessibilityContext";
 
@@ -118,13 +120,13 @@ function WeekCard({ week }) {
 
 function InfoCard({ icon, title, children }) {
   return (
-    <View style={styles.infoCard}>
+    <Card style={styles.infoCard}>
       <View style={styles.infoCardHeader}>
         <Ionicons name={icon} size={18} color={colors.primary} />
         <Text style={styles.infoCardTitle}> {title}</Text>
       </View>
       {children}
-    </View>
+    </Card>
   );
 }
 
@@ -193,8 +195,10 @@ export default function HealthPlanScreen() {
           <Text style={styles.screenTitle}>AI Health Plan</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingTitle}>Generating your personalised plan…</Text>
+          <LoadingSpinner
+            message="Generating your personalised plan…"
+            textStyle={styles.loadingTitle}
+          />
           <Text style={styles.loadingSubtitle}>
             This may take up to 60 seconds on first load. Please wait.
           </Text>
@@ -318,14 +322,13 @@ export default function HealthPlanScreen() {
         ) : null}
 
         {/* Generate button */}
-        <Pressable
-          style={[styles.generateBtn, !canSubmit && styles.generateBtnDisabled]}
+        <Button
+          label="Generate My Plan"
           onPress={handleGenerate}
           disabled={!canSubmit}
-        >
-          <Ionicons name="sparkles" size={18} color={colors.white} />
-          <Text style={styles.generateBtnText}> Generate My Plan</Text>
-        </Pressable>
+          style={[styles.generateBtn, !canSubmit && styles.generateBtnDisabled]}
+          textStyle={styles.generateBtnText}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -470,7 +473,6 @@ const styles = StyleSheet.create({
 
   infoCard: {
     borderRadius: 16,
-    borderWidth: 1,
     borderColor: colors.borderSlateSoft,
     backgroundColor: colors.surface,
     padding: 16,

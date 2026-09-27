@@ -12,8 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { getScanHistory } from "../../utils/scanHistoryStorage";
-import { colors } from "../../theme";
+import EmptyState from "../../components/common/EmptyState";
 
+import { colors } from "../../theme";
 function DetailSheet({ item, onClose }) {
   if (!item) return null;
   const hasAllergens = item.productAllergens?.length > 0;
@@ -177,11 +178,11 @@ export default function ScanProductScreen({ navigation }) {
         </View>
 
         {history.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="scan-outline" size={44} color={colors.borderSlate} />
-            <Text style={styles.emptyText}>No scans yet</Text>
-            <Text style={styles.emptySubtext}>Scan a barcode to see results here</Text>
-          </View>
+          <EmptyState
+            message="No scans yet. Scan a barcode to see results here"
+            icon="scan-outline"
+            style={styles.emptyState}
+          />
         ) : (
           <FlatList
             data={history}

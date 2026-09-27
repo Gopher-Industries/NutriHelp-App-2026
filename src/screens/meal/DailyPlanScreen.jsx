@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -16,6 +15,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import recipeApi from "../../api/recipeApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { formatDisplayName, groupMealsByType, MEAL_TYPES, normalizeRecipe } from "./mealPlanUiHelpers";
 
@@ -46,32 +48,33 @@ function formatLongDate(value) {
 function EmptyMealCard({ mealType, onAdd }) {
   return (
     <>
-      <View style={styles.emptyCard}>
-        <Text style={styles.emptyTitle}>Nothing planned yet</Text>
-        <Text style={styles.emptySubtitle}>
+      <View style={[styles.emptyCard, { minHeight: 98 }]}>
+        <Text style={[styles.emptyTitle, { fontSize: 16 }]}>Nothing planned yet</Text>
+        <Text style={[styles.emptySubtitle, { fontSize: 14 }]}>
           Add a meal for {formatDisplayName(mealType)}
         </Text>
       </View>
-      <Pressable style={styles.outlineAddButton} onPress={onAdd}>
-        <Text style={styles.outlineAddButtonText}>
-          + Add {formatDisplayName(mealType)}
-        </Text>
-      </Pressable>
+      <Button
+        label={`+ Add ${formatDisplayName(mealType)}`}
+        onPress={onAdd}
+        style={[styles.outlineAddButton, { minHeight: 48, height: undefined }]}
+        textStyle={[styles.outlineAddButtonText, { fontSize: 15 }]}
+      />
     </>
   );
 }
 
 function FilledMealCard({ recipe, accent, mealType }) {
   return (
-    <View style={styles.filledCard}>
+    <View style={[styles.filledCard, { minHeight: 78 }]}>
       <View style={[styles.accentBar, { backgroundColor: accent }]} />
       <View style={styles.recipeTextWrap}>
-        <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
-        <Text style={[styles.recipeTypeLabel, { color: accent }]}>
+        <Text style={[styles.recipeTitle, { fontSize: 15 }]} numberOfLines={1}>{recipe.title}</Text>
+        <Text style={[styles.recipeTypeLabel, { color: accent, fontSize: 13 }]}>
           {formatDisplayName(mealType)}
         </Text>
       </View>
-      <Text style={styles.recipeCal}>{Math.round(recipe.calories || 0)} cal</Text>
+      <Text style={[styles.recipeCal, { fontSize: 14 }]}>{Math.round(recipe.calories || 0)} cal</Text>
     </View>
   );
 }
@@ -219,17 +222,17 @@ export default function DailyPlanScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topRow}>
-          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Pressable style={[styles.backButton, { minHeight: 44 }]} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
-            <Text style={styles.backText}>Back</Text>
+            <Text style={[styles.backText, { fontSize: 16 }]}>Back</Text>
           </Pressable>
-          <Text style={styles.logoText}>NutriHelp</Text>
+          <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
         </View>
 
-        <Text style={styles.dayTitle}>
+        <Text style={[styles.dayTitle, { fontSize: 34 }]}>
           {new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(selectedDate))}
         </Text>
-        <Text style={styles.dayDate}>{formatLongDate(selectedDate)}</Text>
+        <Text style={[styles.dayDate, { fontSize: 16 }]}>{formatLongDate(selectedDate)}</Text>
 
         {MEAL_TYPES.map((mealType) => {
           const group = groupsByType.get(mealType);
@@ -242,31 +245,35 @@ export default function DailyPlanScreen({ navigation, route }) {
           return (
             <View key={mealType} style={styles.sectionBlock}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionLabel, { color: accent }]}>
+                <Text style={[styles.sectionLabel, { color: accent, fontSize: 18 }]}>
                   {formatDisplayName(mealType)}
                 </Text>
                 {isSaving && (
-                  <ActivityIndicator size="small" color={accent} style={styles.sectionSpinner} />
+                  <LoadingSpinner
+                    size="small"
+                    color={accent}
+                    style={styles.sectionSpinner}
+                  />
                 )}
               </View>
 
               {recipe ? (
                 <>
                   <FilledMealCard recipe={recipe} accent={accent} mealType={mealType} />
-                  <Pressable
-                    style={[styles.solidAddButton, isSaving && styles.buttonDisabled]}
-                    onPress={() => !isSaving && openAddMeal(mealType)}
+                  <Button
+                    label={`+ Add ${formatDisplayName(mealType)}`}
+                    onPress={() => openAddMeal(mealType)}
                     disabled={isSaving}
-                  >
-                    <Text style={styles.solidAddButtonText}>
-                      + Add {formatDisplayName(mealType)}
-                    </Text>
-                  </Pressable>
+                    style={[styles.solidAddButton, { minHeight: 48, height: undefined }]}
+                    textStyle={[styles.solidAddButtonText, { fontSize: 15 }]}
+                  />
                 </>
               ) : (
                 <EmptyMealCard
                   mealType={mealType}
                   onAdd={() => openAddMeal(mealType)}
+
+
                 />
               )}
             </View>
@@ -284,12 +291,12 @@ export default function DailyPlanScreen({ navigation, route }) {
           <Pressable style={styles.sheetBackdrop} onPress={() => setSheetVisible(false)} />
           <View style={styles.sheetContainer}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>
+            <Text style={[styles.sheetTitle, { fontSize: 18 }]}>
               Add {formatDisplayName(sheetMealType)}
             </Text>
 
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { fontSize: 16, minHeight: 48, height: undefined }]}
               placeholder="Search meals"
               placeholderTextColor={colors.textMutedAlt}
               value={searchText}
@@ -297,25 +304,30 @@ export default function DailyPlanScreen({ navigation, route }) {
             />
 
             {recipesLoading ? (
-              <View style={styles.sheetLoading}>
-                <ActivityIndicator size="large" color={colors.primaryMuted} />
-                <Text style={styles.sheetLoadingText}>Loading meals...</Text>
-              </View>
+              <LoadingSpinner
+                message="Loading meals..."
+                color={colors.primaryMuted}
+                style={styles.sheetLoading}
+                textStyle={[styles.sheetLoadingText, { fontSize: 14 }]}
+              />
             ) : (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {visibleOptions.length === 0 ? (
-                  <View style={styles.emptyResults}>
-                    <Text style={styles.emptyResultsText}>No meals found</Text>
-                  </View>
+                  <EmptyState message="No meals found" style={styles.emptyResults} />
                 ) : (
                   visibleOptions.map((meal) => (
-                    <View key={meal.id} style={styles.optionRow}>
+                    <View key={meal.id} style={[styles.optionRow, { minHeight: 68 }]}>
                       <View style={styles.optionInfo}>
-                        <Text style={styles.optionTitle}>{meal.title}</Text>
-                        <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} Cal</Text>
+                        <Text style={[styles.optionTitle, { fontSize: 16 }]}>{meal.title}</Text>
+                        <Text style={[styles.optionCalories, { fontSize: 14 }]}>
+                          {Math.round(meal.calories || 0)} Cal
+                        </Text>
                       </View>
                       <Pressable
-                        style={styles.optionAddButton}
+                        style={[
+                          styles.optionAddButton,
+                          { width: 32, height: 32, borderRadius: 16 },
+                        ]}
                         onPress={() => handleAddMeal(meal)}
                       >
                         <Ionicons name="add" size={18} color={colors.white} />

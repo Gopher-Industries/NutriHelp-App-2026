@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Modal,
   Pressable,
@@ -16,6 +15,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import recipeApi from "../../api/recipeApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import {
   getDailyMeals,
@@ -178,13 +180,18 @@ function buildRecipeDetailPayload(meal) {
 function EmptyMealCard({ mealType, onAdd }) {
   return (
     <View style={styles.slotCard}>
-      <View style={styles.slotCardEmptyInner}>
-        <Text style={styles.slotEmptyTitle}>No meal selected</Text>
-        <Text style={styles.slotEmptySubtitle}>Choose a dish for {formatDisplayName(mealType)}</Text>
+      <View style={[styles.slotCardEmptyInner, { minHeight: 96 }]}>
+        <Text style={[styles.slotEmptyTitle, { fontSize: 15 }]}>No meal selected</Text>
+        <Text style={[styles.slotEmptySubtitle, { fontSize: 13 }]}>
+          Choose a dish for {formatDisplayName(mealType)}
+        </Text>
       </View>
-      <Pressable style={styles.slotPrimaryButton} onPress={onAdd}>
-        <Text style={styles.slotPrimaryButtonText}>+ Choose Meal</Text>
-      </Pressable>
+      <Button
+        label="+ Choose Meal"
+        onPress={onAdd}
+        style={[styles.slotPrimaryButton, { minHeight: 42, height: undefined }]}
+        textStyle={[styles.slotPrimaryButtonText, { fontSize: 14 }]}
+      />
     </View>
   );
 }
@@ -193,7 +200,10 @@ function FilledMealCard({ meal, accentColor, onViewDetail, onRemove }) {
   return (
     <View style={styles.slotCard}>
       <Pressable
-        style={styles.removeMealBtn}
+        style={[
+          styles.removeMealBtn,
+          { width: 30, height: 30, borderRadius: 15 },
+        ]}
         onPress={onRemove}
         accessibilityRole="button"
         accessibilityLabel="Remove selected meal"
@@ -203,24 +213,29 @@ function FilledMealCard({ meal, accentColor, onViewDetail, onRemove }) {
       <View style={styles.filledRow}>
         <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} resizeMode="cover" accessible={false} />
         <View style={styles.mealInfo}>
-          <Text style={styles.mealTitle} numberOfLines={2}>
+          <Text style={[styles.mealTitle, { fontSize: 16 }]} numberOfLines={2}>
             {meal.title}
           </Text>
-          <Text style={[styles.mealCuisine, { color: accentColor }]} numberOfLines={1}>
+          <Text
+            style={[styles.mealCuisine, { color: accentColor, fontSize: 13 }]}
+            numberOfLines={1}
+          >
             {meal.cuisine || "Recipe Library"}
           </Text>
-          <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} kcal</Text>
+          <Text style={[styles.mealCalories, { fontSize: 13 }]}>
+            {Math.round(meal.calories || 0)} kcal
+          </Text>
         </View>
       </View>
 
       <View style={styles.slotActionRow}>
         <Pressable
-          style={styles.slotOutlineButton}
+          style={[styles.slotOutlineButton, { minHeight: 42 }]}
           onPress={onViewDetail}
           accessibilityRole="button"
           accessibilityLabel={`View details for ${meal.title}`}
         >
-          <Text style={styles.slotOutlineButtonText}>View detail</Text>
+          <Text style={[styles.slotOutlineButtonText, { fontSize: 14 }]}>View detail</Text>
         </Pressable>
       </View>
     </View>
@@ -509,11 +524,14 @@ export default function WeeklyPlanScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable onPress={() => jumpMonth(-1)} style={styles.monthArrowBtn}>
+          <Pressable
+            onPress={() => jumpMonth(-1)}
+            style={[styles.monthArrowBtn, { width: 36, height: 36, borderRadius: 18 }]}
+          >
             <Ionicons name="chevron-back" size={18} color={colors.textNavy} />
           </Pressable>
           <Pressable
-            style={styles.monthLabelBtn}
+            style={[styles.monthLabelBtn, { minHeight: 36 }]}
             onPress={() => {
               setMonthCursor({
                 month: selectedDate.getMonth(),
@@ -522,10 +540,13 @@ export default function WeeklyPlanScreen({ navigation }) {
               setMonthPickerVisible(true);
             }}
           >
-            <Text style={styles.monthLabelText}>{monthLabel}</Text>
+            <Text style={[styles.monthLabelText, { fontSize: 18 }]}>{monthLabel}</Text>
             <Ionicons name="chevron-down" size={16} color={colors.textNavy} />
           </Pressable>
-          <Pressable onPress={() => jumpMonth(1)} style={styles.monthArrowBtn}>
+          <Pressable
+            onPress={() => jumpMonth(1)}
+            style={[styles.monthArrowBtn, { width: 36, height: 36, borderRadius: 18 }]}
+          >
             <Ionicons name="chevron-forward" size={18} color={colors.textNavy} />
           </Pressable>
         </View>
@@ -547,13 +568,26 @@ export default function WeeklyPlanScreen({ navigation }) {
                   styles.dayChip,
                   active ? styles.dayChipActive : null,
                   isToday && !active ? styles.dayChipToday : null,
+                  { minHeight: 58, height: undefined },
                 ]}
                 onPress={() => setSelectedDate(startOfDay(date))}
               >
-                <Text style={[styles.dayNumber, active ? styles.dayNumberActive : null]}>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    { fontSize: 16 },
+                    active ? styles.dayNumberActive : null,
+                  ]}
+                >
                   {date.getDate()}
                 </Text>
-                <Text style={[styles.dayWeek, active ? styles.dayWeekActive : null]}>
+                <Text
+                  style={[
+                    styles.dayWeek,
+                    { fontSize: 11 },
+                    active ? styles.dayWeekActive : null,
+                  ]}
+                >
                   {date.toLocaleDateString("en-US", { weekday: "short" })}
                 </Text>
               </Pressable>
@@ -561,36 +595,52 @@ export default function WeeklyPlanScreen({ navigation }) {
           })}
         </ScrollView>
 
-        <Text style={styles.pageTitle}>Meal Plan</Text>
-        <Text style={styles.pageSubtitle}>Choose meals for each meal time from Recipe Library</Text>
+        <Text style={[styles.pageTitle, { fontSize: 28 }]}>Meal Plan</Text>
+        <Text style={[styles.pageSubtitle, { fontSize: 14 }]}>
+          Choose meals for each meal time from Recipe Library
+        </Text>
         <Pressable
-          style={styles.aiHeroCard}
+          style={[styles.aiHeroCard, { minHeight: 64 }]}
           onPress={() => navigation.navigate("AIWeeklyPlanScreen")}
           android_ripple={{ color: colors.c_a7f3d0 }}
           accessibilityRole="button"
           accessibilityLabel="Generate AI 7-day meal plan"
         >
-          <View style={styles.aiHeroIconWrap}>
-            <Text style={styles.aiHeroIconEmoji}>✨</Text>
+          <View
+            style={[
+              styles.aiHeroIconWrap,
+              { width: 44, height: 44, borderRadius: 12 },
+            ]}
+          >
+            <Text style={[styles.aiHeroIconEmoji, { fontSize: 22 }]}>✨</Text>
           </View>
           <View style={styles.aiHeroTextWrap}>
-            <Text style={styles.aiHeroTitle}>AI 7-day meal plan</Text>
-            <Text style={styles.aiHeroSubtitle}>Generate a personalised weekly plan</Text>
+            <Text style={[styles.aiHeroTitle, { fontSize: 15 }]}>AI 7-day meal plan</Text>
+            <Text style={[styles.aiHeroSubtitle, { fontSize: 12 }]}>
+              Generate a personalised weekly plan
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.success} />
         </Pressable>
 
         {status === "loading" ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={colors.primaryMuted} />
-            <Text style={styles.loadingText}>Loading meal plan...</Text>
-          </View>
+          <LoadingSpinner
+            message="Loading meal plan..."
+            color={colors.primaryMuted}
+            style={styles.loadingBox}
+            textStyle={[styles.loadingText, { fontSize: 14 }]}
+          />
         ) : status === "error" ? (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>Could not load your meal plan.</Text>
-            <Pressable style={styles.retryBtn} onPress={() => loadDailyPlan(selectedDate)}>
-              <Text style={styles.retryBtnText}>Retry</Text>
-            </Pressable>
+            <Text style={[styles.errorText, { fontSize: 15 }]}>
+              Could not load your meal plan.
+            </Text>
+            <Button
+              label="Retry"
+              onPress={() => loadDailyPlan(selectedDate)}
+              style={[styles.retryBtn, { minHeight: 40, height: undefined }]}
+              textStyle={styles.retryBtnText}
+            />
           </View>
         ) : (
           <View style={styles.sectionWrap}>
@@ -609,10 +659,12 @@ export default function WeeklyPlanScreen({ navigation }) {
               return (
                 <View key={mealType} style={styles.slotSection}>
                   <View style={styles.slotHeader}>
-                    <Text style={[styles.slotLabel, { color: accentColor }]}>
+                    <Text style={[styles.slotLabel, { color: accentColor, fontSize: 17 }]}>
                       {formatDisplayName(mealType)}
                     </Text>
-                    {saving ? <ActivityIndicator size="small" color={accentColor} /> : null}
+                    {saving ? (
+                      <LoadingSpinner size="small" color={accentColor} />
+                    ) : null}
                   </View>
 
                   {meals.length > 0 ? (
@@ -623,6 +675,8 @@ export default function WeeklyPlanScreen({ navigation }) {
                             key={`${mealType}-${String(meal?._id ?? meal?.id ?? meal?.recipeId ?? index)}`}
                             meal={meal}
                             accentColor={accentColor}
+
+
                             onViewDetail={() => handleOpenRecipeDetail(meal)}
                             onRemove={() =>
                               handleRemoveMeal(
@@ -634,12 +688,20 @@ export default function WeeklyPlanScreen({ navigation }) {
                           />
                         ))}
                       </View>
-                      <Pressable style={styles.slotPrimaryButton} onPress={() => openAddMeal(mealType)}>
-                        <Text style={styles.slotPrimaryButtonText}>+ Add another meal</Text>
-                      </Pressable>
+                      <Button
+                        label="+ Add another meal"
+                        onPress={() => openAddMeal(mealType)}
+                        style={[styles.slotPrimaryButton, { minHeight: 42, height: undefined }]}
+                        textStyle={[styles.slotPrimaryButtonText, { fontSize: 14 }]}
+                      />
                     </>
                   ) : (
-                    <EmptyMealCard mealType={mealType} onAdd={() => openAddMeal(mealType)} />
+                    <EmptyMealCard
+                      mealType={mealType}
+                      onAdd={() => openAddMeal(mealType)}
+
+
+                    />
                   )}
                 </View>
               );
@@ -653,10 +715,15 @@ export default function WeeklyPlanScreen({ navigation }) {
           <Pressable style={styles.sheetBackdrop} onPress={() => setSheetVisible(false)} />
           <View style={styles.sheetContainer}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Choose {formatDisplayName(sheetMealType)}</Text>
+            <Text style={[styles.sheetTitle, { fontSize: 18 }]}>
+              Choose {formatDisplayName(sheetMealType)}
+            </Text>
 
             <TextInput
-              style={styles.searchInput}
+              style={[
+                styles.searchInput,
+                { fontSize: 15, minHeight: 46, height: undefined },
+              ]}
               placeholder="Search recipe library..."
               placeholderTextColor={colors.textMutedAlt}
               value={searchText}
@@ -664,36 +731,41 @@ export default function WeeklyPlanScreen({ navigation }) {
             />
 
             {recipesLoading ? (
-              <View style={styles.sheetLoadingWrap}>
-                <ActivityIndicator size="large" color={colors.primaryMuted} />
-                <Text style={styles.sheetLoadingText}>Loading recipes...</Text>
-              </View>
+              <LoadingSpinner
+                message="Loading recipes..."
+                color={colors.primaryMuted}
+                style={styles.sheetLoadingWrap}
+                textStyle={[styles.sheetLoadingText, { fontSize: 14 }]}
+              />
             ) : (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {visibleOptions.length === 0 ? (
-                  <View style={styles.emptyResults}>
-                    <Text style={styles.emptyResultsText}>No recipes found for this meal time.</Text>
-                  </View>
+                  <EmptyState
+                    message="No recipes found for this meal time."
+                    style={styles.emptyResults}
+                  />
                 ) : (
                   visibleOptions.map((meal) => (
-                    <View key={meal.id} style={styles.optionRow}>
+                    <View key={meal.id} style={[styles.optionRow, { minHeight: 58 }]}>
                       <Image source={{ uri: meal.imageUrl }} style={styles.optionImage} resizeMode="cover" />
                       <View style={styles.optionInfo}>
-                        <Text style={styles.optionTitle} numberOfLines={2}>
+                        <Text style={[styles.optionTitle, { fontSize: 15 }]} numberOfLines={2}>
                           {meal.title}
                         </Text>
-                        <Text style={styles.optionMeta} numberOfLines={1}>
+                        <Text style={[styles.optionMeta, { fontSize: 12 }]} numberOfLines={1}>
                           {meal.cuisine || "Recipe Library"}
                         </Text>
-                        <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} kcal</Text>
+                        <Text style={[styles.optionCalories, { fontSize: 12 }]}>
+                          {Math.round(meal.calories || 0)} kcal
+                        </Text>
                       </View>
                       <Pressable
-                        style={styles.optionAddButton}
+                        style={[styles.optionAddButton, { minHeight: 36 }]}
                         onPress={() => handleSelectMeal(meal)}
                         accessibilityRole="button"
                         accessibilityLabel={`Add ${meal.title}`}
                       >
-                        <Text style={styles.optionAddButtonText}>Add</Text>
+                        <Text style={[styles.optionAddButtonText, { fontSize: 13 }]}>Add</Text>
                       </Pressable>
                     </View>
                   ))
@@ -715,7 +787,10 @@ export default function WeeklyPlanScreen({ navigation }) {
           <View style={styles.pickerCard}>
             <View style={styles.pickerYearRow}>
               <Pressable
-                style={styles.pickerYearArrow}
+                style={[
+                  styles.pickerYearArrow,
+                  { width: 34, height: 34, borderRadius: 17 },
+                ]}
                 onPress={() =>
                   setMonthCursor((prev) => ({
                     ...prev,
@@ -725,9 +800,12 @@ export default function WeeklyPlanScreen({ navigation }) {
               >
                 <Ionicons name="chevron-back" size={18} color={colors.textNavy} />
               </Pressable>
-              <Text style={styles.pickerYearText}>{monthCursor.year}</Text>
+              <Text style={[styles.pickerYearText, { fontSize: 20 }]}>{monthCursor.year}</Text>
               <Pressable
-                style={styles.pickerYearArrow}
+                style={[
+                  styles.pickerYearArrow,
+                  { width: 34, height: 34, borderRadius: 17 },
+                ]}
                 onPress={() =>
                   setMonthCursor((prev) => ({
                     ...prev,
@@ -745,10 +823,20 @@ export default function WeeklyPlanScreen({ navigation }) {
                 return (
                   <Pressable
                     key={name}
-                    style={[styles.monthCell, active ? styles.monthCellActive : null]}
+                    style={[
+                      styles.monthCell,
+                      active ? styles.monthCellActive : null,
+                      { minHeight: 38 },
+                    ]}
                     onPress={() => setMonthCursor((prev) => ({ ...prev, month: idx }))}
                   >
-                    <Text style={[styles.monthCellText, active ? styles.monthCellTextActive : null]}>
+                    <Text
+                      style={[
+                        styles.monthCellText,
+                        { fontSize: 12 },
+                        active ? styles.monthCellTextActive : null,
+                      ]}
+                    >
                       {name.slice(0, 3)}
                     </Text>
                   </Pressable>
@@ -757,12 +845,18 @@ export default function WeeklyPlanScreen({ navigation }) {
             </View>
 
             <View style={styles.pickerActionRow}>
-              <Pressable style={styles.pickerCancelBtn} onPress={() => setMonthPickerVisible(false)}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
+              <Pressable
+                style={[styles.pickerCancelBtn, { minHeight: 40 }]}
+                onPress={() => setMonthPickerVisible(false)}
+              >
+                <Text style={[styles.pickerCancelText, { fontSize: 14 }]}>Cancel</Text>
               </Pressable>
-              <Pressable style={styles.pickerApplyBtn} onPress={applyMonthCursor}>
-                <Text style={styles.pickerApplyText}>Apply</Text>
-              </Pressable>
+              <Button
+                label="Apply"
+                onPress={applyMonthCursor}
+                style={[styles.pickerApplyBtn, { minHeight: 40, height: undefined }]}
+                textStyle={[styles.pickerApplyText, { fontSize: 14 }]}
+              />
             </View>
           </View>
         </View>

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Platform,
@@ -17,6 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
 import baseApi from "../../api/baseApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
 import recipeApi from "../../api/recipeApi";
@@ -297,8 +299,8 @@ function detailPlaceholder(recipeId, variant) {
 function MetaItem({ label, value }) {
   return (
     <View style={[styles.metaItem, { flexBasis: 0 }]}>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValue} numberOfLines={2}>
+      <Text style={[styles.metaLabel, { fontSize: 12 }]}>{label}</Text>
+      <Text style={[styles.metaValue, { fontSize: 16 }]} numberOfLines={2}>
         {value}
       </Text>
     </View>
@@ -658,10 +660,13 @@ export default function RecipeDetailScreen({ navigation, route }) {
               style={[
                 styles.ingredientRow,
                 index < recipe.ingredients.length - 1 ? styles.ingredientRowBorder : null,
+                { minHeight: 44 },
               ]}
             >
-              <Text style={styles.ingredientName}>{item.name}</Text>
-              <Text style={styles.ingredientQty}>{[item.quantity, item.unit].filter(Boolean).join(" ")}</Text>
+              <Text style={[styles.ingredientName, { fontSize: 16 }]}>{item.name}</Text>
+              <Text style={[styles.ingredientQty, { fontSize: 16 }]}>
+                {[item.quantity, item.unit].filter(Boolean).join(" ")}
+              </Text>
             </View>
           ))}
         </View>
@@ -679,12 +684,14 @@ export default function RecipeDetailScreen({ navigation, route }) {
                 index < recipe.instructions.length - 1 ? styles.instructionBlockBorder : null,
               ]}
             >
-              <Text style={styles.stepLabel}>
+              <Text style={[styles.stepLabel, { fontSize: 16 }]}>
                 Step {String(step.number).padStart(2, "0")} of{" "}
                 {String(recipe.instructions.length).padStart(2, "0")}
               </Text>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepDesc}>{step.description}</Text>
+              <Text style={[styles.stepTitle, { fontSize: 18 }]}>{step.title}</Text>
+              <Text style={[styles.stepDesc, { fontSize: 16, lineHeight: 24 }]}>
+                {step.description}
+              </Text>
             </View>
           ))}
         </View>
@@ -701,14 +708,17 @@ export default function RecipeDetailScreen({ navigation, route }) {
                 style={[
                   styles.nutritionRow,
                   index < recipe.nutrition.length - 1 ? styles.nutritionRowBorder : null,
+                  { minHeight: 40 },
                 ]}
               >
-                <Text style={styles.nutritionName}>{item.name}</Text>
-                <Text style={styles.nutritionValue}>{item.value}</Text>
+                <Text style={[styles.nutritionName, { fontSize: 16 }]}>{item.name}</Text>
+                <Text style={[styles.nutritionValue, { fontSize: 16 }]}>{item.value}</Text>
               </View>
             ))
           ) : (
-            <Text style={styles.nutritionEmptyText}>No nutrition information available yet.</Text>
+            <Text style={[styles.nutritionEmptyText, { fontSize: 14 }]}>
+              No nutrition information available yet.
+            </Text>
           )}
         </View>
       </View>
@@ -880,7 +890,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
             )}
             <Pressable
               onPress={handleBackPress}
-              style={styles.heroBackBtn}
+              style={[styles.heroBackBtn, { minHeight: 44, minWidth: 44 }]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               hitSlop={8}
@@ -889,7 +899,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
             </Pressable>
             <Pressable
               onPress={handleToggleBookmark}
-              style={styles.bookmarkBtn}
+              style={[styles.bookmarkBtn, { minHeight: 44, minWidth: 44 }]}
               accessibilityRole="button"
               accessibilityLabel="Toggle bookmark"
             >
@@ -905,15 +915,15 @@ export default function RecipeDetailScreen({ navigation, route }) {
         <View style={styles.minH0}>
           {isLoading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color={C.primary} />
-              <Text style={styles.loadingText}>Loading recipe details...</Text>
+              <LoadingSpinner size="small" color={C.primary} />
+              <Text style={[styles.loadingText, { fontSize: 16 }]}>Loading recipe details...</Text>
             </View>
           ) : null}
         </View>
 
         <View style={styles.bodyPad}>
           <View style={styles.titleRow}>
-            <Text style={styles.recipeTitle}>{recipe.title}</Text>
+            <Text style={[styles.recipeTitle, { fontSize: 30 }]}>{recipe.title}</Text>
             <Pressable
               onPress={() => navigation.navigate("TimerScreen")}
               style={styles.shareBtn}
@@ -924,31 +934,35 @@ export default function RecipeDetailScreen({ navigation, route }) {
             </Pressable>
             <Pressable
               onPress={handleShare}
-              style={styles.shareBtn}
+              style={[styles.shareBtn, { minHeight: 44, minWidth: 44 }]}
               accessibilityRole="button"
               accessibilityLabel="Share recipe"
             >
               <Ionicons name="share-outline" size={22} color={C.primary} />
             </Pressable>
           </View>
-          {recipe.description ? <Text style={styles.desc}>{recipe.description}</Text> : null}
+          {recipe.description ? (
+            <Text style={[styles.desc, { fontSize: 16 }]}>{recipe.description}</Text>
+          ) : null}
           <View style={styles.badgeRow}>
             {recipe.source ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>
+                <Text style={[styles.badgeText, { fontSize: 12 }]}>
                   {recipe.source === "community" ? "Community" : "Library"}
                 </Text>
               </View>
             ) : null}
             {recipe.cuisine ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{recipe.cuisine}</Text>
+                <Text style={[styles.badgeText, { fontSize: 12 }]}>{recipe.cuisine}</Text>
               </View>
             ) : null}
             {recipe.authorName ? (
               <View style={styles.authorChip}>
                 <Ionicons name="person-circle-outline" size={16} color={C.slate600} />
-                <Text style={styles.authorChipText}>By {recipe.authorName}</Text>
+                <Text style={[styles.authorChipText, { fontSize: 12 }]}>
+                  By {recipe.authorName}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -956,6 +970,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
             <MetaItem
               label="Rating"
               value={`${(Number(recipe.rating) || 0).toFixed(1)} / 5`}
+
             />
             <MetaItem label="Time" value={`${recipe.timeMinutes} mins`} />
             <MetaItem label="Servings" value={`${Number(baseRecipeData.servings) || 1}`} />
@@ -965,7 +980,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
 
         <View style={styles.sectionPad}>
           <View style={styles.scaleCard}>
-            <Text style={styles.scaleTitle}>Serving scale</Text>
+            <Text style={[styles.scaleTitle, { fontSize: 14 }]}>Serving scale</Text>
             <View style={styles.pickerShell}>
               <Picker
                 selectedValue={scaleValue}
@@ -980,14 +995,14 @@ export default function RecipeDetailScreen({ navigation, route }) {
             </View>
 
             <View style={styles.servingsBlock}>
-              <Text style={styles.servingsNumber}>{displayedServings}</Text>
-              <Text style={styles.servingsLabel}>servings</Text>
+              <Text style={[styles.servingsNumber, { fontSize: 24 }]}>{displayedServings}</Text>
+              <Text style={[styles.servingsLabel, { fontSize: 16 }]}>servings</Text>
             </View>
 
             {isScaling ? (
               <View style={styles.scalingRow}>
-                <ActivityIndicator size="small" color={C.primary} />
-                <Text style={styles.scalingText}>Updating quantities...</Text>
+                <LoadingSpinner size="small" color={C.primary} />
+                <Text style={[styles.scalingText, { fontSize: 14 }]}>Updating quantities...</Text>
               </View>
             ) : null}
           </View>
@@ -1002,10 +1017,18 @@ export default function RecipeDetailScreen({ navigation, route }) {
                   <Pressable
                     key={tab}
                     onPress={() => setActiveTab(tab)}
-                    style={[styles.tabCell, selected ? styles.tabCellActive : styles.tabCellInactive]}
+                    style={[
+                      styles.tabCell,
+                      selected ? styles.tabCellActive : styles.tabCellInactive,
+                      { minHeight: 44 },
+                    ]}
                   >
                     <Text
-                      style={[styles.tabCellText, selected ? styles.tabCellTextActive : styles.tabCellTextInactive]}
+                      style={[
+                        styles.tabCellText,
+                        { fontSize: 14 },
+                        selected ? styles.tabCellTextActive : styles.tabCellTextInactive,
+                      ]}
                       numberOfLines={1}
                     >
                       {tab === "ingredients"
@@ -1023,8 +1046,10 @@ export default function RecipeDetailScreen({ navigation, route }) {
           </View>
 
           <View style={styles.reviewComposerCard}>
-            <Text style={styles.reviewComposerTitle}>Your review</Text>
-            <Text style={styles.reviewComposerHint}>Choose stars and write a short comment.</Text>
+            <Text style={[styles.reviewComposerTitle, { fontSize: 18 }]}>Your review</Text>
+            <Text style={[styles.reviewComposerHint, { fontSize: 13 }]}>
+              Choose stars and write a short comment.
+            </Text>
             <View style={styles.reviewStarsWrap}>
               <StarRating
                 rating={Number(reviewRating) || 0}
@@ -1042,37 +1067,40 @@ export default function RecipeDetailScreen({ navigation, route }) {
               onChangeText={setReviewDraft}
               placeholder="Share your experience with this recipe..."
               placeholderTextColor={colors.textSlate400}
-              style={styles.reviewInput}
+              style={[styles.reviewInput, { fontSize: 15, minHeight: 96 }]}
               multiline
               maxLength={1200}
               textAlignVertical="top"
             />
-            <Text style={styles.reviewInputCounter}>{reviewDraft.trim().length}/1200</Text>
-            <Pressable
+            <Text style={[styles.reviewInputCounter, { fontSize: 12 }]}>
+              {reviewDraft.trim().length}/1200
+            </Text>
+            <Button
+              label="Submit review"
               onPress={handleSubmitReview}
-              disabled={isSubmittingReview}
-              style={[styles.reviewSubmitBtn, isSubmittingReview ? styles.reviewSubmitBtnDisabled : null]}
-            >
-              {isSubmittingReview ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text style={styles.reviewSubmitBtnText}>Submit review</Text>
-              )}
-            </Pressable>
+              loading={isSubmittingReview}
+              style={[styles.reviewSubmitBtn, { minHeight: 44 }]}
+              textStyle={[styles.reviewSubmitBtnText, { fontSize: 15 }]}
+            />
           </View>
 
           <View style={styles.reviewListCard}>
             <View style={styles.reviewListHeader}>
-              <Text style={styles.reviewListTitle}>Community reviews</Text>
-              <Text style={styles.reviewListCount}>{reviewItems.length}</Text>
+              <Text style={[styles.reviewListTitle, { fontSize: 18 }]}>Community reviews</Text>
+              <Text style={[styles.reviewListCount, { fontSize: 13 }]}>{reviewItems.length}</Text>
             </View>
             {isReviewsLoading ? (
               <View style={styles.reviewListLoading}>
-                <ActivityIndicator size="small" color={C.primary} />
-                <Text style={styles.reviewListLoadingText}>Loading reviews...</Text>
+                <LoadingSpinner size="small" color={C.primary} />
+                <Text style={[styles.reviewListLoadingText, { fontSize: 14 }]}>
+                  Loading reviews...
+                </Text>
               </View>
             ) : reviewItems.length === 0 ? (
-              <Text style={styles.reviewEmptyText}>No reviews yet. Be the first to leave one.</Text>
+              <EmptyState
+                message="No reviews yet. Be the first to leave one."
+                style={styles.reviewEmptyState}
+              />
             ) : (
               reviewItems.map((item, index) => (
                 <View
@@ -1085,14 +1113,18 @@ export default function RecipeDetailScreen({ navigation, route }) {
                   <View style={styles.reviewItemTop}>
                     <View style={styles.reviewAuthorWrap}>
                       <Ionicons name="person-circle-outline" size={18} color={C.slate600} />
-                      <Text style={styles.reviewAuthor} numberOfLines={1}>
+                      <Text style={[styles.reviewAuthor, { fontSize: 14 }]} numberOfLines={1}>
                         {item.userName || "NutriHelp user"}
                       </Text>
                     </View>
-                    <Text style={styles.reviewDate}>{formatReviewDate(item.createdAt)}</Text>
+                    <Text style={[styles.reviewDate, { fontSize: 12 }]}>
+                      {formatReviewDate(item.createdAt)}
+                    </Text>
                   </View>
-                  <Text style={styles.reviewStarsText}>{"★".repeat(Math.max(0, Math.min(5, item.rating)))}</Text>
-                  <Text style={styles.reviewComment}>{item.comment}</Text>
+                  <Text style={[styles.reviewStarsText, { fontSize: 14 }]}>
+                    {"★".repeat(Math.max(0, Math.min(5, item.rating)))}
+                  </Text>
+                  <Text style={[styles.reviewComment, { fontSize: 15 }]}>{item.comment}</Text>
                 </View>
               ))
             )}
@@ -1369,9 +1401,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: C.primary,
   },
-  reviewSubmitBtnDisabled: {
-    opacity: 0.75,
-  },
   reviewSubmitBtnText: {
     fontSize: 15,
     fontWeight: "700",
@@ -1416,10 +1445,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: C.primary,
   },
-  reviewEmptyText: {
+  reviewEmptyState: {
     marginTop: 12,
-    fontSize: 14,
-    color: C.slate500,
+    paddingHorizontal: 0,
   },
   reviewItem: {
     marginTop: 12,

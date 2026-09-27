@@ -2,7 +2,6 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import profileApi from "../../api/profileApi";
+import Button from "../../components/common/Button";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 
 import { colors } from "../../theme";
@@ -139,7 +141,7 @@ export default function ProfileScreen({ navigation }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingSpinner />
       </SafeAreaView>
     );
   }
@@ -190,17 +192,16 @@ export default function ProfileScreen({ navigation }) {
           <StatCard icon="target" value={goal} label="GOAL" />
         </View>
 
-        <Pressable
-          style={styles.primaryButton}
+        <Button
+          label="Edit Profile"
           onPress={() =>
             navigation.navigate("EditProfileScreen", {
               initialProfile: profile,
             })
           }
-        >
-          <Ionicons name="create-outline" size={16} color={colors.white} />
-          <Text style={styles.primaryButtonText}>Edit Profile</Text>
-        </Pressable>
+          style={styles.primaryButton}
+          textStyle={styles.primaryButtonText}
+        />
 
         <Pressable
           style={styles.secondaryButton}
@@ -217,7 +218,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.secondaryButtonText}>Shopping List</Text>
         </Pressable>
 
-        <View style={styles.streakCard}>
+        <Card style={styles.streakCard}>
           <View style={styles.streakBadge}>
             <Ionicons name="checkmark-circle" size={18} color={colors.white} />
           </View>
@@ -235,7 +236,7 @@ export default function ProfileScreen({ navigation }) {
                     : "Great start — keep going!"}
             </Text>
           </View>
-        </View>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
@@ -416,8 +417,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.c_eef5ef,
     borderRadius: 16,
+    borderWidth: 0,
     paddingHorizontal: 16,
     paddingVertical: 14,
+    marginBottom: 0,
   },
 
   streakBadge: {

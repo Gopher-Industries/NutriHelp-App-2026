@@ -8,8 +8,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../../theme";
 
+import Button from "../../components/common/Button";
+
+import { colors } from "../../theme";
 export default function DeleteAccountScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -42,9 +44,13 @@ export default function DeleteAccountScreen({ navigation }) {
           blocked from performing the action.
         </Text>
 
-        <Pressable style={styles.keepButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.keepButtonText}>Keep My Account</Text>
-        </Pressable>
+        <Button
+          label="Keep My Account"
+          variant="success"
+          onPress={() => navigation.goBack()}
+          style={styles.keepButton}
+          textStyle={styles.keepButtonText}
+        />
 
         <Pressable
           style={styles.deleteButton}

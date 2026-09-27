@@ -13,8 +13,10 @@ import {
   UIManager,
   View,
 } from "react-native";
-import { colors } from "../../../theme";
 
+import Button from "../../../components/common/Button";
+
+import { colors } from "../../../theme";
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -91,8 +93,10 @@ function SelectInput({ label, value, options, onChange }) {
 
   return (
     <>
-      <Pressable style={styles.selectBtn} onPress={() => setOpen(true)}>
-        <Text style={styles.selectValue}>{selected?.label ?? "Select..."}</Text>
+      <Pressable style={[styles.selectBtn, { minHeight: 44 }]} onPress={() => setOpen(true)}>
+        <Text style={[styles.selectValue, { fontSize: 14 }]}>
+          {selected?.label ?? "Select..."}
+        </Text>
         <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
       </Pressable>
 
@@ -104,14 +108,18 @@ function SelectInput({ label, value, options, onChange }) {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setOpen(false)}>
           <Pressable style={styles.modalSheet} onPress={() => {}}>
-            <Text style={styles.modalTitle}>{label}</Text>
+            <Text style={[styles.modalTitle, { fontSize: 16 }]}>{label}</Text>
             <ScrollView bounces={false}>
               {options.map((opt) => {
                 const active = opt.value === value;
                 return (
                   <Pressable
                     key={opt.value}
-                    style={[styles.modalOption, active && styles.modalOptionActive]}
+                    style={[
+                      styles.modalOption,
+                      active && styles.modalOptionActive,
+                      { minHeight: 44 },
+                    ]}
                     onPress={() => {
                       onChange(opt.value);
                       setOpen(false);
@@ -120,6 +128,7 @@ function SelectInput({ label, value, options, onChange }) {
                     <Text
                       style={[
                         styles.modalOptionText,
+                        { fontSize: 15 },
                         active && styles.modalOptionTextActive,
                       ]}
                     >
@@ -145,10 +154,16 @@ function ChipGroup({ options, selected, onToggle }) {
         return (
           <Pressable
             key={option}
-            style={[styles.chip, active && styles.chipActive]}
+            style={[styles.chip, active && styles.chipActive, { minHeight: 36 }]}
             onPress={() => onToggle(option)}
           >
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            <Text
+              style={[
+                styles.chipText,
+                { fontSize: 13 },
+                active && styles.chipTextActive,
+              ]}
+            >
               {option}
             </Text>
           </Pressable>
@@ -166,14 +181,26 @@ function ButtonGroup({ options, value, onChange }) {
         return (
           <Pressable
             key={opt.value}
-            style={[styles.groupBtn, active && styles.groupBtnActive]}
+            style={[styles.groupBtn, active && styles.groupBtnActive, { minHeight: 52 }]}
             onPress={() => onChange(opt.value)}
           >
-            <Text style={[styles.groupBtnTitle, active && styles.groupBtnTitleActive]}>
+            <Text
+              style={[
+                styles.groupBtnTitle,
+                { fontSize: 13 },
+                active && styles.groupBtnTitleActive,
+              ]}
+            >
               {opt.title ?? opt.label}
             </Text>
             {opt.sub ? (
-              <Text style={[styles.groupBtnSub, active && styles.groupBtnSubActive]}>
+              <Text
+                style={[
+                  styles.groupBtnSub,
+                  { fontSize: 10 },
+                  active && styles.groupBtnSubActive,
+                ]}
+              >
                 {opt.sub}
               </Text>
             ) : null}
@@ -187,8 +214,8 @@ function ButtonGroup({ options, value, onChange }) {
 function AccordionSection({ title, open, onToggle, children }) {
   return (
     <View style={styles.section}>
-      <Pressable style={styles.sectionHeader} onPress={onToggle}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+      <Pressable style={[styles.sectionHeader, { minHeight: 48 }]} onPress={onToggle}>
+        <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{title}</Text>
         <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
           size={18}
@@ -201,7 +228,7 @@ function AccordionSection({ title, open, onToggle, children }) {
 }
 
 function FieldLabel({ text }) {
-  return <Text style={styles.fieldLabel}>{text}</Text>;
+  return <Text style={[styles.fieldLabel, { fontSize: 13 }]}>{text}</Text>;
 }
 
 export default function PersonalisedPlanForm({ onSubmit, onBack }) {
@@ -266,11 +293,11 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.header}>
-        <Pressable onPress={onBack} style={styles.backBtn} hitSlop={8}>
+        <Pressable onPress={onBack} style={[styles.backBtn, { width: 44, height: 44 }]} hitSlop={8}>
           <Ionicons name="arrow-back" size={22} color={colors.textNavy} />
         </Pressable>
-        <Text style={styles.headerTitle}>AI Meal Plan</Text>
-        <View style={styles.headerSpacer} />
+        <Text style={[styles.headerTitle, { fontSize: 17 }]}>AI Meal Plan</Text>
+        <View style={[styles.headerSpacer, { width: 44 }]} />
       </View>
 
       <ScrollView
@@ -279,8 +306,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.pageTitle}>Personalise Your Plan</Text>
-        <Text style={styles.pageSubtitle}>
+        <Text style={[styles.pageTitle, { fontSize: 24 }]}>Personalise Your Plan</Text>
+        <Text style={[styles.pageSubtitle, { fontSize: 14, lineHeight: 20 }]}>
           Tell us about your goals and health to generate a tailored 7-day meal plan.
         </Text>
 
@@ -288,6 +315,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
           title="Basic Preferences"
           open={sec1Open}
           onToggle={toggleSection(setSec1Open)}
+
+
         >
           <FieldLabel text="Diet Type" />
           <SelectInput
@@ -295,6 +324,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             value={dietType}
             options={DIET_TYPES}
             onChange={setDietType}
+
+
           />
 
           <FieldLabel text="Goal" />
@@ -303,11 +334,17 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             value={goal}
             options={GOALS}
             onChange={setGoal}
+
+
           />
 
           <FieldLabel text="Daily Calories (kcal)" />
           <TextInput
-            style={[styles.textInput, calorieError ? styles.textInputError : null]}
+            style={[
+              styles.textInput,
+              { fontSize: 14, minHeight: 44 },
+              calorieError ? styles.textInputError : null,
+            ]}
             value={calories}
             onChangeText={(v) => {
               setCalories(v);
@@ -319,7 +356,7 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             placeholderTextColor={colors.textMuted}
           />
           {calorieError ? (
-            <Text style={styles.errorText}>{calorieError}</Text>
+            <Text style={[styles.errorText, { fontSize: 12 }]}>{calorieError}</Text>
           ) : null}
 
           <FieldLabel text="Cuisine Preference" />
@@ -328,6 +365,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             value={cuisine}
             options={CUISINES}
             onChange={setCuisine}
+
+
           />
         </AccordionSection>
 
@@ -335,12 +374,16 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
           title="Health & Medical"
           open={sec2Open}
           onToggle={toggleSection(setSec2Open)}
+
+
         >
           <FieldLabel text="Health Conditions" />
           <ChipGroup
             options={HEALTH_CONDITIONS}
             selected={healthConditions}
             onToggle={toggleChip(setHealthConditions)}
+
+
           />
 
           <FieldLabel text="Allergies" />
@@ -348,6 +391,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             options={ALLERGIES}
             selected={allergies}
             onToggle={toggleChip(setAllergies)}
+
+
           />
 
           <FieldLabel text="Meal Texture" />
@@ -355,11 +400,13 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             options={TEXTURES}
             value={mealTexture}
             onChange={setMealTexture}
+
+
           />
 
           <FieldLabel text="Additional Notes" />
           <TextInput
-            style={styles.notesInput}
+            style={[styles.notesInput, { fontSize: 14, minHeight: 80 }]}
             value={additionalNotes}
             onChangeText={(v) => {
               if (v.length <= 300) setAdditionalNotes(v);
@@ -369,19 +416,25 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             placeholder="e.g. On warfarin, prefer low-sodium meals..."
             placeholderTextColor={colors.textMuted}
           />
-          <Text style={styles.charCount}>{additionalNotes.length}/300</Text>
+          <Text style={[styles.charCount, { fontSize: 11 }]}>
+            {additionalNotes.length}/300
+          </Text>
         </AccordionSection>
 
         <AccordionSection
           title="Lifestyle"
           open={sec3Open}
           onToggle={toggleSection(setSec3Open)}
+
+
         >
           <FieldLabel text="Mobility Level" />
           <ButtonGroup
             options={MOBILITY}
             value={mobilityLevel}
             onChange={setMobilityLevel}
+
+
           />
 
           <FieldLabel text="Cooking Complexity" />
@@ -389,6 +442,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             options={COOKING}
             value={cookingComplexity}
             onChange={setCookingComplexity}
+
+
           />
 
           <FieldLabel text="Portion Size" />
@@ -396,13 +451,18 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             options={PORTIONS}
             value={portionSize}
             onChange={setPortionSize}
+
+
           />
         </AccordionSection>
 
-        <Pressable style={styles.submitBtn} onPress={handleSubmit}>
-          <Ionicons name="sparkles-outline" size={18} color={colors.white} />
-          <Text style={styles.submitBtnText}>Generate My 7-Day Plan</Text>
-        </Pressable>
+        <Button
+          label="Generate My 7-Day Plan"
+          onPress={handleSubmit}
+          variant="success"
+          style={[styles.submitBtn, { minHeight: 54, height: undefined }]}
+          textStyle={[styles.submitBtnText, { fontSize: 16 }]}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
