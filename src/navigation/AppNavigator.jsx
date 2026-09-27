@@ -10,6 +10,7 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { UserProvider, useUser } from "../context/UserContext";
 import { AccessibilityProvider } from "../context/AccessibilityContext";
@@ -46,6 +47,7 @@ export default function AppNavigator() {
   const navTheme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
+    <SafeAreaProvider>
     <UserProvider>
       <AccessibilityProvider>
       <HealthConditionsProvider>
@@ -66,5 +68,6 @@ export default function AppNavigator() {
       </HealthConditionsProvider>
       </AccessibilityProvider>
     </UserProvider>
+    </SafeAreaProvider>
   );
 }
