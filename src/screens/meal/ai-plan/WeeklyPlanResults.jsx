@@ -12,6 +12,7 @@ import { ApiError } from "../../../api/baseApi";
 import { saveMealToDaily } from "../../../api/mealPlanApi";
 import Button from "../../../components/common/Button";
 import EmptyState from "../../../components/common/EmptyState";
+import { useAccessibility } from "../../../context/AccessibilityContext";
 import { useUser } from "../../../context/UserContext";
 import { saveDailyMeal } from "../../../utils/dailyMealsStorage";
 import FeedbackCard from "./FeedbackCard";
@@ -34,20 +35,20 @@ function parseNutrient(value) {
   return Number.isNaN(n) ? 0 : n;
 }
 
-function NutrientBadge({ label, value, highSodium }) {
+function NutrientBadge({ label, value, highSodium, fs }) {
   return (
     <View style={[styles.badge, highSodium && styles.badgeSodium]}>
-      <Text style={[styles.badgeLabel, highSodium && styles.badgeLabelSodium, { fontSize: 10 }]}>
+      <Text style={[styles.badgeLabel, highSodium && styles.badgeLabelSodium, { fontSize: fs(10) }]}>
         {label}
       </Text>
-      <Text style={[styles.badgeValue, highSodium && styles.badgeValueSodium, { fontSize: 12 }]}>
+      <Text style={[styles.badgeValue, highSodium && styles.badgeValueSodium, { fontSize: fs(12) }]}>
         {value}
       </Text>
     </View>
   );
 }
 
-function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) {
+function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated, fs, sh }) {
   const [expanded, setExpanded] = useState(false);
   const [saveState, setSaveState] = useState("idle");
   const [saveError, setSaveError] = useState("");
@@ -106,25 +107,25 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
 
   return (
     <View style={styles.mealCard}>
-      <Text style={[styles.mealTypeLabel, { fontSize: 10 }]}>{mealType.toUpperCase()}</Text>
-      <Text style={[styles.mealName, { fontSize: 15 }]}>{meal.name}</Text>
+      <Text style={[styles.mealTypeLabel, { fontSize: fs(10) }]}>{mealType.toUpperCase()}</Text>
+      <Text style={[styles.mealName, { fontSize: fs(15) }]}>{meal.name}</Text>
       {meal.description ? (
-        <Text style={[styles.mealDesc, { fontSize: 13, lineHeight: 18 }]}>
+        <Text style={[styles.mealDesc, { fontSize: fs(13), lineHeight: fs(18) }]}>
           {meal.description}
         </Text>
       ) : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
         <View style={styles.badgesRow}>
-          <NutrientBadge label="Cal" value={meal.calories ?? "—"} />
-          <NutrientBadge label="Protein" value={meal.proteins ?? "—"} />
-          <NutrientBadge label="Fat" value={meal.fats ?? "—"} />
-          <NutrientBadge label="Fiber" value={meal.fiber ?? "—"} />
+          <NutrientBadge label="Cal" value={meal.calories ?? "—"} fs={fs} />
+          <NutrientBadge label="Protein" value={meal.proteins ?? "—"} fs={fs} />
+          <NutrientBadge label="Fat" value={meal.fats ?? "—"} fs={fs} />
+          <NutrientBadge label="Fiber" value={meal.fiber ?? "—"} fs={fs} />
           <NutrientBadge
             label="Sodium"
             value={meal.sodium ?? "—"}
             highSodium={sodiumVal > 600}
-
+            fs={fs}
           />
         </View>
       </ScrollView>
@@ -132,15 +133,15 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
       {meal.ingredients?.length > 0 ? (
         <>
           <Pressable
-            style={[styles.ingredientsToggle, { minHeight: 28 }]}
+            style={[styles.ingredientsToggle, { minHeight: sh(28) }]}
             onPress={() => setExpanded((prev) => !prev)}
           >
-            <Text style={[styles.ingredientsToggleText, { fontSize: 12 }]}>
+            <Text style={[styles.ingredientsToggleText, { fontSize: fs(12) }]}>
               {expanded ? "Hide ingredients" : "Show ingredients"}
             </Text>
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
-              size={13}
+              size={fs(13)}
               color={colors.success}
             />
           </Pressable>
@@ -148,13 +149,13 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
             <View style={styles.ingredientsList}>
               {meal.ingredients.map((ing, i) => (
                 <View key={i} style={styles.ingredientRow}>
-                  <Text style={[styles.ingredientDot, { fontSize: 12, lineHeight: 18 }]}>
+                  <Text style={[styles.ingredientDot, { fontSize: fs(12), lineHeight: fs(18) }]}>
                     •
                   </Text>
-                  <Text style={[styles.ingredientItem, { fontSize: 12, lineHeight: 18 }]}>
+                  <Text style={[styles.ingredientItem, { fontSize: fs(12), lineHeight: fs(18) }]}>
                     {ing.item}
                   </Text>
-                  <Text style={[styles.ingredientAmount, { fontSize: 12, lineHeight: 18 }]}>
+                  <Text style={[styles.ingredientAmount, { fontSize: fs(12), lineHeight: fs(18) }]}>
                     {ing.amount}
                   </Text>
                 </View>
@@ -166,27 +167,27 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
 
       {saveState === "saved" ? (
         <View style={styles.savedBadge}>
-          <Ionicons name="checkmark-circle" size={15} color={colors.success} />
-          <Text style={[styles.savedBadgeText, { fontSize: 13 }]}>Added to Daily Plan</Text>
+          <Ionicons name="checkmark-circle" size={fs(15)} color={colors.success} />
+          <Text style={[styles.savedBadgeText, { fontSize: fs(13) }]}>Added to Daily Plan</Text>
         </View>
       ) : (
         <Button
           label={isAuthenticated ? "Add to Daily Plan" : "Log in to save"}
           onPress={handleSave}
           loading={saveState === "saving"}
-          style={[styles.saveBtn, { minHeight: 40, height: undefined }]}
-          textStyle={[styles.saveBtnText, { fontSize: 13 }]}
+          style={[styles.saveBtn, { minHeight: sh(40), height: undefined }]}
+          textStyle={[styles.saveBtnText, { fontSize: fs(13) }]}
         />
       )}
 
       {saveState === "error" && saveError ? (
-        <Text style={[styles.saveError, { fontSize: 12 }]}>{saveError}</Text>
+        <Text style={[styles.saveError, { fontSize: fs(12) }]}>{saveError}</Text>
       ) : null}
     </View>
   );
 }
 
-function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated }) {
+function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated, fs, sh }) {
   const borderColor = DAY_COLORS[dayIndex % DAY_COLORS.length];
 
   const renderMeal = (meal, mealType) => {
@@ -199,15 +200,15 @@ function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated }) {
         day={dayData.day}
         isAuthenticated={isAuthenticated}
         onNotAuthenticated={onNotAuthenticated}
-
-
+        fs={fs}
+        sh={sh}
       />
     );
   };
 
   return (
     <View style={[styles.dayCard, { borderLeftColor: borderColor }]}>
-      <Text style={[styles.dayTitle, { color: borderColor, fontSize: 17 }]}>{dayData.day}</Text>
+      <Text style={[styles.dayTitle, { color: borderColor, fontSize: fs(17) }]}>{dayData.day}</Text>
       {renderMeal(dayData.breakfast, "Breakfast")}
       {renderMeal(dayData.lunch, "Lunch")}
       {renderMeal(dayData.dinner, "Dinner")}
@@ -224,6 +225,7 @@ export default function WeeklyPlanResults({
   onBack,
 }) {
   const { isAuthenticated, logout } = useUser();
+  const { fs, sh } = useAccessibility();
 
   const handleNotAuthenticated = useCallback(() => {
     logout();
@@ -232,18 +234,18 @@ export default function WeeklyPlanResults({
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={52} color={colors.danger} />
-        <Text style={[styles.errorTitle, { fontSize: 20 }]}>Something went wrong</Text>
-        <Text style={[styles.errorMsg, { fontSize: 14, lineHeight: 20 }]}>{error}</Text>
+        <Ionicons name="alert-circle-outline" size={fs(52)} color={colors.danger} />
+        <Text style={[styles.errorTitle, { fontSize: fs(20) }]}>Something went wrong</Text>
+        <Text style={[styles.errorMsg, { fontSize: fs(14), lineHeight: fs(20) }]}>{error}</Text>
         <Button
           label="Try Again"
           onPress={onRegenerate}
           variant="success"
-          style={[styles.retryBtn, { minHeight: 48, height: undefined }]}
-          textStyle={[styles.retryBtnText, { fontSize: 15 }]}
+          style={[styles.retryBtn, { minHeight: sh(48), height: undefined }]}
+          textStyle={[styles.retryBtnText, { fontSize: fs(15) }]}
         />
-        <Pressable style={[styles.editBtn, { minHeight: 44 }]} onPress={onBack}>
-          <Text style={[styles.editBtnText, { fontSize: 14 }]}>Edit Preferences</Text>
+        <Pressable style={[styles.editBtn, { minHeight: sh(44) }]} onPress={onBack}>
+          <Text style={[styles.editBtnText, { fontSize: fs(14) }]}>Edit Preferences</Text>
         </Pressable>
       </View>
     );
@@ -260,11 +262,11 @@ export default function WeeklyPlanResults({
           label="Regenerate"
           onPress={onRegenerate}
           variant="success"
-          style={[styles.retryBtn, { minHeight: 48, height: undefined }]}
-          textStyle={[styles.retryBtnText, { fontSize: 15 }]}
+          style={[styles.retryBtn, { minHeight: sh(48), height: undefined }]}
+          textStyle={[styles.retryBtnText, { fontSize: fs(15) }]}
         />
-        <Pressable style={[styles.editBtn, { minHeight: 44 }]} onPress={onBack}>
-          <Text style={[styles.editBtnText, { fontSize: 14 }]}>Edit Preferences</Text>
+        <Pressable style={[styles.editBtn, { minHeight: sh(44) }]} onPress={onBack}>
+          <Text style={[styles.editBtnText, { fontSize: fs(14) }]}>Edit Preferences</Text>
         </Pressable>
       </View>
     );
@@ -277,17 +279,17 @@ export default function WeeklyPlanResults({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.topBar}>
-        <Pressable style={[styles.topBarBack, { minHeight: 44 }]} onPress={onBack} hitSlop={8}>
-          <Ionicons name="arrow-back" size={18} color={colors.textGray700} />
-          <Text style={[styles.topBarBackText, { fontSize: 14 }]}>Edit</Text>
+        <Pressable style={[styles.topBarBack, { minHeight: sh(44) }]} onPress={onBack} hitSlop={8}>
+          <Ionicons name="arrow-back" size={fs(18)} color={colors.textGray700} />
+          <Text style={[styles.topBarBackText, { fontSize: fs(14) }]}>Edit</Text>
         </Pressable>
-        <Text style={[styles.topBarTitle, { fontSize: 15 }]}>Your 7-Day Plan</Text>
+        <Text style={[styles.topBarTitle, { fontSize: fs(15) }]}>Your 7-Day Plan</Text>
         <Button
           label="Regenerate"
           onPress={onRegenerate}
           variant="success"
-          style={[styles.regenBtn, { minHeight: 36, height: undefined }]}
-          textStyle={[styles.regenBtnText, { fontSize: 13 }]}
+          style={[styles.regenBtn, { minHeight: sh(36), height: undefined }]}
+          textStyle={[styles.regenBtnText, { fontSize: fs(13) }]}
         />
       </View>
 
@@ -298,8 +300,8 @@ export default function WeeklyPlanResults({
           dayIndex={i}
           isAuthenticated={isAuthenticated}
           onNotAuthenticated={handleNotAuthenticated}
-
-
+          fs={fs}
+          sh={sh}
         />
       ))}
 

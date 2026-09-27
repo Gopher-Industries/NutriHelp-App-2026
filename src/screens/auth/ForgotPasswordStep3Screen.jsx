@@ -10,6 +10,7 @@ import {
 
 import { resetPassword } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import useFormValidation from "../../hooks/useFormValidation";
 import useAppTheme from "../../hooks/useAppTheme";
 
@@ -38,6 +39,7 @@ export default function ForgotPasswordStep3Screen({
   resetToken = "",
   goTo = (_nextScreen, _params) => {},
 }) {
+  const { fs, sh } = useAccessibility();
   const { colors } = useAppTheme();
 
   const [loading, setLoading] = useState(false);
@@ -85,6 +87,7 @@ export default function ForgotPasswordStep3Screen({
           <View
             style={[
               styles.successCircle,
+              { width: sh(120), height: sh(120) },
               {
                 borderColor: colors.successBackground,
               },
@@ -93,6 +96,7 @@ export default function ForgotPasswordStep3Screen({
             <Text
               style={[
                 styles.successTick,
+                { width: sh(56), height: sh(56), fontSize: fs(34), lineHeight: fs(54), },
                 {
                   backgroundColor: colors.success,
                   color: colors.primaryText,
@@ -106,6 +110,7 @@ export default function ForgotPasswordStep3Screen({
           <Text
             style={[
               styles.successTitle,
+              { fontSize: fs(24) },
               {
                 color: colors.success,
               },
@@ -117,6 +122,7 @@ export default function ForgotPasswordStep3Screen({
           <Text
             style={[
               styles.successMessage,
+              { fontSize: fs(14), lineHeight: fs(20) },
               {
                 color: colors.textSecondary,
               },
@@ -151,6 +157,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.title,
+                  { fontSize: fs(22) },
                   {
                     color: colors.text,
                   },
@@ -162,6 +169,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.subtitle,
+                  { fontSize: fs(13), lineHeight: fs(19) },
                   {
                     color: colors.textSecondary,
                   },
@@ -184,6 +192,7 @@ export default function ForgotPasswordStep3Screen({
                 <Text
                   style={[
                     styles.infoText,
+                    { fontSize: fs(12) },
                     {
                       color: colors.error,
                     },
@@ -230,6 +239,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.ruleText,
+                  { fontSize: fs(12), lineHeight: fs(18) },
                   { color: colors.textSecondary },
                 ]}
               >
@@ -239,6 +249,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.ruleText,
+                  { fontSize: fs(12), lineHeight: fs(18) },
                   { color: colors.textSecondary },
                 ]}
               >
@@ -248,6 +259,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.ruleText,
+                  { fontSize: fs(12), lineHeight: fs(18) },
                   { color: colors.textSecondary },
                 ]}
               >
@@ -257,6 +269,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.ruleText,
+                  { fontSize: fs(12), lineHeight: fs(18) },
                   { color: colors.textSecondary },
                 ]}
               >
@@ -266,6 +279,7 @@ export default function ForgotPasswordStep3Screen({
               <Text
                 style={[
                   styles.ruleText,
+                  { fontSize: fs(12), lineHeight: fs(18) },
                   { color: colors.textSecondary },
                 ]}
               >
@@ -309,16 +323,12 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "left",
-    fontSize: 22,
     fontWeight: "800",
   },
 
   subtitle: {
     marginTop: 10,
     textAlign: "left",
-    fontSize: 13,
-    lineHeight: 19,
-    maxWidth: 290,
   },
 
   infoBox: {
@@ -330,7 +340,6 @@ const styles = StyleSheet.create({
   },
 
   infoText: {
-    fontSize: 12,
     fontWeight: "500",
   },
 
@@ -341,8 +350,6 @@ const styles = StyleSheet.create({
   },
 
   ruleText: {
-    fontSize: 12,
-    lineHeight: 18,
   },
 
   footer: {
@@ -356,8 +363,6 @@ const styles = StyleSheet.create({
 
   successCircle: {
     alignSelf: "center",
-    width: 120,
-    height: 120,
     borderRadius: 999,
     borderWidth: 4,
     alignItems: "center",
@@ -366,18 +371,13 @@ const styles = StyleSheet.create({
   },
 
   successTick: {
-    width: 56,
-    height: 56,
     borderRadius: 999,
-    fontSize: 34,
     fontWeight: "800",
     textAlign: "center",
-    lineHeight: 54,
   },
 
   successTitle: {
     textAlign: "center",
-    fontSize: 24,
     fontWeight: "800",
   },
 
@@ -385,7 +385,5 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 24,
     textAlign: "center",
-    fontSize: 14,
-    lineHeight: 20,
   },
 });

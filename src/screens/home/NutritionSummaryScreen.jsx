@@ -8,12 +8,14 @@ import mealPlanApi from "../../api/mealPlanApi";
 import Button from "../../components/common/Button";
 import EmptyState from "../../components/common/EmptyState";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { buildNutritionSummary, groupMealsByType } from "../meal/mealPlanUiHelpers";
 
 import { colors } from "../../theme";
 export default function NutritionSummaryScreen({ navigation }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const [totalCalories, setTotalCalories] = useState(0);
@@ -55,19 +57,19 @@ export default function NutritionSummaryScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
         <Pressable
-          style={[styles.backButton, { minHeight: 44 }]}
+          style={[styles.backButton, { minHeight: sh(44) }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
-          <Text style={[styles.backText, { fontSize: 15 }]}>Back</Text>
+          <Ionicons name="arrow-back" size={fs(22)} color={colors.textSecondaryAlt} />
+          <Text style={[styles.backText, { fontSize: fs(15) }]}>Back</Text>
         </Pressable>
-        <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { fontSize: 30 }]}>Nutrition Summary</Text>
-        <Text style={[styles.subtitle, { fontSize: 16, lineHeight: 23 }]}>
+        <Text style={[styles.title, { fontSize: fs(30) }]}>Nutrition Summary</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(16), lineHeight: fs(23) }]}>
           {loading
             ? "Loading today's nutrition data..."
             : `Today's total: ${totalCalories} kcal consumed`}
@@ -86,18 +88,18 @@ export default function NutritionSummaryScreen({ navigation }) {
             <Button
               label="Go to Meal Plan"
               onPress={() => navigation.navigate("MealPlanOverviewScreen")}
-              style={[styles.planButton, { minHeight: 48, height: undefined }]}
-              textStyle={[styles.planButtonText, { fontSize: 14 }]}
+              style={[styles.planButton, { minHeight: sh(48), height: undefined }]}
+              textStyle={[styles.planButtonText, { fontSize: fs(14) }]}
             />
           </View>
         ) : (
           rows.map((item) => (
             <View key={item.label} style={styles.rowCard}>
               <View style={styles.rowHeader}>
-                <Text style={[styles.rowTitle, { color: item.color, fontSize: 22 }]}>
+                <Text style={[styles.rowTitle, { color: item.color, fontSize: fs(22) }]}>
                   {item.label}
                 </Text>
-                <Text style={[styles.rowValue, { fontSize: 16 }]}>{item.value}</Text>
+                <Text style={[styles.rowValue, { fontSize: fs(16) }]}>{item.value}</Text>
               </View>
               <View style={styles.track}>
                 <View
@@ -107,7 +109,7 @@ export default function NutritionSummaryScreen({ navigation }) {
                   ]}
                 />
               </View>
-              <Text style={[styles.rowProgress, { fontSize: 12 }]}>
+              <Text style={[styles.rowProgress, { fontSize: fs(12) }]}>
                 {Math.round(item.progress * 100)}% of daily target
               </Text>
             </View>

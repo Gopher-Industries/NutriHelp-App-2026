@@ -1,10 +1,12 @@
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from "react-native";
 
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { colors } from "../../theme";
 
 /**
  * Shared primary action button (FE-02).
  * Variants map to existing app colors to avoid visual regressions.
+ * Consumes AccessibilityContext font/touch scale (FE-04).
  */
 export default function Button({
   label,
@@ -17,6 +19,7 @@ export default function Button({
   textStyle,
   ...rest
 }) {
+  const { fs, sh } = useAccessibility();
   const text = label ?? title ?? "";
 
   const variantStyle = styles[variant] || styles.primary;
@@ -36,6 +39,8 @@ export default function Button({
         variantStyle,
         disabled ? styles.disabled : null,
         style,
+        // FE-04: accessibility sizing wins over fixed heights from call sites
+        { minHeight: sh(48), height: undefined, paddingVertical: sh(12) },
       ]}
       activeOpacity={0.85}
     >
@@ -48,6 +53,7 @@ export default function Button({
             variantTextStyle,
             disabled ? styles.disabledText : null,
             textStyle,
+            { fontSize: fs(14) },
           ]}
         >
           {text}
@@ -59,15 +65,12 @@ export default function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 48,
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   text: {
-    fontSize: 14,
     fontWeight: "700",
   },
   primary: {

@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import mealPlanApi from "../../api/mealPlanApi";
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { groupMealsByType } from "../meal/mealPlanUiHelpers";
 
@@ -22,6 +23,7 @@ function toNumber(v) {
 
 export default function GoalDetailsScreen({ navigation }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [calories, setCalories] = useState(0);
   const [protein, setProtein] = useState(0);
@@ -82,19 +84,19 @@ export default function GoalDetailsScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
         <Pressable
-          style={[styles.backButton, { minHeight: 44 }]}
+          style={[styles.backButton, { minHeight: sh(44) }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.textSecondaryAlt} />
-          <Text style={[styles.backText, { fontSize: 15 }]}>Back</Text>
+          <Ionicons name="arrow-back" size={fs(22)} color={colors.textSecondaryAlt} />
+          <Text style={[styles.backText, { fontSize: fs(15) }]}>Back</Text>
         </Pressable>
-        <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { fontSize: 30 }]}>Goal Progress</Text>
-        <Text style={[styles.subtitle, { fontSize: 16, lineHeight: 23 }]}>
+        <Text style={[styles.title, { fontSize: fs(30) }]}>Goal Progress</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(16), lineHeight: fs(23) }]}>
           {loading
             ? "Loading today's progress..."
             : progressPercent >= 80
@@ -117,39 +119,39 @@ export default function GoalDetailsScreen({ navigation }) {
                   ]}
                 />
                 <View style={styles.innerCircle}>
-                  <Text style={[styles.ringValue, { fontSize: 34 }]}>{calories}</Text>
-                  <Text style={[styles.ringUnit, { fontSize: 16 }]}>
+                  <Text style={[styles.ringValue, { fontSize: fs(34) }]}>{calories}</Text>
+                  <Text style={[styles.ringUnit, { fontSize: fs(16) }]}>
                     of {CALORIE_TARGET} kcal
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.heroHeadline, { fontSize: 20 }]}>
+              <Text style={[styles.heroHeadline, { fontSize: fs(20) }]}>
                 {progressPercent}% of your daily goal reached
               </Text>
             </View>
 
             {metricItems.map((item) => (
-              <View key={item.label} style={[styles.metricCard, { minHeight: 72 }]}>
+              <View key={item.label} style={[styles.metricCard, { minHeight: sh(72) }]}>
                 <View
                   style={[
                     styles.metricIconWrap,
-                    { backgroundColor: item.color, width: 42, height: 42, borderRadius: 21 },
+                    { backgroundColor: item.color, width: sh(42), height: sh(42), borderRadius: sh(21) },
                   ]}
                 >
-                  <Ionicons name="flag-outline" size={20} color={colors.white} />
+                  <Ionicons name="flag-outline" size={fs(20)} color={colors.white} />
                 </View>
                 <View style={styles.metricBody}>
-                  <Text style={[styles.metricLabel, { fontSize: 15 }]}>{item.label}</Text>
-                  <Text style={[styles.metricValue, { fontSize: 22 }]}>{item.value}</Text>
+                  <Text style={[styles.metricLabel, { fontSize: fs(15) }]}>{item.label}</Text>
+                  <Text style={[styles.metricValue, { fontSize: fs(22) }]}>{item.value}</Text>
                 </View>
               </View>
             ))}
 
             <Pressable
-              style={[styles.nutritionLink, { minHeight: 44 }]}
+              style={[styles.nutritionLink, { minHeight: sh(44) }]}
               onPress={() => navigation.navigate("NutritionSummaryScreen")}
             >
-              <Text style={[styles.nutritionLinkText, { fontSize: 14 }]}>
+              <Text style={[styles.nutritionLinkText, { fontSize: fs(14) }]}>
                 View Full Nutrition Summary →
               </Text>
             </Pressable>

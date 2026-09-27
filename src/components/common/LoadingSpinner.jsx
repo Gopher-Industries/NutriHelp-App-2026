@@ -1,9 +1,11 @@
 import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
 
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { colors } from "../../theme";
 
 /**
  * Shared loading indicator (FE-02).
+ * Consumes AccessibilityContext font scale (FE-04).
  */
 export default function LoadingSpinner({
   message,
@@ -12,11 +14,13 @@ export default function LoadingSpinner({
   style,
   textStyle,
 }) {
+  const { fs } = useAccessibility();
+
   return (
     <View style={[styles.wrap, style]}>
       <ActivityIndicator size={size} color={color} />
       {message ? (
-        <Text style={[styles.message, textStyle]}>
+        <Text style={[styles.message, { fontSize: fs(14) }, textStyle]}>
           {message}
         </Text>
       ) : null}
@@ -31,7 +35,6 @@ const styles = StyleSheet.create({
   },
   message: {
     marginTop: 10,
-    fontSize: 14,
     color: colors.textSecondary,
     textAlign: "center",
   },

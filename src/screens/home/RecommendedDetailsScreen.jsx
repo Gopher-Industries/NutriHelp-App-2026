@@ -1,15 +1,17 @@
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAccessibility } from "../../context/AccessibilityContext";
 
 import { colors } from "../../theme";
 export default function RecommendedDetailsScreen() {
+  const { fs } = useAccessibility();
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { fontSize: 30 }]}>Recommended for you</Text>
-        <Text style={[styles.subtitle, { fontSize: 16, lineHeight: 23 }]}>
+        <Text style={[styles.title, { fontSize: fs(30) }]}>Recommended for you</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(16), lineHeight: fs(23) }]}>
           Based on your current nutrition goals, this smoothie is a strong fit.
         </Text>
 
@@ -21,23 +23,23 @@ export default function RecommendedDetailsScreen() {
         />
 
         <View style={styles.infoCard}>
-          <Text style={[styles.foodTitle, { fontSize: 24 }]}>Berry Protein Smoothie</Text>
-          <Text style={[styles.foodDescription, { fontSize: 16, lineHeight: 23 }]}>
+          <Text style={[styles.foodTitle, { fontSize: fs(24) }]}>Berry Protein Smoothie</Text>
+          <Text style={[styles.foodDescription, { fontSize: fs(16), lineHeight: fs(23) }]}>
             A balanced high-protein option with banana, berries, oats, and Greek
             yogurt to support your daily macro target.
           </Text>
 
           <View style={styles.metricRow}>
-            <Text style={[styles.metricLabel, { fontSize: 16 }]}>Calories</Text>
-            <Text style={[styles.metricValue, { fontSize: 17 }]}>420 kcal</Text>
+            <Text style={[styles.metricLabel, { fontSize: fs(16) }]}>Calories</Text>
+            <Text style={[styles.metricValue, { fontSize: fs(17) }]}>420 kcal</Text>
           </View>
           <View style={styles.metricRow}>
-            <Text style={[styles.metricLabel, { fontSize: 16 }]}>Protein</Text>
-            <Text style={[styles.metricValue, { fontSize: 17 }]}>31 g</Text>
+            <Text style={[styles.metricLabel, { fontSize: fs(16) }]}>Protein</Text>
+            <Text style={[styles.metricValue, { fontSize: fs(17) }]}>31 g</Text>
           </View>
           <View style={styles.metricRow}>
-            <Text style={[styles.metricLabel, { fontSize: 16 }]}>Best for</Text>
-            <Text style={[styles.metricValue, { fontSize: 17 }]}>Post-workout recovery</Text>
+            <Text style={[styles.metricLabel, { fontSize: fs(16) }]}>Best for</Text>
+            <Text style={[styles.metricValue, { fontSize: fs(17) }]}>Post-workout recovery</Text>
           </View>
         </View>
       </ScrollView>

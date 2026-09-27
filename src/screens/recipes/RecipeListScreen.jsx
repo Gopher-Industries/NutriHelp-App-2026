@@ -17,6 +17,7 @@ import recipeApi from "../../api/recipeApi";
 import Button from "../../components/common/Button";
 import EmptyState from "../../components/common/EmptyState";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getBookmarkedRecipes } from "../../utils/recipeBookmarks";
@@ -346,7 +347,7 @@ export function extractRecipeList(response) {
   return [];
 }
 
-export function FilterChips({ filters, selectedFilter, onSelect }) {
+export function FilterChips({ filters, selectedFilter, onSelect, fs, sh }) {
   return (
     <ScrollView
       horizontal
@@ -365,12 +366,13 @@ export function FilterChips({ filters, selectedFilter, onSelect }) {
             style={[
               styles.chip,
               isSelected ? styles.chipSelected : styles.chipUnselected,
-              { minHeight: 44 },
+              { minHeight: sh ? sh(44) : 44 },
             ]}
           >
             <Text
               style={[
                 styles.chipText,
+                fs ? { fontSize: fs(16) } : null,
                 isSelected ? styles.chipTextSelected : null,
               ]}
             >
@@ -383,15 +385,15 @@ export function FilterChips({ filters, selectedFilter, onSelect }) {
   );
 }
 
-export function RecipeCard({ recipe, onPress, cardWidth }) {
+export function RecipeCard({ recipe, onPress, cardWidth, fs, sh }) {
   const avgRating = Number(recipe?.rating) || 0;
   const reviewCount = Number(recipe?.totalRatings) || 0;
   const shouldShowScore = avgRating > 0 || reviewCount > 0;
   const title = recipe?.title ?? "";
   const imageUri = String(recipe?.imageUrl ?? "").trim();
-  const titleLineHeight = RECIPE_CARD_TITLE_LINE_HEIGHT;
+  const titleLineHeight = fs ? fs(RECIPE_CARD_TITLE_LINE_HEIGHT) : RECIPE_CARD_TITLE_LINE_HEIGHT;
   const titleBlockMinH = titleLineHeight * RECIPE_CARD_TITLE_MAX_LINES;
-  const metaRowMinH = RECIPE_CARD_META_ROW_H;
+  const metaRowMinH = sh ? sh(RECIPE_CARD_META_ROW_H) : RECIPE_CARD_META_ROW_H;
   const cardMinHeight =
     RECIPE_CARD_IMAGE_H +
     RECIPE_CARD_CONTENT_PAD_V +
@@ -440,7 +442,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
           accessibilityRole="image"
           accessibilityLabel="No recipe image"
         >
-          <Ionicons name="image-outline" size={40} color={colors.c_a8a29e} />
+          <Ionicons name="image-outline" size={fs ? fs(40) : 40} color={colors.c_a8a29e} />
         </View>
       )}
 
@@ -463,7 +465,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
             style={[
               styles.cardTitle,
               {
-                fontSize: 16,
+                fontSize: fs ? fs(16) : 16,
                 lineHeight: titleLineHeight,
               },
             ]}
@@ -474,11 +476,11 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
 
         <View style={[styles.metaRow, { minHeight: metaRowMinH }]}>
           <View style={styles.metaLeft}>
-            <Ionicons name="star" size={15} color={colors.warning} />
+            <Ionicons name="star" size={fs ? fs(15) : 15} color={colors.warning} />
             <Text
               style={[
                 styles.metaRating,
-                { marginLeft: 4, fontSize: 14 },
+                { marginLeft: 4, fontSize: fs ? fs(14) : 14 },
               ]}
               numberOfLines={1}
             >
@@ -488,7 +490,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
               <Text
                 style={[
                   styles.metaCount,
-                  { marginLeft: 4, fontSize: 12 },
+                  { marginLeft: 4, fontSize: fs ? fs(12) : 12 },
                 ]}
                 numberOfLines={1}
               >
@@ -499,7 +501,7 @@ export function RecipeCard({ recipe, onPress, cardWidth }) {
           <Text
             style={[
               styles.kcalText,
-              { flexShrink: 0, fontSize: 14 },
+              { flexShrink: 0, fontSize: fs ? fs(14) : 14 },
             ]}
             numberOfLines={1}
           >
@@ -517,22 +519,23 @@ async function fetchListFromApi(userId) {
   return extractRecipeList(primary);
 }
 
-function SearchEntryBar({ onPress }) {
+function SearchEntryBar({ onPress, fs, sh }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.searchEntryBar, { minHeight: 48 }]}
+      style={[styles.searchEntryBar, { minHeight: sh(48) }]}
       accessibilityRole="button"
       accessibilityLabel="Open recipe search"
     >
-      <Ionicons name="search-outline" size={22} color={colors.textMuted} />
-      <Text style={[styles.searchEntryText, { fontSize: 16 }]}>Search recipes…</Text>
+      <Ionicons name="search-outline" size={fs(22)} color={colors.textMuted} />
+      <Text style={[styles.searchEntryText, { fontSize: fs(16) }]}>Search recipes…</Text>
     </Pressable>
   );
 }
 
 export default function RecipeListScreen({ navigation, route }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const userId = useMemo(() => extractUserId(user), [user]);
   const effectiveUserId = userId ?? 0;
   const createdAt = route?.params?.createdAt;
@@ -636,31 +639,31 @@ export default function RecipeListScreen({ navigation, route }) {
       <View style={styles.pageChrome}>
       <View style={styles.brandHeader}>
         <View style={styles.headerSideSpacer} />
-        <Text style={[styles.logoText, { fontSize: 14 }]}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
         <View style={styles.headerSideSpacer} />
       </View>
       <View style={styles.screen}>
       <View style={styles.headerRow}>
-        <Text style={[styles.pageTitle, { fontSize: 24 }]}>My recipe</Text>
+        <Text style={[styles.pageTitle, { fontSize: fs(24) }]}>My recipe</Text>
         <Button
           label="Create recipe"
           onPress={() => navigation?.navigate?.("CreateRecipeScreen")}
-          style={[styles.primaryBtn, { minHeight: 44 }]}
-          textStyle={[styles.primaryBtnText, { fontSize: 16 }]}
+          style={[styles.primaryBtn, { minHeight: sh(44) }]}
+          textStyle={[styles.primaryBtnText, { fontSize: fs(16) }]}
         />
       </View>
 
       <SearchEntryBar
         onPress={() => navigation?.navigate?.("SearchRecipesScreen", {})}
-
-
+        fs={fs}
+        sh={sh}
       />
 
       {bookmarkedRecipes.length > 0 ? (
         <View style={styles.bookmarksSection}>
           <View style={styles.bookmarksHeader}>
-            <Ionicons name="bookmark" size={18} color={C.primary} />
-            <Text style={[styles.bookmarksTitle, { fontSize: 15 }]}>Bookmarked</Text>
+            <Ionicons name="bookmark" size={fs(18)} color={C.primary} />
+            <Text style={[styles.bookmarksTitle, { fontSize: fs(15) }]}>Bookmarked</Text>
           </View>
           <ScrollView
             horizontal
@@ -678,11 +681,11 @@ export default function RecipeListScreen({ navigation, route }) {
                   <Image source={{ uri: String(item.imageUrl).trim() }} style={styles.bookmarkImage} />
                 ) : (
                   <View style={styles.bookmarkImagePlaceholder}>
-                    <Ionicons name="image-outline" size={22} color={colors.c_a8a29e} />
+                    <Ionicons name="image-outline" size={fs(22)} color={colors.c_a8a29e} />
                   </View>
                 )}
                 <Text
-                  style={[styles.bookmarkName, { fontSize: 13, minHeight: 48 }]}
+                  style={[styles.bookmarkName, { fontSize: fs(13), minHeight: sh(48) }]}
                   numberOfLines={2}
                 >
                   {item.title}
@@ -699,7 +702,7 @@ export default function RecipeListScreen({ navigation, route }) {
           color={C.primary}
           message="Loading recipes…"
           style={styles.loadingBox}
-          textStyle={[styles.loadingText, { fontSize: 16 }]}
+          textStyle={[styles.loadingText, { fontSize: fs(16) }]}
         />
       ) : null}
 
@@ -711,8 +714,8 @@ export default function RecipeListScreen({ navigation, route }) {
             recipe={item}
             onPress={handleRecipePress}
             cardWidth={cardWidth}
-
-
+            fs={fs}
+            sh={sh}
           />
         )}
         numColumns={2}

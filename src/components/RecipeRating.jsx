@@ -4,6 +4,7 @@ import StarRating from "react-native-star-rating-widget";
 import recipeApi from "../api/recipeApi";
 import Card from "./common/Card";
 import LoadingSpinner from "./common/LoadingSpinner";
+import { useAccessibility } from "../context/AccessibilityContext";
 
 import { colors } from "../theme";
 const C = {
@@ -93,6 +94,7 @@ export default function RecipeRating({
   userRating = 0,
   onRatingStatsChange,
 }) {
+  const { fs, sh } = useAccessibility();
   const serverUserRating = Number(userRating) || 0;
   const [currentRating, setCurrentRating] = useState(serverUserRating);
   const [effectiveAverage, setEffectiveAverage] = useState(Number(averageRating) || 0);
@@ -179,15 +181,15 @@ export default function RecipeRating({
 
   return (
     <Card style={styles.card}>
-      <Text style={[styles.title, { fontSize: 18 }]}>Rate this recipe</Text>
-      <Text style={[styles.helper, { fontSize: 14 }]}>{helperText}</Text>
-      <Text style={[styles.hint, { fontSize: 12 }]}>{statusHint}</Text>
+      <Text style={[styles.title, { fontSize: fs(18) }]}>Rate this recipe</Text>
+      <Text style={[styles.helper, { fontSize: fs(14) }]}>{helperText}</Text>
+      <Text style={[styles.hint, { fontSize: fs(12) }]}>{statusHint}</Text>
 
       <View style={styles.starWrap} pointerEvents={isSubmitting || alreadyRated ? "none" : "auto"}>
         <StarRating
           rating={Number(currentRating) || 0}
           maxStars={5}
-          starSize={32}
+          starSize={sh(32)}
           color={colors.warning}
           emptyColor={colors.borderStrong}
           enableHalfStar={false}
@@ -199,7 +201,7 @@ export default function RecipeRating({
       {isSubmitting ? (
         <View style={styles.submittingRow}>
           <LoadingSpinner size="small" color={C.primary} />
-          <Text style={[styles.submittingText, { fontSize: 14 }]}>
+          <Text style={[styles.submittingText, { fontSize: fs(14) }]}>
             Submitting rating...
           </Text>
         </View>

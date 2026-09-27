@@ -15,6 +15,7 @@ import {
 } from "react-native";
 
 import Button from "../../../components/common/Button";
+import { useAccessibility } from "../../../context/AccessibilityContext";
 
 import { colors } from "../../../theme";
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -87,17 +88,17 @@ const PORTIONS = [
   { label: "Large", value: "large" },
 ];
 
-function SelectInput({ label, value, options, onChange }) {
+function SelectInput({ label, value, options, onChange, fs, sh }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
 
   return (
     <>
-      <Pressable style={[styles.selectBtn, { minHeight: 44 }]} onPress={() => setOpen(true)}>
-        <Text style={[styles.selectValue, { fontSize: 14 }]}>
+      <Pressable style={[styles.selectBtn, { minHeight: sh(44) }]} onPress={() => setOpen(true)}>
+        <Text style={[styles.selectValue, { fontSize: fs(14) }]}>
           {selected?.label ?? "Select..."}
         </Text>
-        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+        <Ionicons name="chevron-down" size={fs(16)} color={colors.textSecondary} />
       </Pressable>
 
       <Modal
@@ -108,7 +109,7 @@ function SelectInput({ label, value, options, onChange }) {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setOpen(false)}>
           <Pressable style={styles.modalSheet} onPress={() => {}}>
-            <Text style={[styles.modalTitle, { fontSize: 16 }]}>{label}</Text>
+            <Text style={[styles.modalTitle, { fontSize: fs(16) }]}>{label}</Text>
             <ScrollView bounces={false}>
               {options.map((opt) => {
                 const active = opt.value === value;
@@ -118,7 +119,7 @@ function SelectInput({ label, value, options, onChange }) {
                     style={[
                       styles.modalOption,
                       active && styles.modalOptionActive,
-                      { minHeight: 44 },
+                      { minHeight: sh(44) },
                     ]}
                     onPress={() => {
                       onChange(opt.value);
@@ -128,13 +129,13 @@ function SelectInput({ label, value, options, onChange }) {
                     <Text
                       style={[
                         styles.modalOptionText,
-                        { fontSize: 15 },
+                        { fontSize: fs(15) },
                         active && styles.modalOptionTextActive,
                       ]}
                     >
                       {opt.label}
                     </Text>
-                    {active && <Ionicons name="checkmark" size={16} color={colors.success} />}
+                    {active && <Ionicons name="checkmark" size={fs(16)} color={colors.success} />}
                   </Pressable>
                 );
               })}
@@ -146,7 +147,7 @@ function SelectInput({ label, value, options, onChange }) {
   );
 }
 
-function ChipGroup({ options, selected, onToggle }) {
+function ChipGroup({ options, selected, onToggle, fs, sh }) {
   return (
     <View style={styles.chipGrid}>
       {options.map((option) => {
@@ -154,13 +155,13 @@ function ChipGroup({ options, selected, onToggle }) {
         return (
           <Pressable
             key={option}
-            style={[styles.chip, active && styles.chipActive, { minHeight: 36 }]}
+            style={[styles.chip, active && styles.chipActive, { minHeight: sh(36) }]}
             onPress={() => onToggle(option)}
           >
             <Text
               style={[
                 styles.chipText,
-                { fontSize: 13 },
+                { fontSize: fs(13) },
                 active && styles.chipTextActive,
               ]}
             >
@@ -173,7 +174,7 @@ function ChipGroup({ options, selected, onToggle }) {
   );
 }
 
-function ButtonGroup({ options, value, onChange }) {
+function ButtonGroup({ options, value, onChange, fs, sh }) {
   return (
     <View style={styles.btnGroup}>
       {options.map((opt) => {
@@ -181,13 +182,13 @@ function ButtonGroup({ options, value, onChange }) {
         return (
           <Pressable
             key={opt.value}
-            style={[styles.groupBtn, active && styles.groupBtnActive, { minHeight: 52 }]}
+            style={[styles.groupBtn, active && styles.groupBtnActive, { minHeight: sh(52) }]}
             onPress={() => onChange(opt.value)}
           >
             <Text
               style={[
                 styles.groupBtnTitle,
-                { fontSize: 13 },
+                { fontSize: fs(13) },
                 active && styles.groupBtnTitleActive,
               ]}
             >
@@ -197,7 +198,7 @@ function ButtonGroup({ options, value, onChange }) {
               <Text
                 style={[
                   styles.groupBtnSub,
-                  { fontSize: 10 },
+                  { fontSize: fs(10) },
                   active && styles.groupBtnSubActive,
                 ]}
               >
@@ -211,14 +212,14 @@ function ButtonGroup({ options, value, onChange }) {
   );
 }
 
-function AccordionSection({ title, open, onToggle, children }) {
+function AccordionSection({ title, open, onToggle, children, fs, sh }) {
   return (
     <View style={styles.section}>
-      <Pressable style={[styles.sectionHeader, { minHeight: 48 }]} onPress={onToggle}>
-        <Text style={[styles.sectionTitle, { fontSize: 15 }]}>{title}</Text>
+      <Pressable style={[styles.sectionHeader, { minHeight: sh(48) }]} onPress={onToggle}>
+        <Text style={[styles.sectionTitle, { fontSize: fs(15) }]}>{title}</Text>
         <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
-          size={18}
+          size={fs(18)}
           color={colors.textGray700}
         />
       </Pressable>
@@ -227,11 +228,12 @@ function AccordionSection({ title, open, onToggle, children }) {
   );
 }
 
-function FieldLabel({ text }) {
-  return <Text style={[styles.fieldLabel, { fontSize: 13 }]}>{text}</Text>;
+function FieldLabel({ text, fs }) {
+  return <Text style={[styles.fieldLabel, { fontSize: fs(13) }]}>{text}</Text>;
 }
 
 export default function PersonalisedPlanForm({ onSubmit, onBack }) {
+  const { fs, sh } = useAccessibility();
   const [dietType, setDietType] = useState("balanced");
   const [goal, setGoal] = useState("maintain weight");
   const [calories, setCalories] = useState("1800");
@@ -293,11 +295,11 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.header}>
-        <Pressable onPress={onBack} style={[styles.backBtn, { width: 44, height: 44 }]} hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color={colors.textNavy} />
+        <Pressable onPress={onBack} style={[styles.backBtn, { width: sh(44), height: sh(44) }]} hitSlop={8}>
+          <Ionicons name="arrow-back" size={fs(22)} color={colors.textNavy} />
         </Pressable>
-        <Text style={[styles.headerTitle, { fontSize: 17 }]}>AI Meal Plan</Text>
-        <View style={[styles.headerSpacer, { width: 44 }]} />
+        <Text style={[styles.headerTitle, { fontSize: fs(17) }]}>AI Meal Plan</Text>
+        <View style={[styles.headerSpacer, { width: sh(44) }]} />
       </View>
 
       <ScrollView
@@ -306,8 +308,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={[styles.pageTitle, { fontSize: 24 }]}>Personalise Your Plan</Text>
-        <Text style={[styles.pageSubtitle, { fontSize: 14, lineHeight: 20 }]}>
+        <Text style={[styles.pageTitle, { fontSize: fs(24) }]}>Personalise Your Plan</Text>
+        <Text style={[styles.pageSubtitle, { fontSize: fs(14), lineHeight: fs(20) }]}>
           Tell us about your goals and health to generate a tailored 7-day meal plan.
         </Text>
 
@@ -315,34 +317,34 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
           title="Basic Preferences"
           open={sec1Open}
           onToggle={toggleSection(setSec1Open)}
-
-
+          fs={fs}
+          sh={sh}
         >
-          <FieldLabel text="Diet Type" />
+          <FieldLabel text="Diet Type" fs={fs} />
           <SelectInput
             label="Diet Type"
             value={dietType}
             options={DIET_TYPES}
             onChange={setDietType}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Goal" />
+          <FieldLabel text="Goal" fs={fs} />
           <SelectInput
             label="Goal"
             value={goal}
             options={GOALS}
             onChange={setGoal}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Daily Calories (kcal)" />
+          <FieldLabel text="Daily Calories (kcal)" fs={fs} />
           <TextInput
             style={[
               styles.textInput,
-              { fontSize: 14, minHeight: 44 },
+              { fontSize: fs(14), minHeight: sh(44) },
               calorieError ? styles.textInputError : null,
             ]}
             value={calories}
@@ -356,17 +358,17 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             placeholderTextColor={colors.textMuted}
           />
           {calorieError ? (
-            <Text style={[styles.errorText, { fontSize: 12 }]}>{calorieError}</Text>
+            <Text style={[styles.errorText, { fontSize: fs(12) }]}>{calorieError}</Text>
           ) : null}
 
-          <FieldLabel text="Cuisine Preference" />
+          <FieldLabel text="Cuisine Preference" fs={fs} />
           <SelectInput
             label="Cuisine"
             value={cuisine}
             options={CUISINES}
             onChange={setCuisine}
-
-
+            fs={fs}
+            sh={sh}
           />
         </AccordionSection>
 
@@ -374,39 +376,39 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
           title="Health & Medical"
           open={sec2Open}
           onToggle={toggleSection(setSec2Open)}
-
-
+          fs={fs}
+          sh={sh}
         >
-          <FieldLabel text="Health Conditions" />
+          <FieldLabel text="Health Conditions" fs={fs} />
           <ChipGroup
             options={HEALTH_CONDITIONS}
             selected={healthConditions}
             onToggle={toggleChip(setHealthConditions)}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Allergies" />
+          <FieldLabel text="Allergies" fs={fs} />
           <ChipGroup
             options={ALLERGIES}
             selected={allergies}
             onToggle={toggleChip(setAllergies)}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Meal Texture" />
+          <FieldLabel text="Meal Texture" fs={fs} />
           <ButtonGroup
             options={TEXTURES}
             value={mealTexture}
             onChange={setMealTexture}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Additional Notes" />
+          <FieldLabel text="Additional Notes" fs={fs} />
           <TextInput
-            style={[styles.notesInput, { fontSize: 14, minHeight: 80 }]}
+            style={[styles.notesInput, { fontSize: fs(14), minHeight: sh(80) }]}
             value={additionalNotes}
             onChangeText={(v) => {
               if (v.length <= 300) setAdditionalNotes(v);
@@ -416,7 +418,7 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
             placeholder="e.g. On warfarin, prefer low-sodium meals..."
             placeholderTextColor={colors.textMuted}
           />
-          <Text style={[styles.charCount, { fontSize: 11 }]}>
+          <Text style={[styles.charCount, { fontSize: fs(11) }]}>
             {additionalNotes.length}/300
           </Text>
         </AccordionSection>
@@ -425,34 +427,34 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
           title="Lifestyle"
           open={sec3Open}
           onToggle={toggleSection(setSec3Open)}
-
-
+          fs={fs}
+          sh={sh}
         >
-          <FieldLabel text="Mobility Level" />
+          <FieldLabel text="Mobility Level" fs={fs} />
           <ButtonGroup
             options={MOBILITY}
             value={mobilityLevel}
             onChange={setMobilityLevel}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Cooking Complexity" />
+          <FieldLabel text="Cooking Complexity" fs={fs} />
           <ButtonGroup
             options={COOKING}
             value={cookingComplexity}
             onChange={setCookingComplexity}
-
-
+            fs={fs}
+            sh={sh}
           />
 
-          <FieldLabel text="Portion Size" />
+          <FieldLabel text="Portion Size" fs={fs} />
           <ButtonGroup
             options={PORTIONS}
             value={portionSize}
             onChange={setPortionSize}
-
-
+            fs={fs}
+            sh={sh}
           />
         </AccordionSection>
 
@@ -460,8 +462,8 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
           label="Generate My 7-Day Plan"
           onPress={handleSubmit}
           variant="success"
-          style={[styles.submitBtn, { minHeight: 54, height: undefined }]}
-          textStyle={[styles.submitBtnText, { fontSize: 16 }]}
+          style={[styles.submitBtn, { minHeight: sh(54), height: undefined }]}
+          textStyle={[styles.submitBtnText, { fontSize: fs(16) }]}
         />
       </ScrollView>
     </KeyboardAvoidingView>

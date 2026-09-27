@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useAccessibility } from "../../../context/AccessibilityContext";
 import { colors } from "../../../theme";
 const MESSAGES = [
   "🔍 Searching for the best recipes for you...",
@@ -17,6 +18,7 @@ const MESSAGES = [
 const INTERVAL_MS = 2200;
 
 export default function PlanLoadingView({ onCancel }) {
+  const { fs, sh } = useAccessibility();
   const [msgIndex, setMsgIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
@@ -66,13 +68,13 @@ export default function PlanLoadingView({ onCancel }) {
       <Animated.Text
         style={[
           styles.message,
-          { opacity: fadeAnim, fontSize: 17, lineHeight: 26, minHeight: 54 },
+          { opacity: fadeAnim, fontSize: fs(17), lineHeight: fs(26), minHeight: sh(54) },
         ]}
       >
         {MESSAGES[msgIndex]}
       </Animated.Text>
 
-      <Text style={[styles.hint, { fontSize: 13 }]}>This may take 10–30 seconds</Text>
+      <Text style={[styles.hint, { fontSize: fs(13) }]}>This may take 10–30 seconds</Text>
 
       <View style={styles.dots}>
         {MESSAGES.map((_, i) => (
@@ -83,9 +85,9 @@ export default function PlanLoadingView({ onCancel }) {
         ))}
       </View>
 
-      <Pressable style={[styles.cancelBtn, { minHeight: 44 }]} onPress={onCancel}>
-        <Ionicons name="close" size={16} color={colors.textSecondary} />
-        <Text style={[styles.cancelText, { fontSize: 14 }]}>Cancel</Text>
+      <Pressable style={[styles.cancelBtn, { minHeight: sh(44) }]} onPress={onCancel}>
+        <Ionicons name="close" size={fs(16)} color={colors.textSecondary} />
+        <Text style={[styles.cancelText, { fontSize: fs(14) }]}>Cancel</Text>
       </Pressable>
     </View>
   );

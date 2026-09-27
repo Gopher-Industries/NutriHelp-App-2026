@@ -14,6 +14,7 @@ import Svg, { Circle, Line, Path } from "react-native-svg";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import useAppTheme from "../../hooks/useAppTheme";
 
 const nutriHelpLogo = require("../../../assets/nutrihelp-logo.png");
@@ -78,6 +79,7 @@ function ChevronLeftIcon({ color = "#18233D", size = 24 }) {
 export function AuthScreen({ children, onBack }) {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+  const { fs, sh } = useAccessibility();
 
   useEffect(() => {
     if (!onBack) return;
@@ -93,7 +95,7 @@ export function AuthScreen({ children, onBack }) {
     return () => subscription.remove();
   }, [onBack]);
 
-  const backSize = 44;
+  const backSize = sh(44);
 
   return (
     <View
@@ -115,7 +117,7 @@ export function AuthScreen({ children, onBack }) {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ChevronLeftIcon color={colors.text} size={24} />
+            <ChevronLeftIcon color={colors.text} size={fs(24)} />
           </Pressable>
         ) : (
           <View
@@ -125,7 +127,7 @@ export function AuthScreen({ children, onBack }) {
 
         <Image
           source={nutriHelpLogo}
-          style={[styles.nutriLogo, { width: 112, height: 48 }]}
+          style={[styles.nutriLogo, { width: sh(112), height: sh(48) }]}
           resizeMode="contain"
           accessible={false}
         />
@@ -154,6 +156,7 @@ export function FieldLabel({
   focused = false,
 }) {
   const { colors } = useAppTheme();
+  const { fs } = useAccessibility();
 
   let color = colors.text;
 
@@ -164,7 +167,7 @@ export function FieldLabel({
   }
 
   return (
-    <Text style={[styles.label, { color, fontSize: 14 }]}>{children}</Text>
+    <Text style={[styles.label, { color, fontSize: fs(14) }]}>{children}</Text>
   );
 }
 
@@ -174,6 +177,7 @@ export function FieldLabel({
 
 export function FieldError({ message }) {
   const { colors } = useAppTheme();
+  const { fs } = useAccessibility();
 
   if (!message) {
     return null;
@@ -185,7 +189,7 @@ export function FieldError({ message }) {
         styles.errorText,
         {
           color: colors.error,
-          fontSize: 12,
+          fontSize: fs(12),
         },
       ]}
     >
@@ -214,9 +218,10 @@ export function AuthInput({
 }) {
   const [focused, setFocused] = useState(false);
   const { colors } = useAppTheme();
+  const { fs, sh } = useAccessibility();
 
   const hasValue = Boolean(value && String(value).length > 0);
-  const inputHeight = 50;
+  const inputHeight = sh(50);
 
   let borderColor = colors.border;
   let borderWidth = 1;
@@ -261,7 +266,7 @@ export function AuthInput({
             styles.textInput,
             {
               color: editable ? colors.text : colors.disabled,
-              fontSize: 14,
+              fontSize: fs(14),
               minHeight: inputHeight,
             },
           ]}
@@ -282,7 +287,7 @@ export function AuthInput({
 
         {showPasswordToggle ? (
           <Pressable
-            style={[styles.eyeButton, { width: 44, height: 44 }]}
+            style={[styles.eyeButton, { width: sh(44), height: sh(44) }]}
             onPress={onTogglePassword}
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
             accessibilityRole="button"
@@ -291,7 +296,7 @@ export function AuthInput({
             <EyeIcon
               crossed={passwordVisible}
               color={colors.textSecondary}
-              size={22}
+              size={fs(22)}
             />
           </Pressable>
         ) : null}
@@ -348,14 +353,15 @@ export function GoogleButton({
   disabled = false,
 }) {
   const { colors } = useAppTheme();
+  const { fs, sh } = useAccessibility();
 
   return (
     <Pressable
       style={[
         styles.googleButton,
         {
-          minHeight: 48,
-          paddingVertical: 10,
+          minHeight: sh(48),
+          paddingVertical: sh(10),
           borderColor: colors.border,
           backgroundColor: disabled
             ? colors.surfaceSecondary
@@ -378,7 +384,7 @@ export function GoogleButton({
         <>
           <Image
             source={googleLogo}
-            style={[styles.googleLogo, { width: 42, height: 42 }]}
+            style={[styles.googleLogo, { width: sh(42), height: sh(42) }]}
             resizeMode="contain"
           />
 
@@ -387,7 +393,7 @@ export function GoogleButton({
               styles.googleButtonText,
               {
                 color: colors.text,
-                fontSize: 14,
+                fontSize: fs(14),
               },
             ]}
           >
@@ -405,6 +411,7 @@ export function GoogleButton({
 
 export function HelperLink({ title, onPress }) {
   const { colors } = useAppTheme();
+  const { fs } = useAccessibility();
 
   return (
     <Pressable
@@ -418,7 +425,7 @@ export function HelperLink({ title, onPress }) {
           styles.linkText,
           {
             color: colors.primary,
-            fontSize: 12,
+            fontSize: fs(12),
           },
         ]}
       >

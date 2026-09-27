@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import {
   buildNutritionSummary,
@@ -23,6 +24,7 @@ import {
 import { colors } from "../../theme";
 export default function MealPlanDetailScreen({ navigation, route }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [selectedMealType, setSelectedMealType] = useState(route?.params?.mealType || "breakfast");
   const [groups, setGroups] = useState([]);
   const [glasses, setGlasses] = useState(0);
@@ -80,12 +82,12 @@ export default function MealPlanDetailScreen({ navigation, route }) {
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <View style={styles.topRow}>
           <Pressable
-            style={[styles.backButton, { width: 78, height: 78, borderRadius: 39 }]}
+            style={[styles.backButton, { width: sh(78), height: sh(78), borderRadius: sh(39) }]}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={34} color={colors.textNearBlack} />
+            <Ionicons name="chevron-back" size={fs(34)} color={colors.textNearBlack} />
           </Pressable>
-          <Ionicons name="restaurant-outline" size={30} color={colors.facebookBlue} />
+          <Ionicons name="restaurant-outline" size={fs(30)} color={colors.facebookBlue} />
         </View>
 
         <ScrollView
@@ -98,10 +100,10 @@ export default function MealPlanDetailScreen({ navigation, route }) {
             return (
               <Pressable
                 key={mealType}
-                style={[styles.tabChip, active && styles.tabChipActive, { minHeight: 54 }]}
+                style={[styles.tabChip, active && styles.tabChipActive, { minHeight: sh(54) }]}
                 onPress={() => setSelectedMealType(mealType)}
               >
-                <Text style={[styles.tabText, active && styles.tabTextActive, { fontSize: 22 }]}>
+                <Text style={[styles.tabText, active && styles.tabTextActive, { fontSize: fs(22) }]}>
                   {formatDisplayName(mealType)}
                 </Text>
               </Pressable>
@@ -112,15 +114,15 @@ export default function MealPlanDetailScreen({ navigation, route }) {
         <View style={styles.waterCard}>
           <View style={styles.waterHeader}>
             <View>
-              <Text style={[styles.waterTitle, { fontSize: 26 }]}>Water Intake</Text>
-              <Text style={[styles.waterSubtext, { fontSize: 15 }]}>
+              <Text style={[styles.waterTitle, { fontSize: fs(26) }]}>Water Intake</Text>
+              <Text style={[styles.waterSubtext, { fontSize: fs(15) }]}>
                 {glasses} of {goalGlasses} glasses consumed
               </Text>
-              <Text style={[styles.waterMlText, { fontSize: 16 }]}>
+              <Text style={[styles.waterMlText, { fontSize: fs(16) }]}>
                 {amountMl} ML / {goalGlasses * 250} ML
               </Text>
             </View>
-            <Ionicons name="water-outline" size={28} color={colors.linkBlue} />
+            <Ionicons name="water-outline" size={fs(28)} color={colors.linkBlue} />
           </View>
 
           <View style={styles.glassRow}>
@@ -130,7 +132,7 @@ export default function MealPlanDetailScreen({ navigation, route }) {
                 <Ionicons
                   key={index}
                   name="water-outline"
-                  size={28}
+                  size={fs(28)}
                   color={active ? colors.linkBlue : colors.white}
                   style={styles.glassIcon}
                 />
@@ -139,7 +141,7 @@ export default function MealPlanDetailScreen({ navigation, route }) {
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { fontSize: 26 }]}>
+        <Text style={[styles.sectionTitle, { fontSize: fs(26) }]}>
           {selectedGroup?.title || "Meal"}
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -153,10 +155,10 @@ export default function MealPlanDetailScreen({ navigation, route }) {
         </ScrollView>
 
         <View style={styles.summaryCard}>
-          <Text style={[styles.summaryTitle, { fontSize: 26 }]}>Nutrition Summary</Text>
+          <Text style={[styles.summaryTitle, { fontSize: fs(26) }]}>Nutrition Summary</Text>
           {nutritionSummary.map((item) => (
-            <View key={item.label} style={[styles.summaryRow, { minHeight: 28 }]}>
-              <Text style={[styles.summaryLabel, { color: item.color, fontSize: 17 }]}>
+            <View key={item.label} style={[styles.summaryRow, { minHeight: sh(28) }]}>
+              <Text style={[styles.summaryLabel, { color: item.color, fontSize: fs(17) }]}>
                 {item.label}
               </Text>
               <View style={styles.summaryTrack}>
@@ -167,7 +169,7 @@ export default function MealPlanDetailScreen({ navigation, route }) {
                   ]}
                 />
               </View>
-              <Text style={[styles.summaryValue, { fontSize: 16 }]}>{item.value}</Text>
+              <Text style={[styles.summaryValue, { fontSize: fs(16) }]}>{item.value}</Text>
             </View>
           ))}
         </View>
