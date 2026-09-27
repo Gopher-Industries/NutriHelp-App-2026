@@ -108,6 +108,8 @@ export function AuthScreen({ children, onBack }) {
             style={styles.backButton}
             onPress={onBack}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <ChevronLeftIcon color={colors.text} />
           </Pressable>
@@ -119,6 +121,7 @@ export function AuthScreen({ children, onBack }) {
           source={nutriHelpLogo}
           style={styles.nutriLogo}
           resizeMode="contain"
+          accessible={false}
         />
       </View>
 
@@ -282,6 +285,8 @@ export function AuthInput({
             style={styles.eyeButton}
             onPress={onTogglePassword}
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
           >
             <EyeIcon
               crossed={passwordVisible}
@@ -324,6 +329,9 @@ export function AuthButton({
         color: "rgba(255,255,255,0.25)",
         borderless: false,
       }}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color={colors.primaryText} />
@@ -373,6 +381,9 @@ export function GoogleButton({
         color: "rgba(128,128,128,0.12)",
         borderless: false,
       }}
+      accessibilityRole="button"
+      accessibilityLabel="Sign in with Google"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color={colors.text} />
@@ -408,7 +419,12 @@ export function HelperLink({ title, onPress }) {
   const { colors } = useAppTheme();
 
   return (
-    <Pressable style={styles.linkWrapper} onPress={onPress}>
+    <Pressable
+      style={styles.linkWrapper}
+      onPress={onPress}
+      accessibilityRole="link"
+      accessibilityLabel={title}
+    >
       <Text
         style={[
           styles.linkText,
