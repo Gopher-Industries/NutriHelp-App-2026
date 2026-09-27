@@ -10,12 +10,15 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { UserProvider, useUser } from "../context/UserContext";
 import { AccessibilityProvider } from "../context/AccessibilityContext";
 import { HealthConditionsProvider } from "../context/HealthConditionsContext";
 import { ChatbotProvider } from "../context/ChatbotContext";
+import { ToastProvider } from "../context/ToastContext";
 import FloatingChatbot from "../components/FloatingChatbot/FloatingChatbot";
+import Toast from "../components/Toast";
 
 import AuthStack from "./AuthStack";
 import MainTabs from "./MainTabs";
@@ -44,10 +47,12 @@ export default function AppNavigator() {
   const navTheme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
+    <SafeAreaProvider>
     <UserProvider>
       <AccessibilityProvider>
       <HealthConditionsProvider>
       <ChatbotProvider>
+      <ToastProvider>
       <NavigationContainer theme={navTheme}>
         <RootNavigator />
         {/* FloatingChatbot must be INSIDE NavigationContainer so it shares
@@ -55,11 +60,14 @@ export default function AppNavigator() {
             after RootNavigator gives it a higher z-order, keeping it visible
             above all screens. */}
         <FloatingChatbot />
+        <Toast />
         <StatusBar style={colorScheme === "dark" ? "light" : "auto"} />
       </NavigationContainer>
+      </ToastProvider>
       </ChatbotProvider>
       </HealthConditionsProvider>
       </AccessibilityProvider>
     </UserProvider>
+    </SafeAreaProvider>
   );
 }

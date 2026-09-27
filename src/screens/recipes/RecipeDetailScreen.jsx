@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
 import baseApi from "../../api/baseApi";
 import { useUser } from "../../context/UserContext";
+import { useToast } from "../../context/ToastContext";
 import recipeApi from "../../api/recipeApi";
 import {
   addRecipeBookmark,
@@ -305,6 +306,7 @@ function MetaItem({ label, value }) {
 
 export default function RecipeDetailScreen({ navigation, route }) {
   const { user } = useUser();
+  const { showToast } = useToast();
   const userId = useMemo(() => extractUserId(user), [user]);
   const effectiveUserId = userId ?? 0;
   const [isSaved, setIsSaved] = useState(false);
@@ -832,9 +834,9 @@ export default function RecipeDetailScreen({ navigation, route }) {
         source: target.sourceType,
         id: target.recipeId,
       });
-      Alert.alert("Review saved", "Your rating and comment were submitted.");
+            showToast("Review submitted", "success");
     } catch (error) {
-      Alert.alert("Submit failed", error?.message ?? "Unable to submit review right now.");
+      showToast(error?.message ?? "Unable to submit review right now.", "error");
     } finally {
       setIsSubmittingReview(false);
     }
