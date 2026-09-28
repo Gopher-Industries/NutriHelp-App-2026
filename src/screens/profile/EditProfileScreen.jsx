@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import profileApi from "../../api/profileApi";
 import { useUser } from "../../context/UserContext";
+import { useToast } from "../../context/ToastContext";
 
 const DIETARY_OPTIONS = [
   "Balanced",
@@ -90,6 +91,7 @@ function toFormValues(profile = {}, fallbackUser = null) {
 
 export default function EditProfileScreen({ navigation, route }) {
   const { logout, user } = useUser();
+  const { showToast } = useToast();
   const initialProfile = route?.params?.initialProfile || null;
   const [loading, setLoading] = useState(!initialProfile);
   const [saving, setSaving] = useState(false);
@@ -205,11 +207,10 @@ export default function EditProfileScreen({ navigation, route }) {
         }
       }
 
-      Alert.alert("Profile", "Changes saved successfully.", [
-        { text: "OK", onPress: () => navigation.goBack() },
-      ]);
+      showToast("Changes saved successfully.", "success");
+      navigation.goBack();
     } catch (error) {
-      Alert.alert("Edit Profile", error.message || "Failed to save profile.");
+      showToast(error.message || "Failed to save profile.", "error");
     } finally {
       setSaving(false);
     }

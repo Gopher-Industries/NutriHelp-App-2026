@@ -361,6 +361,12 @@ export default function SettingsScreen({ navigation }) {
             }
           />
           <SettingRow
+            label="Dietary Requirements"
+            description="Set your dietary preferences and allergies."
+            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            onPress={() => navigation.navigate("DietaryRequirementsScreen")}
+          />
+          <SettingRow
             label="Delete Account"
             description="Review deletion details before taking action."
             right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}

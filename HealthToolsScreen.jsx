@@ -4,7 +4,10 @@ import WaterTracker from '../../components/WaterTracker';
 import CalorieBarChart from '../../components/charts/CalorieBarChart';
 import { useUser } from '../../context/UserContext';
 
-const MOCK_CALORIE_DATA = [
+// FE-13: no backend calorie-intake endpoint is available yet, so this chart
+// shows sample data. It is clearly labelled as a demo in-app (below) so the
+// user is not misled into thinking these are their real figures.
+const SAMPLE_CALORIE_DATA = [
   { label: "Breakfast", intake: 450 },
   { label: "Lunch", intake: 650 },
   { label: "Dinner", intake: 800 },
@@ -27,7 +30,15 @@ export default function HealthToolsScreen() {
 
         {/* MOB-FE05: CalorieBarChart on HealthToolsScreen */}
         <View className="mb-6">
-          <CalorieBarChart data={MOCK_CALORIE_DATA} goal={800} />
+          <View className="flex-row items-center mb-2">
+            <Text className="text-xs font-bold text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40 rounded-full px-2 py-0.5">
+              DEMO
+            </Text>
+            <Text className="text-xs text-slate-500 dark:text-slate-400 ml-2">
+              Sample data — calorie tracking is not connected to live data yet.
+            </Text>
+          </View>
+          <CalorieBarChart data={SAMPLE_CALORIE_DATA} goal={800} />
         </View>
       </View>
     </ScrollView>

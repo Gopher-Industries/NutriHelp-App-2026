@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useState } from "react";
 import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -283,7 +284,12 @@ export default function HomeScreen({ navigation }) {
 
           <Pressable
             style={styles.notificationButton}
-            onPress={() => navigation.navigate("HealthNewsScreen")}
+            onPress={() =>
+              Alert.alert(
+                "Coming soon",
+                "Health News isn't available yet — this section will be added in a future update."
+              )
+            }
           >
             <Ionicons name="notifications-outline" size={24} color="#4B5563" />
             <View style={styles.notificationDot} />
@@ -415,407 +421,98 @@ export default function HomeScreen({ navigation }) {
 
 const makeStyles = (t) =>
 StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: t.bg("#FFFFFF"),
-  },
-
-  screen: {
-    flex: 1,
-    backgroundColor: t.bg("#FFFFFF"),
-  },
-
-  content: {
-    paddingHorizontal: 18,
-    paddingTop: 8,
-    paddingBottom: 32,
-  },
-
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-
-  statusSpacer: {
-    width: 40,
-  },
-
-  logoBlock: {
-    flex: 1,
-    alignItems: "center",
-  },
-
-  logoText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: t.fg("#18233D"),
-  },
-
-  batteryBadge: {
-    width: 40,
-    alignItems: "flex-end",
-  },
-
-  heroRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
-
-  heroTextWrap: {
-    flex: 1,
-    paddingRight: 14,
-  },
-
-  heroGreeting: {
-    fontSize: 23,
-    lineHeight: 30,
-    fontWeight: "800",
-    color: t.fg("#22365D"),
-  },
-
-  heroSun: {
-    color: t.fg("#F4B000"),
-  },
-
-  heroDate: {
-    marginTop: 4,
-    fontSize: 13,
-    color: t.fg("#7A7F8E"),
-  },
-
+  safeArea: { flex: 1, backgroundColor: t.bg("#FFFFFF") },
+  screen: { flex: 1, backgroundColor: t.bg("#FFFFFF") },
+  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  statusSpacer: { width: 40 },
+  logoBlock: { flex: 1, alignItems: "center" },
+  logoText: { fontSize: 14, fontWeight: "700", color: t.fg("#18233D") },
+  batteryBadge: { width: 40, alignItems: "flex-end" },
+  heroRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 },
+  heroTextWrap: { flex: 1, paddingRight: 14 },
+  heroGreeting: { fontSize: 23, lineHeight: 30, fontWeight: "800", color: t.fg("#22365D") },
+  heroSun: { color: t.fg("#F4B000") },
+  heroDate: { marginTop: 4, fontSize: 13, color: t.fg("#7A7F8E") },
   notificationButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: t.bg("#FFFFFF"),
-    borderWidth: 1,
-    borderColor: t.bd("#E5E7EB"),
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    width: 50, height: 50, borderRadius: 14,
+    backgroundColor: t.bg("#FFFFFF"), borderWidth: 1, borderColor: t.bd("#E5E7EB"),
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#0F172A", shadowOpacity: 0.08, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 }, elevation: 2,
   },
-
   notificationDot: {
-    position: "absolute",
-    top: 8,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    position: "absolute", top: 8, right: 10, width: 8, height: 8, borderRadius: 4,
     backgroundColor: t.bg("#FF4D4F"),
   },
-
-  statsRow: {
-    flexDirection: "row",
-    marginBottom: 14,
-  },
-
+  statsRow: { flexDirection: "row", marginBottom: 14 },
   statCard: {
-    flex: 1,
-    borderRadius: 14,
-    backgroundColor: t.bg("#FFFFFF"),
-    borderWidth: 1,
-    borderColor: t.bd("#E8EDF5"),
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 10,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 1,
+    flex: 1, borderRadius: 14,
+    backgroundColor: t.bg("#FFFFFF"), borderWidth: 1, borderColor: t.bd("#E8EDF5"),
+    paddingHorizontal: 12, paddingTop: 12, paddingBottom: 10,
+    shadowColor: "#0F172A", shadowOpacity: 0.05, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 }, elevation: 1,
   },
-
-  statIcon: {
-    fontSize: 22,
-    marginBottom: 6,
-  },
-
-  statValue: {
-    fontSize: 15,
-    fontWeight: "700",
-    flexShrink: 1,
-  },
-
-  statValueAccent: {
-    fontSize: 21,
-    fontWeight: "800",
-  },
-
-  statValueMuted: {
-    fontSize: 15,
-    color: t.fg("#A0A8B6"),
-  },
-
-  statLabel: {
-    marginTop: 4,
-    fontSize: 11,
-    color: t.fg("#7A7F8E"),
-  },
-
-  progressTrack: {
-    marginTop: 10,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: t.bg("#E5E7EB"),
-    overflow: "hidden",
-  },
-
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-  },
-
-  statFooter: {
-    marginTop: 8,
-    fontSize: 11,
-    fontWeight: "600",
-    color: t.fg("#7A7F8E"),
-  },
-
-  actionsRow: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-
+  statIcon: { fontSize: 22, marginBottom: 6 },
+  statValue: { fontSize: 15, fontWeight: "700", flexShrink: 1 },
+  statValueAccent: { fontSize: 21, fontWeight: "800" },
+  statValueMuted: { fontSize: 15, color: t.fg("#A0A8B6") },
+  statLabel: { marginTop: 4, fontSize: 11, color: t.fg("#7A7F8E") },
+  progressTrack: { marginTop: 10, height: 4, borderRadius: 999, backgroundColor: t.bg("#E5E7EB"), overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 999 },
+  statFooter: { marginTop: 8, fontSize: 11, fontWeight: "600", color: t.fg("#7A7F8E") },
+  actionsRow: { flexDirection: "row", marginBottom: 16 },
   actionButton: {
-    flex: 1,
-    minHeight: 58,
-    borderRadius: 12,
-    backgroundColor: t.bg("#2B78C5"),
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-    paddingHorizontal: 6,
+    flex: 1, minHeight: 58, borderRadius: 12, backgroundColor: t.bg("#2B78C5"),
+    alignItems: "center", justifyContent: "center", marginRight: 10, paddingHorizontal: 6,
   },
-
-  actionButtonLast: {
-    marginRight: 0,
-  },
-
-  actionButtonDisabled: {
-    opacity: 0.72,
-  },
-
-  actionLabel: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: "700",
-    color: t.fg("#FFFFFF"),
-  },
-
+  actionButtonLast: { marginRight: 0 },
+  actionButtonDisabled: { opacity: 0.72 },
+  actionLabel: { marginTop: 4, fontSize: 12, fontWeight: "700", color: t.fg("#FFFFFF") },
   mealsCard: {
     borderRadius: 16,
-    backgroundColor: t.bg("#FFFFFF"),
-    borderWidth: 1,
-    borderColor: t.bd("#E8EDF5"),
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
+    backgroundColor: t.bg("#FFFFFF"), borderWidth: 1, borderColor: t.bd("#E8EDF5"),
+    paddingHorizontal: 14, paddingVertical: 14,
+    shadowColor: "#0F172A", shadowOpacity: 0.05, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 }, elevation: 2,
   },
-
-  mealsCardTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: t.fg("#202633"),
-    marginBottom: 12,
-  },
-
-  mealSection: {
-    marginBottom: 12,
-  },
-
-  mealSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-
-  mealSectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  mealSectionCount: {
-    fontSize: 12,
-    color: t.fg("#8A94A6"),
-    fontWeight: "600",
-  },
-
-  mealHorizontalContent: {
-    paddingRight: 4,
-  },
-
+  mealsCardTitle: { fontSize: 15, fontWeight: "700", color: t.fg("#202633"), marginBottom: 12 },
+  mealSection: { marginBottom: 12 },
+  mealSectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+  mealSectionTitle: { fontSize: 14, fontWeight: "700" },
+  mealSectionCount: { fontSize: 12, color: t.fg("#8A94A6"), fontWeight: "600" },
+  mealHorizontalContent: { paddingRight: 4 },
   mealCardHorizontal: {
-    width: 188,
-    borderWidth: 1,
-    borderColor: t.bd("#E5E7EB"),
-    borderRadius: 12,
-    backgroundColor: t.bg("#FFFFFF"),
-    marginRight: 10,
-    overflow: "hidden",
+    width: 188, borderWidth: 1, borderColor: t.bd("#E5E7EB"), borderRadius: 12,
+    backgroundColor: t.bg("#FFFFFF"), marginRight: 10, overflow: "hidden",
   },
-
-  mealThumb: {
-    width: "100%",
-    height: 96,
-    backgroundColor: t.bg("#E2E8F0"),
-  },
-
-  mealCardBody: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-
-  mealTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: t.fg("#22365D"),
-  },
-
-  mealType: {
-    marginTop: 2,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-
-  mealCalories: {
-    marginTop: 4,
-    fontSize: 12,
-    color: t.fg("#9CA3AF"),
-    fontWeight: "600",
-  },
-
-  linkButton: {
-    paddingTop: 4,
-    paddingBottom: 2,
-    alignItems: "center",
-  },
-
-  linkButtonText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: t.fg("#2B78C5"),
-  },
-
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 28,
-  },
-
-  emptyStateIcon: {
-    fontSize: 34,
-    marginBottom: 10,
-  },
-
-  emptyStateTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: t.fg("#4B5563"),
-    marginBottom: 8,
-  },
-
-  emptyStateBody: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: t.fg("#9CA3AF"),
-    textAlign: "center",
-    marginBottom: 18,
-  },
-
+  mealThumb: { width: "100%", height: 96, backgroundColor: t.bg("#E2E8F0") },
+  mealCardBody: { paddingHorizontal: 10, paddingVertical: 10 },
+  mealTitle: { fontSize: 14, fontWeight: "700", color: t.fg("#22365D") },
+  mealType: { marginTop: 2, fontSize: 12, fontWeight: "600" },
+  mealCalories: { marginTop: 4, fontSize: 12, color: t.fg("#9CA3AF"), fontWeight: "600" },
+  linkButton: { paddingTop: 4, paddingBottom: 2, alignItems: "center" },
+  linkButtonText: { fontSize: 13, fontWeight: "700", color: t.fg("#2B78C5") },
+  emptyState: { alignItems: "center", paddingVertical: 28 },
+  emptyStateIcon: { fontSize: 34, marginBottom: 10 },
+  emptyStateTitle: { fontSize: 14, fontWeight: "700", color: t.fg("#4B5563"), marginBottom: 8 },
+  emptyStateBody: { fontSize: 12, lineHeight: 18, color: t.fg("#9CA3AF"), textAlign: "center", marginBottom: 18 },
   emptyCta: {
-    width: "100%",
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: t.bg("#2B78C5"),
-    alignItems: "center",
-    justifyContent: "center",
+    width: "100%", height: 48, borderRadius: 12, backgroundColor: t.bg("#2B78C5"),
+    alignItems: "center", justifyContent: "center",
   },
-
-  emptyCtaText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: t.fg("#FFFFFF"),
-  },
-
+  emptyCtaText: { fontSize: 14, fontWeight: "700", color: t.fg("#FFFFFF") },
   skeletonStatCard: {
-    flex: 1,
-    borderRadius: 14,
-    backgroundColor: t.bg("#FFFFFF"),
-    borderWidth: 1,
-    borderColor: t.bd("#E8EDF5"),
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 10,
+    flex: 1, borderRadius: 14,
+    backgroundColor: t.bg("#FFFFFF"), borderWidth: 1, borderColor: t.bd("#E8EDF5"),
+    paddingHorizontal: 12, paddingTop: 12, paddingBottom: 10,
   },
-
-  skeletonIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    backgroundColor: t.bg("#EEF2F7"),
-    marginBottom: 10,
-  },
-
-  skeletonValue: {
-    width: "68%",
-    height: 20,
-    borderRadius: 8,
-    backgroundColor: t.bg("#EEF2F7"),
-    marginBottom: 8,
-  },
-
-  skeletonLabel: {
-    width: "46%",
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: t.bg("#F3F5F9"),
-    marginBottom: 12,
-  },
-
-  skeletonTrack: {
-    width: "100%",
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: t.bg("#EEF2F7"),
-  },
-
-  loadingBlock: {
-    paddingVertical: 8,
-  },
-
-  loadingLineLong: {
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: t.bg("#EEF2F7"),
-    marginBottom: 14,
-  },
-
-  loadingLineMid: {
-    width: "72%",
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: t.bg("#F3F5F9"),
-    marginBottom: 14,
-  },
-
-  loadingLineShort: {
-    width: "54%",
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: t.bg("#EEF2F7"),
-  },
+  skeletonIcon: { width: 22, height: 22, borderRadius: 6, backgroundColor: t.bg("#EEF2F7"), marginBottom: 10 },
+  skeletonValue: { width: "68%", height: 20, borderRadius: 8, backgroundColor: t.bg("#EEF2F7"), marginBottom: 8 },
+  skeletonLabel: { width: "46%", height: 12, borderRadius: 6, backgroundColor: t.bg("#F3F5F9"), marginBottom: 12 },
+  skeletonTrack: { width: "100%", height: 4, borderRadius: 999, backgroundColor: t.bg("#EEF2F7") },
+  loadingBlock: { paddingVertical: 8 },
+  loadingLineLong: { height: 16, borderRadius: 8, backgroundColor: t.bg("#EEF2F7"), marginBottom: 14 },
+  loadingLineMid: { width: "72%", height: 16, borderRadius: 8, backgroundColor: t.bg("#F3F5F9"), marginBottom: 14 },
+  loadingLineShort: { width: "54%", height: 16, borderRadius: 8, backgroundColor: t.bg("#EEF2F7") },
 });

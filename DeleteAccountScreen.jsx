@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -37,26 +36,33 @@ export default function DeleteAccountScreen({ navigation }) {
 
         <Text style={styles.title}>Delete your account?</Text>
         <Text style={styles.subtitle}>
-          This would permanently remove your local access to profile, wellness,
-          and meal data. The mobile app does not currently expose a confirmed
-          backend delete-account endpoint, so this screen is intentionally
-          blocked from performing the action.
+          Deleting your account would permanently remove your profile, wellness,
+          and meal data.
         </Text>
 
+        {/* FE-22: no backend delete-account endpoint exists yet, so the action
+            cannot be performed. Communicate this clearly instead of showing a
+            delete button that appears to work but silently does nothing. */}
+        <View style={styles.noticeBanner}>
+          <Ionicons name="information-circle-outline" size={18} color="#B45309" />
+          <Text style={styles.noticeText}>
+            Account deletion isn’t available yet. This feature is waiting on the
+            backend and will be enabled in a future update. To request deletion
+            in the meantime, please contact support.
+          </Text>
+        </View>
+
         <Pressable style={styles.keepButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.keepButtonText}>Keep My Account</Text>
+          <Text style={styles.keepButtonText}>Back to Settings</Text>
         </Pressable>
 
         <Pressable
-          style={styles.deleteButton}
-          onPress={() =>
-            Alert.alert(
-              "Delete Account",
-              "This mobile flow is intentionally blocked because no confirmed backend delete-account endpoint is wired yet."
-            )
-          }
+          style={styles.deleteButtonDisabled}
+          disabled
+          accessibilityState={{ disabled: true }}
+          accessibilityLabel="Delete account, currently unavailable"
         >
-          <Text style={styles.deleteButtonText}>Delete My Account</Text>
+          <Text style={styles.deleteButtonDisabledText}>Delete Unavailable</Text>
         </Pressable>
 
         <View style={styles.footerPill}>
@@ -167,22 +173,43 @@ StyleSheet.create({
     color: t.fg("#FFFFFF"),
   },
 
-  deleteButton: {
+  noticeBanner: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: t.bg("#FFFBEB"),
+    borderWidth: 1,
+    borderColor: t.bd("#FDE68A"),
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 24,
+  },
+
+  noticeText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: t.fg("#92400E"),
+  },
+
+  deleteButtonDisabled: {
     width: "100%",
     height: 52,
     borderRadius: 26,
-    backgroundColor: t.bg("#FFF5F5"),
+    backgroundColor: t.bg("#F3F4F6"),
     borderWidth: 1,
-    borderColor: t.bd("#E9B6B6"),
+    borderColor: t.bd("#E5E7EB"),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 22,
+    opacity: 0.7,
   },
 
-  deleteButtonText: {
+  deleteButtonDisabledText: {
     fontSize: 15,
     fontWeight: "700",
-    color: t.fg("#C81E1E"),
+    color: t.fg("#9CA3AF"),
   },
 
   footerPill: {
