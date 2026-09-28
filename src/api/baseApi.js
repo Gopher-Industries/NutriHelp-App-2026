@@ -4,7 +4,8 @@ export const AUTH_TOKEN_KEY = "nutrihelp.auth.token";
 export const REFRESH_TOKEN_KEY = "nutrihelp.auth.refreshToken";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const DEFAULT_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS) || 8000;
+// Render free tier can take ~30s to wake; keep headroom above cold-start latency.
+const DEFAULT_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS) || 45000;
 
 if (!API_BASE_URL) {
   throw new Error(
@@ -201,7 +202,11 @@ export async function request(method, path, options = {}) {
   });
 
   if (response.status === 401) {
-    await triggerUnauthorizedHandler();
+    // Only force-logout for authenticated requests. Login/register 401s must not
+    // trigger the unauthorized handler (skipAuth: true).
+    if (!skipAuth) {
+      await triggerUnauthorizedHandler();
+    }
     throw new ApiError("Unauthorized", response.status, data);
   }
 
