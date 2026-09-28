@@ -47,8 +47,6 @@ const verticalScrollProps = {
   ...(Platform.OS === "android" ? { overScrollMode: "never" } : {}),
 };
 
-const CATEGORY_OPTIONS = ["Breakfast", "Lunch", "Dinner", "Snack", "Dessert", "Vegetarian"];
-const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Hard"];
 const UNIT_OPTIONS = ["g", "ml", "cups", "tbsp", "tsp", "pcs"];
 
 function extractUserId(user) {
@@ -158,10 +156,8 @@ export default function CreateRecipeScreen({ navigation }) {
   const effectiveUserId = userId ?? 0;
 
   const [recipeName, setRecipeName] = useState("");
-  const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
   const [timeMinutes, setTimeMinutes] = useState("");
   const [servings, setServings] = useState("");
-  const [difficulty, setDifficulty] = useState(DIFFICULTY_OPTIONS[0]);
 
   const [cuisine, setCuisine] = useState("");
   const [cookingMethod, setCookingMethod] = useState("");
@@ -178,11 +174,6 @@ export default function CreateRecipeScreen({ navigation }) {
     },
   ]);
   const [steps, setSteps] = useState([{ id: 1, text: "" }]);
-
-  const [calories, setCalories] = useState("");
-  const [protein, setProtein] = useState("");
-  const [carbs, setCarbs] = useState("");
-  const [fat, setFat] = useState("");
 
   const [cuisineOptions, setCuisineOptions] = useState([]);
   const [ingredientCatalog, setIngredientCatalog] = useState([]);
@@ -416,22 +407,14 @@ export default function CreateRecipeScreen({ navigation }) {
     const payload = {
       user_id: effectiveUserId,
       recipe_name: recipeName.trim(),
-      category,
       cuisine,
       cuisine_id: selectedCuisine?.id ?? null,
       cooking_method: cookingMethod,
       cooking_method_id: selectedCookingMethod?.id ?? null,
       time_minutes: timeMinutes.trim(),
       servings: servings.trim(),
-      difficulty,
       ingredients: validIngredients,
       instructions: validSteps,
-      nutrition: {
-        calories: calories.trim(),
-        protein: protein.trim(),
-        carbs: carbs.trim(),
-        fat: fat.trim(),
-      },
       recipe_image: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : "",
     };
 
@@ -489,15 +472,6 @@ export default function CreateRecipeScreen({ navigation }) {
             />
             {showErrors && errors.recipeName ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.recipeName}</Text> : null}
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Category</Text>
-            <View style={styles.pickerShell}>
-              <Picker selectedValue={category} onValueChange={(value) => setCategory(value)} style={{ minHeight: sh(44) }}>
-                {CATEGORY_OPTIONS.map((item) => (
-                  <Picker.Item key={item} label={item} value={item} />
-                ))}
-              </Picker>
-            </View>
-
             <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Cuisine</Text>
             {cuisineOptions.length > 0 ? (
               <View style={styles.pickerShell}>
@@ -552,15 +526,6 @@ export default function CreateRecipeScreen({ navigation }) {
               keyboardType="numeric"
               style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
             />
-
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Difficulty</Text>
-            <View style={styles.pickerShell}>
-              <Picker selectedValue={difficulty} onValueChange={(value) => setDifficulty(value)} style={{ minHeight: sh(44) }}>
-                {DIFFICULTY_OPTIONS.map((item) => (
-                  <Picker.Item key={item} label={item} value={item} />
-                ))}
-              </Picker>
-            </View>
 
             <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Recipe Photo</Text>
             <Button
@@ -702,38 +667,6 @@ export default function CreateRecipeScreen({ navigation }) {
             {showErrors && errors.steps ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.steps}</Text> : null}
           </View>
 
-          <View style={[styles.card, styles.cardSpaced]}>
-            <Text style={[styles.sectionTitle, styles.nutritionTitle, { fontSize: fs(18) }]}>Nutritional Information</Text>
-            <TextInput
-              value={calories}
-              onChangeText={setCalories}
-              placeholder="Calories (kcal)"
-              keyboardType="numeric"
-              style={[styles.input, styles.inputMarginBottom, { fontSize: fs(16), minHeight: sh(44) }]}
-            />
-            <TextInput
-              value={protein}
-              onChangeText={setProtein}
-              placeholder="Protein (g)"
-              keyboardType="numeric"
-              style={[styles.input, styles.inputMarginBottom, { fontSize: fs(16), minHeight: sh(44) }]}
-            />
-            <TextInput
-              value={carbs}
-              onChangeText={setCarbs}
-              placeholder="Carbs (g)"
-              keyboardType="numeric"
-              style={[styles.input, styles.inputMarginBottom, { fontSize: fs(16), minHeight: sh(44) }]}
-            />
-            <TextInput
-              value={fat}
-              onChangeText={setFat}
-              placeholder="Fat (g)"
-              keyboardType="numeric"
-              style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
-            />
-          </View>
-
           <Button
             label="Save Recipe"
             onPress={handleSubmit}
@@ -800,7 +733,6 @@ const styles = StyleSheet.create({
     color: C.slate900,
     backgroundColor: C.white,
   },
-  inputMarginBottom: { marginBottom: 8 },
   inputLabel: {
     marginBottom: 6,
     fontSize: 13,
@@ -829,7 +761,6 @@ const styles = StyleSheet.create({
   previewImage: { marginTop: 12, height: 192, width: "100%", borderRadius: 12 },
   sectionHeader: { marginBottom: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sectionTitle: { fontSize: 18, fontWeight: "600", color: C.slate900 },
-  nutritionTitle: { marginBottom: 12 },
   addBtn: {
     minHeight: 44,
     minWidth: 44,
