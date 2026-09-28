@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  FlatList,
   Pressable,
   RefreshControl,
+  SectionList,
   StyleSheet,
   Text,
   View,
@@ -17,49 +17,62 @@ import Card from "../../components/common/Card";
 import EmptyState from "../../components/common/EmptyState";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NavigationHeader from "../../components/common/NavigationHeader";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import {
   formatAppointmentWhen,
   getAppointmentId,
   getAppointmentTitle,
   normalizeAppointmentsResponse,
+  splitAppointments,
 } from "./appointmentHelpers";
 
 import { colors } from "../../theme";
 function AppointmentCard({ appointment, onPress }) {
+  const { fs, sh } = useAccessibility();
   const title = getAppointmentTitle(appointment);
   const when = formatAppointmentWhen(appointment);
   const doctor = appointment?.doctor || appointment?.provider || "";
   const location = appointment?.location || "";
 
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${when}`}
+    >
       <Card style={styles.card}>
-        <View style={styles.cardIcon}>
-          <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+        <View
+          style={[
+            styles.cardIcon,
+            { width: sh(40), height: sh(40), borderRadius: sh(20) },
+          ]}
+        >
+          <Ionicons name="calendar-outline" size={fs(20)} color={colors.primary} />
         </View>
         <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
+          <Text style={[styles.cardTitle, { fontSize: fs(15) }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={styles.cardMeta}>{when}</Text>
+          <Text style={[styles.cardMeta, { fontSize: fs(13) }]}>{when}</Text>
           {doctor ? (
-            <Text style={styles.cardSub} numberOfLines={1}>
+            <Text style={[styles.cardSub, { fontSize: fs(12) }]} numberOfLines={2}>
               {doctor}
             </Text>
           ) : null}
           {location ? (
-            <Text style={styles.cardSub} numberOfLines={1}>
+            <Text style={[styles.cardSub, { fontSize: fs(12) }]} numberOfLines={2}>
               {location}
             </Text>
           ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        <Ionicons name="chevron-forward" size={fs(18)} color={colors.textMuted} />
       </Card>
     </Pressable>
   );
 }
 
 export default function AppointmentsScreen({ navigation }) {
+  const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -91,6 +104,15 @@ export default function AppointmentsScreen({ navigation }) {
     }, [loadAppointments])
   );
 
+  const sections = useMemo(() => {
+    const { upcoming, past } = splitAppointments(appointments);
+    const result = [{ key: "upcoming", title: "Upcoming", data: upcoming }];
+    if (past.length > 0) {
+      result.push({ key: "past", title: "Past", data: past });
+    }
+    return result;
+  }, [appointments]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <NavigationHeader
@@ -101,8 +123,11 @@ export default function AppointmentsScreen({ navigation }) {
           <Pressable
             onPress={() => navigation.navigate("BookAppointmentScreen")}
             hitSlop={8}
+            style={[styles.addButton, { minWidth: sh(44), minHeight: sh(44) }]}
+            accessibilityRole="button"
+            accessibilityLabel="Book appointment"
           >
-            <Ionicons name="add" size={26} color={colors.primary} />
+            <Ionicons name="add" size={fs(26)} color={colors.primary} />
           </Pressable>
         }
       />
@@ -112,14 +137,13 @@ export default function AppointmentsScreen({ navigation }) {
           <LoadingSpinner message="Loading appointments..." />
         </View>
       ) : (
-        <FlatList
-          data={appointments}
+        <SectionList
+          sections={sections}
           keyExtractor={(item, index) =>
             String(getAppointmentId(item) ?? `appointment-${index}`)
           }
-          contentContainerStyle={
-            appointments.length === 0 ? styles.emptyList : styles.list
-          }
+          contentContainerStyle={styles.list}
+          stickySectionHeadersEnabled={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -130,16 +154,31 @@ export default function AppointmentsScreen({ navigation }) {
           ListHeaderComponent={
             error ? (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-                <Pressable onPress={() => loadAppointments()}>
-                  <Text style={styles.retryText}>Try again</Text>
+                <Text style={[styles.errorText, { fontSize: fs(13) }]}>{error}</Text>
+                <Pressable
+                  onPress={() => loadAppointments()}
+                  style={{ minHeight: sh(44), justifyContent: "center" }}
+                  accessibilityRole="button"
+                >
+                  <Text style={[styles.retryText, { fontSize: fs(13) }]}>Try again</Text>
                 </Pressable>
               </View>
             ) : null
           }
-          ListEmptyComponent={
-            !error ? (
-              <EmptyState message="No upcoming appointments. Tap + to book one." />
+          renderSectionHeader={({ section }) => (
+            <Text
+              style={[styles.sectionTitle, { fontSize: fs(13) }]}
+              accessibilityRole="header"
+            >
+              {section.title}
+            </Text>
+          )}
+          renderSectionFooter={({ section }) =>
+            section.key === "upcoming" && section.data.length === 0 && !error ? (
+              <EmptyState
+                message="No upcoming appointments. Tap + to book one."
+                style={styles.empty}
+              />
             ) : null
           }
           renderItem={({ item }) => (
@@ -168,15 +207,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  addButton: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   list: {
     paddingHorizontal: 16,
     paddingBottom: 24,
     paddingTop: 8,
   },
-  emptyList: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    justifyContent: "center",
+  sectionTitle: {
+    marginTop: 8,
+    marginBottom: 8,
+    fontWeight: "700",
+    color: colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  empty: {
+    marginTop: 16,
+    marginBottom: 16,
   },
   card: {
     flexDirection: "row",
@@ -187,9 +237,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     backgroundColor: colors.surfaceBlueTint,
     alignItems: "center",
     justifyContent: "center",
@@ -199,19 +246,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    fontSize: 15,
     fontWeight: "700",
     color: colors.textPrimary,
   },
   cardMeta: {
     marginTop: 2,
-    fontSize: 13,
     color: colors.primary,
     fontWeight: "600",
   },
   cardSub: {
     marginTop: 2,
-    fontSize: 12,
     color: colors.textSecondary,
   },
   errorBox: {
@@ -224,12 +268,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.dangerDark,
-    fontSize: 13,
   },
   retryText: {
     marginTop: 8,
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 13,
   },
 });

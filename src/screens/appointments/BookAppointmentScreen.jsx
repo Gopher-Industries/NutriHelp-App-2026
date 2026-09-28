@@ -1,8 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,7 +21,15 @@ import {
 import { toErrorMessage } from "../../api/baseApi";
 import Button from "../../components/common/Button";
 import NavigationHeader from "../../components/common/NavigationHeader";
-import { getAppointmentId } from "./appointmentHelpers";
+import { useAccessibility } from "../../context/AccessibilityContext";
+import {
+  getAppointmentDateTime,
+  getAppointmentId,
+  getAppointmentNotes,
+  parseTime,
+  toDateString,
+  toTimeString,
+} from "./appointmentHelpers";
 
 import { colors } from "../../theme";
 function Field({
@@ -29,18 +40,50 @@ function Field({
   multiline = false,
   autoCapitalize = "sentences",
 }) {
+  const { fs, sh } = useAccessibility();
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { fontSize: fs(13) }]}>{label}</Text>
       <TextInput
-        style={[styles.input, multiline ? styles.inputMultiline : null]}
+        style={[
+          styles.input,
+          { fontSize: fs(14), minHeight: sh(48) },
+          multiline ? [styles.inputMultiline, { minHeight: sh(90) }] : null,
+        ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
         autoCapitalize={autoCapitalize}
+        accessibilityLabel={label}
       />
+    </View>
+  );
+}
+
+function PickerField({ label, value, placeholder, icon, onPress }) {
+  const { fs, sh } = useAccessibility();
+  return (
+    <View style={styles.field}>
+      <Text style={[styles.label, { fontSize: fs(13) }]}>{label}</Text>
+      <Pressable
+        style={[styles.input, styles.pickerInput, { minHeight: sh(48) }]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value || placeholder}`}
+      >
+        <Text
+          style={[
+            styles.pickerText,
+            { fontSize: fs(14) },
+            value ? null : styles.pickerPlaceholder,
+          ]}
+        >
+          {value || placeholder}
+        </Text>
+        <Ionicons name={icon} size={fs(18)} color={colors.primary} />
+      </Pressable>
     </View>
   );
 }
@@ -50,14 +93,44 @@ function buildInitialValues(appointment = {}) {
     title: appointment.title || appointment.description || "",
     doctor: appointment.doctor || appointment.provider || "",
     type: appointment.type || "",
-    date: appointment.date || "",
+    date: appointment.date ? String(appointment.date).slice(0, 10) : "",
     time: appointment.time || "",
     location: appointment.location || "",
-    notes: appointment.notes || appointment.description || "",
+    notes: getAppointmentNotes(appointment),
   };
 }
 
+function startOfToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+function formatDateLabel(dateString) {
+  const when = getAppointmentDateTime({ date: dateString });
+  if (!when) {
+    return "";
+  }
+  return when.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatTimeLabel(timeString) {
+  const time = parseTime(timeString);
+  if (!time) {
+    return "";
+  }
+  const date = new Date();
+  date.setHours(time.hours, time.minutes, 0, 0);
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 export default function BookAppointmentScreen({ navigation, route }) {
+  const { fs } = useAccessibility();
   const mode = route?.params?.mode === "reschedule" ? "reschedule" : "create";
   const existing = route?.params?.appointment || {};
   const appointmentId = getAppointmentId(existing);
@@ -65,11 +138,20 @@ export default function BookAppointmentScreen({ navigation, route }) {
   const [values, setValues] = useState(() => buildInitialValues(existing));
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [pickerMode, setPickerMode] = useState(null);
 
   const headerTitle = useMemo(
     () => (mode === "reschedule" ? "Reschedule" : "Book appointment"),
     [mode]
   );
+
+  const pickerValue = useMemo(() => {
+    const selected = getAppointmentDateTime({
+      date: values.date,
+      time: values.time || "09:00",
+    });
+    return selected && selected >= new Date() ? selected : new Date();
+  }, [values.date, values.time]);
 
   const updateField = (key, value) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -78,18 +160,38 @@ export default function BookAppointmentScreen({ navigation, route }) {
     }
   };
 
+  const handlePickerChange = (event, selected) => {
+    if (Platform.OS === "android") {
+      setPickerMode(null);
+    }
+    if (event?.type === "dismissed" || !selected) {
+      return;
+    }
+    if (pickerMode === "date") {
+      updateField("date", toDateString(selected));
+    } else {
+      updateField("time", toTimeString(selected));
+    }
+  };
+
   const validate = () => {
     const nextErrors = {};
     if (!values.title.trim()) {
       nextErrors.title = "Title is required.";
     }
-    if (!values.date.trim()) {
-      nextErrors.date = "Date is required (YYYY-MM-DD).";
-    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(values.date.trim())) {
-      nextErrors.date = "Use YYYY-MM-DD format.";
+    if (!values.date) {
+      nextErrors.date = "Please choose a date.";
     }
-    if (!values.time.trim()) {
-      nextErrors.time = "Time is required.";
+    if (!values.time) {
+      nextErrors.time = "Please choose a time.";
+    } else if (!parseTime(values.time)) {
+      nextErrors.time = "Please choose a valid time.";
+    }
+    if (!nextErrors.date && !nextErrors.time) {
+      const when = getAppointmentDateTime({ date: values.date, time: values.time });
+      if (!when || when <= new Date()) {
+        nextErrors.date = "Please choose a date and time in the future.";
+      }
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -104,8 +206,8 @@ export default function BookAppointmentScreen({ navigation, route }) {
       title: values.title.trim(),
       doctor: values.doctor.trim() || undefined,
       type: values.type.trim() || undefined,
-      date: values.date.trim(),
-      time: values.time.trim(),
+      date: values.date,
+      time: values.time,
       location: values.location.trim() || undefined,
       notes: values.notes.trim() || undefined,
     };
@@ -144,6 +246,11 @@ export default function BookAppointmentScreen({ navigation, route }) {
     }
   };
 
+  const renderError = (key) =>
+    errors[key] ? (
+      <Text style={[styles.errorText, { fontSize: fs(12) }]}>{errors[key]}</Text>
+    ) : null;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <NavigationHeader
@@ -167,9 +274,7 @@ export default function BookAppointmentScreen({ navigation, route }) {
             onChangeText={(text) => updateField("title", text)}
             placeholder="e.g. GP checkup"
           />
-          {errors.title ? (
-            <Text style={styles.errorText}>{errors.title}</Text>
-          ) : null}
+          {renderError("title")}
 
           <Field
             label="Doctor / Provider"
@@ -185,26 +290,44 @@ export default function BookAppointmentScreen({ navigation, route }) {
             placeholder="e.g. Consultation"
           />
 
-          <Field
-            label="Date (YYYY-MM-DD)"
-            value={values.date}
-            onChangeText={(text) => updateField("date", text)}
-            placeholder="2026-09-30"
-            autoCapitalize="none"
+          <PickerField
+            label="Date"
+            value={formatDateLabel(values.date)}
+            placeholder="Select a date"
+            icon="calendar-outline"
+            onPress={() => setPickerMode("date")}
           />
-          {errors.date ? (
-            <Text style={styles.errorText}>{errors.date}</Text>
-          ) : null}
+          {renderError("date")}
 
-          <Field
+          <PickerField
             label="Time"
-            value={values.time}
-            onChangeText={(text) => updateField("time", text)}
-            placeholder="e.g. 14:30"
-            autoCapitalize="none"
+            value={formatTimeLabel(values.time)}
+            placeholder="Select a time"
+            icon="time-outline"
+            onPress={() => setPickerMode("time")}
           />
-          {errors.time ? (
-            <Text style={styles.errorText}>{errors.time}</Text>
+          {renderError("time")}
+
+          {pickerMode ? (
+            <View style={styles.pickerWrap}>
+              <DateTimePicker
+                value={pickerValue}
+                mode={pickerMode}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={pickerMode === "date" ? startOfToday() : undefined}
+                onChange={handlePickerChange}
+              />
+              {Platform.OS === "ios" ? (
+                <Button
+                  label="Done"
+                  variant="secondary"
+                  onPress={() => {
+                    handlePickerChange({ type: "set" }, pickerValue);
+                    setPickerMode(null);
+                  }}
+                />
+              ) : null}
+            </View>
           ) : null}
 
           <Field
@@ -252,7 +375,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    fontSize: 13,
     fontWeight: "600",
     color: colors.textGray700,
     marginBottom: 6,
@@ -263,19 +385,31 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    fontSize: 14,
     color: colors.textPrimary,
     backgroundColor: colors.white,
   },
   inputMultiline: {
-    minHeight: 90,
     textAlignVertical: "top",
+  },
+  pickerInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pickerText: {
+    flex: 1,
+    color: colors.textPrimary,
+  },
+  pickerPlaceholder: {
+    color: colors.textMuted,
+  },
+  pickerWrap: {
+    marginBottom: 12,
   },
   errorText: {
     marginTop: -6,
     marginBottom: 10,
     color: colors.dangerDark,
-    fontSize: 12,
   },
   submitButton: {
     marginTop: 10,
@@ -287,6 +421,5 @@ const styles = StyleSheet.create({
   submitText: {
     color: colors.white,
     fontWeight: "700",
-    fontSize: 15,
   },
 });

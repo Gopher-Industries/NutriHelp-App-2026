@@ -17,32 +17,36 @@ import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NavigationHeader from "../../components/common/NavigationHeader";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import {
   formatAppointmentWhen,
   getAppointmentId,
+  getAppointmentNotes,
   getAppointmentTitle,
 } from "./appointmentHelpers";
 
 import { colors } from "../../theme";
 function DetailRow({ label, value, icon }) {
+  const { fs, sh } = useAccessibility();
   if (!value) {
     return null;
   }
 
   return (
     <View style={styles.detailRow}>
-      <View style={styles.detailIcon}>
-        <Ionicons name={icon} size={18} color={colors.primary} />
+      <View style={[styles.detailIcon, { width: sh(28) }]}>
+        <Ionicons name={icon} size={fs(18)} color={colors.primary} />
       </View>
       <View style={styles.detailTextWrap}>
-        <Text style={styles.detailLabel}>{label}</Text>
-        <Text style={styles.detailValue}>{value}</Text>
+        <Text style={[styles.detailLabel, { fontSize: fs(12) }]}>{label}</Text>
+        <Text style={[styles.detailValue, { fontSize: fs(14) }]}>{value}</Text>
       </View>
     </View>
   );
 }
 
 export default function AppointmentDetailScreen({ navigation, route }) {
+  const { fs } = useAccessibility();
   const initialAppointment = route?.params?.appointment || {};
   const [appointment] = useState(initialAppointment);
   const [busy, setBusy] = useState(false);
@@ -127,8 +131,12 @@ export default function AppointmentDetailScreen({ navigation, route }) {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>{getAppointmentTitle(appointment)}</Text>
-          <Text style={styles.when}>{formatAppointmentWhen(appointment)}</Text>
+          <Text style={[styles.title, { fontSize: fs(22) }]}>
+            {getAppointmentTitle(appointment)}
+          </Text>
+          <Text style={[styles.when, { fontSize: fs(14) }]}>
+            {formatAppointmentWhen(appointment)}
+          </Text>
 
           <Card style={styles.card}>
             <DetailRow
@@ -158,7 +166,7 @@ export default function AppointmentDetailScreen({ navigation, route }) {
             />
             <DetailRow
               label="Notes"
-              value={appointment.notes || appointment.description}
+              value={getAppointmentNotes(appointment)}
               icon="document-text-outline"
             />
           </Card>
@@ -199,14 +207,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   title: {
-    fontSize: 22,
     fontWeight: "800",
     color: colors.textPrimary,
   },
   when: {
     marginTop: 6,
     marginBottom: 16,
-    fontSize: 14,
     fontWeight: "600",
     color: colors.primary,
   },
@@ -226,19 +232,16 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   detailIcon: {
-    width: 28,
     marginTop: 2,
   },
   detailTextWrap: {
     flex: 1,
   },
   detailLabel: {
-    fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 2,
   },
   detailValue: {
-    fontSize: 14,
     color: colors.textPrimary,
     fontWeight: "600",
   },
@@ -253,7 +256,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: colors.white,
     fontWeight: "700",
-    fontSize: 15,
   },
   dangerButton: {
     alignItems: "center",
@@ -267,6 +269,5 @@ const styles = StyleSheet.create({
   dangerButtonText: {
     color: colors.dangerDark,
     fontWeight: "700",
-    fontSize: 15,
   },
 });
