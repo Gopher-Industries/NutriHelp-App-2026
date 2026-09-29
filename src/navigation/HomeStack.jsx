@@ -3,7 +3,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import GoalDetailsScreen from "../screens/home/GoalDetailsScreen";
 import HomeScreen from "../screens/home/HomeScreen";
 import ElderlyHomeScreen from "../screens/home/ElderlyHomeScreen";
-import ChatScreen from "../screens/home/ChatScreen";
 import { useAccessibility } from "../context/AccessibilityContext";
 import HealthToolsScreen from "../screens/health/HealthToolsScreen";
 import WaterIntakeScreen from "../screens/health/WaterIntakeScreen";
@@ -24,11 +23,6 @@ export default function HomeStack() {
       <Stack.Screen
         name="HomeScreen"
         component={elderlyModeEnabled ? ElderlyHomeScreen : HomeScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ChatScreen"
-        component={ChatScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

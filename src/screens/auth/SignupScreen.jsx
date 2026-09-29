@@ -11,6 +11,7 @@ import {
 import { ApiError, toErrorMessage } from "../../api/baseApi";
 import { registerUser } from "../../api/authApi";
 import useFormValidation from "../../hooks/useFormValidation";
+import useAppTheme from "../../hooks/useAppTheme";
 
 import {
   AuthButton,
@@ -44,6 +45,8 @@ const signupSchema = {
 };
 
 export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
+  const { colors } = useAppTheme();
+
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [accountCreated, setAccountCreated] = useState(false);
@@ -79,41 +82,98 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
       setAccountCreated(true);
     } catch (error) {
       console.error("[SignupScreen] Signup error:", error);
-      
+
       if (error instanceof ApiError) {
         if (error.status === 409) {
-          setErrors({ email: "An account with this email already exists." });
+          setErrors({
+            email: "An account with this email already exists.",
+          });
           return;
         }
-        setGeneralError(toErrorMessage(error, "Account creation failed. Please try again."));
+
+        setGeneralError(
+          toErrorMessage(
+            error,
+            "Account creation failed. Please try again."
+          )
+        );
         return;
       }
 
-      setGeneralError(toErrorMessage(error, "Account creation failed. Please try again."));
+      setGeneralError(
+        toErrorMessage(
+          error,
+          "Account creation failed. Please try again."
+        )
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // -------------------------------------------------------
+  // ACCOUNT CREATED / SUCCESS SCREEN
+  // -------------------------------------------------------
+
   if (accountCreated) {
     return (
       <AuthScreen onBack={() => goTo("login")}>
         <View style={styles.successWrapper}>
-          <View style={styles.successCircle}>
-            <Text style={styles.successTick}>✓</Text>
+          <View
+            style={[
+              styles.successCircle,
+              {
+                borderColor: colors.successBackground,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.successTick,
+                {
+                  backgroundColor: colors.success,
+                  color: colors.primaryText,
+                },
+              ]}
+            >
+              ✓
+            </Text>
           </View>
 
-          <Text style={styles.successTitle}>You are all set!</Text>
+          <Text
+            style={[
+              styles.successTitle,
+              {
+                color: colors.success,
+              },
+            ]}
+          >
+            You are all set!
+          </Text>
 
-          <Text style={styles.successMessage}>
+          <Text
+            style={[
+              styles.successMessage,
+              {
+                color: colors.textSecondary,
+              },
+            ]}
+          >
             The account was created successfully. Welcome to NutriHelp.
           </Text>
 
-          <AuthButton title="Go to Login" onPress={() => goTo("login")} />
+          <AuthButton
+            title="Go to Login"
+            onPress={() => goTo("login")}
+          />
         </View>
       </AuthScreen>
     );
   }
+
+  // -------------------------------------------------------
+  // SIGNUP FORM
+  // -------------------------------------------------------
 
   return (
     <AuthScreen onBack={() => goTo("login")}>
@@ -127,50 +187,103 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
           showsVerticalScrollIndicator={false}
         >
           <AuthCard>
-            <View style={styles.titleBlock}>
-              <Text style={styles.title}>Create Account</Text>
+            {/* TITLE */}
 
-              <Text style={styles.subtitle}>
+            <View style={styles.titleBlock}>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                Create Account
+              </Text>
+
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 Join NutriHelp and start managing your nutrition journey.
               </Text>
             </View>
 
+            {/* GENERAL ERROR */}
+
             {generalError ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorBoxText}>{generalError}</Text>
+              <View
+                style={[
+                  styles.errorBox,
+                  {
+                    borderColor: colors.error,
+                    backgroundColor: colors.errorBackground,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.errorBoxText,
+                    {
+                      color: colors.error,
+                    },
+                  ]}
+                >
+                  {generalError}
+                </Text>
               </View>
             ) : null}
+
+            {/* FIRST NAME */}
 
             <AuthInput
               label="First Name"
               value={values.firstName}
-              onChangeText={(text) => handleChange("firstName", text)}
+              onChangeText={(text) =>
+                handleChange("firstName", text)
+              }
               placeholder="Enter Your First Name"
               error={errors.firstName}
             />
 
+            {/* LAST NAME */}
+
             <AuthInput
               label="Last Name"
               value={values.lastName}
-              onChangeText={(text) => handleChange("lastName", text)}
+              onChangeText={(text) =>
+                handleChange("lastName", text)
+              }
               placeholder="Enter Your Last Name"
               error={errors.lastName}
             />
 
+            {/* EMAIL */}
+
             <AuthInput
               label="Email"
               value={values.email}
-              onChangeText={(text) => handleChange("email", text)}
+              onChangeText={(text) =>
+                handleChange("email", text)
+              }
               placeholder="Enter Your Email"
               error={errors.email}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
+            {/* PASSWORD */}
+
             <AuthInput
               label="Password"
               value={values.password}
-              onChangeText={(text) => handleChange("password", text)}
+              onChangeText={(text) =>
+                handleChange("password", text)
+              }
               placeholder="Enter Your Password"
               error={errors.password}
               secureTextEntry
@@ -182,10 +295,14 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
               }
             />
 
+            {/* CONFIRM PASSWORD */}
+
             <AuthInput
               label="Re-enter Password"
               value={values.confirmPassword}
-              onChangeText={(text) => handleChange("confirmPassword", text)}
+              onChangeText={(text) =>
+                handleChange("confirmPassword", text)
+              }
               placeholder="Re-enter Your Password"
               error={errors.confirmPassword}
               secureTextEntry
@@ -197,17 +314,34 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
               }
             />
 
+            {/* CREATE ACCOUNT BUTTON */}
+
             <AuthButton
               title="Create Account"
               onPress={handleSignup}
               loading={loading}
             />
 
+            {/* FOOTER */}
+
             <View style={styles.footer}>
-              <Text style={styles.footerText}>
+              <Text
+                style={[
+                  styles.footerText,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 Already have an account?{" "}
+
                 <Text
-                  style={styles.footerLinkDark}
+                  style={[
+                    styles.footerLinkDark,
+                    {
+                      color: colors.text,
+                    },
+                  ]}
                   onPress={() => goTo("login")}
                 >
                   Login.
@@ -240,7 +374,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 24,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   subtitle: {
@@ -248,15 +381,12 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
     maxWidth: 290,
   },
 
   errorBox: {
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -265,7 +395,6 @@ const styles = StyleSheet.create({
   errorBoxText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#EF4444",
   },
 
   footer: {
@@ -275,12 +404,10 @@ const styles = StyleSheet.create({
   footerText: {
     textAlign: "center",
     fontSize: 12,
-    color: "#6B7280",
   },
 
   footerLinkDark: {
     fontWeight: "700",
-    color: "#18233D",
   },
 
   successWrapper: {
@@ -294,7 +421,6 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 999,
     borderWidth: 4,
-    borderColor: "#DDEFE7",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 28,
@@ -304,8 +430,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 999,
-    backgroundColor: "#047857",
-    color: "#FFFFFF",
     fontSize: 34,
     fontWeight: "800",
     textAlign: "center",
@@ -316,7 +440,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 24,
     fontWeight: "800",
-    color: "#047857",
   },
 
   successMessage: {
@@ -325,6 +448,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     lineHeight: 20,
-    color: "#6B7280",
   },
 });

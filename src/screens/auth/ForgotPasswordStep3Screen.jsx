@@ -11,6 +11,7 @@ import {
 import { resetPassword } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
 import useFormValidation from "../../hooks/useFormValidation";
+import useAppTheme from "../../hooks/useAppTheme";
 
 import {
   AuthButton,
@@ -37,6 +38,8 @@ export default function ForgotPasswordStep3Screen({
   resetToken = "",
   goTo = (_nextScreen, _params) => {},
 }) {
+  const { colors } = useAppTheme();
+
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   const [passwordReset, setPasswordReset] = useState(false);
@@ -64,7 +67,12 @@ export default function ForgotPasswordStep3Screen({
       await resetPassword(email, resetToken, values.password);
       setPasswordReset(true);
     } catch (error) {
-      setGeneralError(toErrorMessage(error, "Password reset failed. Please try again."));
+      setGeneralError(
+        toErrorMessage(
+          error,
+          "Password reset failed. Please try again."
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -74,17 +82,54 @@ export default function ForgotPasswordStep3Screen({
     return (
       <AuthScreen onBack={() => goTo("login")}>
         <View style={styles.successWrapper}>
-          <View style={styles.successCircle}>
-            <Text style={styles.successTick}>✓</Text>
+          <View
+            style={[
+              styles.successCircle,
+              {
+                borderColor: colors.successBackground,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.successTick,
+                {
+                  backgroundColor: colors.success,
+                  color: colors.primaryText,
+                },
+              ]}
+            >
+              ✓
+            </Text>
           </View>
 
-          <Text style={styles.successTitle}>Password updated!</Text>
-
-          <Text style={styles.successMessage}>
-            Your password has been reset successfully. You can now log in with your new password.
+          <Text
+            style={[
+              styles.successTitle,
+              {
+                color: colors.success,
+              },
+            ]}
+          >
+            Password updated!
           </Text>
 
-          <AuthButton title="Go to Login" onPress={() => goTo("login")} />
+          <Text
+            style={[
+              styles.successMessage,
+              {
+                color: colors.textSecondary,
+              },
+            ]}
+          >
+            Your password has been reset successfully. You can now log in with
+            your new password.
+          </Text>
+
+          <AuthButton
+            title="Go to Login"
+            onPress={() => goTo("login")}
+          />
         </View>
       </AuthScreen>
     );
@@ -103,16 +148,49 @@ export default function ForgotPasswordStep3Screen({
         >
           <AuthCard>
             <View style={styles.titleBlock}>
-              <Text style={styles.title}>Create new password</Text>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                Create new password
+              </Text>
 
-              <Text style={styles.subtitle}>
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
                 Choose a strong new password for your NutriHelp account.
               </Text>
             </View>
 
             {generalError ? (
-              <View style={styles.infoBox}>
-                <Text style={styles.infoText}>{generalError}</Text>
+              <View
+                style={[
+                  styles.infoBox,
+                  {
+                    borderColor: colors.error,
+                    backgroundColor: colors.errorBackground,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.infoText,
+                    {
+                      color: colors.error,
+                    },
+                  ]}
+                >
+                  {generalError}
+                </Text>
               </View>
             ) : null}
 
@@ -134,7 +212,9 @@ export default function ForgotPasswordStep3Screen({
             <AuthInput
               label="Confirm New Password"
               value={values.confirmPassword}
-              onChangeText={(text) => handleChange("confirmPassword", text)}
+              onChangeText={(text) =>
+                handleChange("confirmPassword", text)
+              }
               placeholder="Re-enter New Password"
               error={errors.confirmPassword}
               secureTextEntry
@@ -147,11 +227,50 @@ export default function ForgotPasswordStep3Screen({
             />
 
             <View style={styles.passwordRules}>
-              <Text style={styles.ruleText}>• At least 8 characters</Text>
-              <Text style={styles.ruleText}>• One uppercase letter</Text>
-              <Text style={styles.ruleText}>• One lowercase letter</Text>
-              <Text style={styles.ruleText}>• One number</Text>
-              <Text style={styles.ruleText}>• One special character</Text>
+              <Text
+                style={[
+                  styles.ruleText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                • At least 8 characters
+              </Text>
+
+              <Text
+                style={[
+                  styles.ruleText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                • One uppercase letter
+              </Text>
+
+              <Text
+                style={[
+                  styles.ruleText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                • One lowercase letter
+              </Text>
+
+              <Text
+                style={[
+                  styles.ruleText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                • One number
+              </Text>
+
+              <Text
+                style={[
+                  styles.ruleText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                • One special character
+              </Text>
             </View>
 
             <AuthButton
@@ -192,7 +311,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 22,
     fontWeight: "800",
-    color: "#18233D",
   },
 
   subtitle: {
@@ -200,15 +318,12 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
     maxWidth: 290,
   },
 
   infoBox: {
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#BFD7EA",
-    backgroundColor: "#F7FBFF",
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -217,7 +332,6 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#1F73B7",
   },
 
   passwordRules: {
@@ -229,7 +343,6 @@ const styles = StyleSheet.create({
   ruleText: {
     fontSize: 12,
     lineHeight: 18,
-    color: "#6B7280",
   },
 
   footer: {
@@ -247,7 +360,6 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 999,
     borderWidth: 4,
-    borderColor: "#DDEFE7",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 28,
@@ -257,8 +369,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 999,
-    backgroundColor: "#047857",
-    color: "#FFFFFF",
     fontSize: 34,
     fontWeight: "800",
     textAlign: "center",
@@ -269,7 +379,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 24,
     fontWeight: "800",
-    color: "#047857",
   },
 
   successMessage: {
@@ -278,6 +387,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     lineHeight: 20,
-    color: "#6B7280",
   },
 });

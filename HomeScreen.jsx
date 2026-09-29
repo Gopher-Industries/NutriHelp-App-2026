@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useState } from "react";
 import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -86,13 +87,8 @@ function pickMealImageUrl(meal, index) {
 function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
   const progress = clampProgress(value, maxValue);
 
-    return (
-    <Pressable
-      style={styles.statCard}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${label}: ${value} of ${maxValue} ${unit}`}
-    >
+  return (
+    <Pressable style={styles.statCard} onPress={onPress}>
       <Text style={styles.statIcon}>{icon}</Text>
       <Text
         style={styles.statValue}
@@ -127,9 +123,6 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
       ]}
       onPress={onPress}
       disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
     >
       <MaterialCommunityIcons name={icon} size={20} color="#FFFFFF" />
       <Text style={styles.actionLabel}>{label}</Text>
@@ -139,18 +132,8 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
 
 function MealItem({ item, onPress }) {
   return (
-    <Pressable
-      style={styles.mealCardHorizontal}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${item.title}, ${item.mealType}, ${item.calories} kcal`}
-    >
-      <Image
-        source={{ uri: item.imageUrl }}
-        style={styles.mealThumb}
-        resizeMode="cover"
-        accessible={false}
-      />
+    <Pressable style={styles.mealCardHorizontal} onPress={onPress}>
+      <Image source={{ uri: item.imageUrl }} style={styles.mealThumb} resizeMode="cover" />
       <View style={styles.mealCardBody}>
         <Text style={styles.mealTitle} numberOfLines={2}>
           {item.title}
@@ -295,9 +278,12 @@ export default function HomeScreen({ navigation }) {
 
           <Pressable
             style={styles.notificationButton}
-            onPress={() => navigation.navigate("HealthNewsScreen")}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
+            onPress={() =>
+              Alert.alert(
+                "Coming soon",
+                "Notifications aren't available yet. We'll let you know when this is ready."
+              )
+            }
           >
             <Ionicons name="notifications-outline" size={24} color="#4B5563" />
             <View style={styles.notificationDot} />

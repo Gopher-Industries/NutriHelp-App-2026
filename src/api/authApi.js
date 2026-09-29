@@ -1,25 +1,31 @@
 import { get, post } from "./baseApi";
 
-// For POST /api/auth/login 200 response:
-// { success: true, data: { user: { id, email, name, role }, session: { accessToken, refreshToken } } }
+// Normalize login payloads from either:
+// - /api/login → { data: { user, token } }
+// - /api/auth/login → { data: { user, session: { accessToken, refreshToken } } }
 function transformLoginResponse(response) {
-  const session = response.data?.session;
-  const token = session?.accessToken;
+  const data = response?.data || response;
+  const session = data?.session;
+  const token =
+    session?.accessToken ||
+    data?.token ||
+    data?.accessToken ||
+    response?.token;
 
   if (!token) {
     throw new Error("No access token in login response");
   }
 
-  const user = response.data?.user;
+  const user = data?.user;
   return {
     token,
-    refreshToken: session?.refreshToken || null,
+    refreshToken: session?.refreshToken || data?.refreshToken || null,
     user: user
       ? {
-          id: user.id,
+          id: user.id ?? user.user_id,
           email: user.email,
-          name: user.name,
-          role: user.role,
+          name: user.name || user.email,
+          role: user.role || user.user_roles?.role_name,
         }
       : null,
     expiresAt: null,
@@ -27,15 +33,16 @@ function transformLoginResponse(response) {
 }
 
 
-// Returns { mfaRequired: true, email } on 202, or transformed auth object on 200
+// Returns { mfaRequired: true, email } when MFA is required, or transformed auth object on success
 export async function loginUser(email, password) {
+  // Production backend authenticates via /api/login (not /api/auth/login).
   const response = await post(
-    "/api/auth/login",
+    "/api/login",
     { email: email.trim(), password },
-    { skipAuth: true }
+    { skipAuth: true, timeoutMs: 45000 }
   );
 
-  // 202: { success: true, data: { mfaRequired: true, email, message } }
+  // 202 / MFA challenge: { success: true, data: { mfaRequired: true, email, message } }
   if (response?.data?.mfaRequired) {
     return {
       mfaRequired: true,
@@ -43,7 +50,17 @@ export async function loginUser(email, password) {
     };
   }
 
-  // 200: { success: true, data: { user, session: { accessToken, refreshToken } } }
+  // MFA enabled but no session token yet — continue on MFA screen
+  if (
+    response?.data?.user?.mfa_enabled &&
+    !(response?.data?.token || response?.data?.session?.accessToken)
+  ) {
+    return {
+      mfaRequired: true,
+      email: response.data.user.email || email.trim(),
+    };
+  }
+
   return transformLoginResponse(response);
 }
 
@@ -60,7 +77,7 @@ export async function registerUser(firstName, lastName, email, password) {
       contactNumber: "0000000000",
       address: "Not provided",
     },
-    { skipAuth: true }
+    { skipAuth: true, timeoutMs: 45000 }
   );
 
   if (response && response.success === false) {
