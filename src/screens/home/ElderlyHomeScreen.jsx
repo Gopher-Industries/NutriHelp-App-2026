@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import { useAccessibility } from "../../context/AccessibilityContext";
 import { useHealthConditions } from "../../context/HealthConditionsContext";
+import { useNutritionTargets } from "../../context/NutritionTargetsContext";
 import { useUser } from "../../context/UserContext";
 
 function getGreeting() {
@@ -69,6 +70,7 @@ export default function ElderlyHomeScreen({ navigation }) {
   const { user } = useUser();
   const { fs, sh } = useAccessibility();
   const { conditions, activeWarnings } = useHealthConditions();
+  const { waterTarget } = useNutritionTargets();
   const [waterGlasses, setWaterGlasses] = useState(0);
 
   const displayName = user?.full_name?.split(" ")[0] ||
@@ -127,11 +129,11 @@ export default function ElderlyHomeScreen({ navigation }) {
           <View style={styles.waterTextCol}>
             <Text style={[styles.waterLabel, { fontSize: fs(16) }]}>Today's water</Text>
             <Text style={[styles.waterValue, { fontSize: fs(22) }]}>
-              {waterGlasses} <Text style={[styles.waterUnit, { fontSize: fs(14) }]}>of 8 cups</Text>
+              {waterGlasses} <Text style={[styles.waterUnit, { fontSize: fs(14) }]}>of {waterTarget} cups</Text>
             </Text>
           </View>
           <View style={styles.waterBarWrap}>
-            <View style={[styles.waterBarFill, { width: `${Math.min(waterGlasses / 8, 1) * 100}%` }]} />
+            <View style={[styles.waterBarFill, { width: `${Math.min(waterGlasses / waterTarget, 1) * 100}%` }]} />
           </View>
           <Ionicons name="chevron-forward" size={fs(20)} color="#94A3B8" />
         </Pressable>
