@@ -6,6 +6,7 @@ import ProfileScreen from "../screens/profile/ProfileScreen";
 import SettingsScreen from "../screens/profile/SettingsScreen";
 import TimerScreen from "../screens/tools/TimerScreen";
 import PlaceholderScreen from "./_PlaceholderScreen";
+import ShoppingListScreen from "../screens/account/ShoppingListScreen";
 
 const Stack = createStackNavigator();
 export default function AccountStack() {
@@ -37,9 +38,9 @@ export default function AccountStack() {
         options={{ title: "Dietary Requirements" }}
       />
       <Stack.Screen
-        name="ShoppingListScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Shopping List" }}
+       name="ShoppingListScreen"
+       component={ShoppingListScreen}
+       options={{ headerShown: false }}
       />
       <Stack.Screen
         name="AppointmentsScreen"

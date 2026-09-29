@@ -3,9 +3,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 // Single source of truth for the app's daily calorie and water targets.
 // Consumed by HomeScreen, ElderlyHomeScreen, WaterTracker, HealthToolsScreen,
-// AIWeeklyPlanScreen, and PersonalisedPlanForm (FE-14) so a change made in
-// any one place (e.g. generating an AI plan with a new calorie target)
-// reflects everywhere else without an app restart.
+// and PersonalisedPlanForm (FE-14) so a change made in any one place (e.g.
+// generating an AI plan with a new calorie target) reflects everywhere else
+// without an app restart.
 const CALORIE_TARGET_STORAGE_KEY = "nutrihelp.targets.calorieTarget";
 const WATER_TARGET_STORAGE_KEY = "nutrihelp.targets.waterTarget";
 
