@@ -281,7 +281,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() =>
               Alert.alert(
                 "Coming soon",
-                "Health News isn't available yet — this section will be added in a future update."
+                "Notifications aren't available yet. We'll let you know when this is ready."
               )
             }
           >
