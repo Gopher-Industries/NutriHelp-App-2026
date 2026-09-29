@@ -2,6 +2,7 @@ import { View, Text, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import FieldError from "./FieldError";
 
+import { colors } from "../../theme";
 export default function Input({
   label,
   value,
@@ -16,7 +17,7 @@ export default function Input({
     <View style={{ marginBottom: 16 }}>
       
       {label && (
-        <Text style={{ marginBottom: 6, color: "#000", fontWeight: "500" }}>
+        <Text style={{ marginBottom: 6, color: colors.black, fontWeight: "500" }}>
           {label}
         </Text>
       )}
@@ -25,7 +26,7 @@ export default function Input({
         
         {/* Icon */}
         {icon && (
-          <Ionicons name={icon} size={20} color="#666" style={{ marginRight: 8 }} />
+          <Ionicons name={icon} size={20} color={colors.textGrayDark} style={{ marginRight: 8 }} />
         )}
 
         <TextInput
@@ -34,14 +35,14 @@ export default function Input({
           placeholder={placeholder}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.textGrayLighter}
           style={{
             flex: 1,
             borderWidth: 1,
-            borderColor: error ? "red" : "#ccc",
+            borderColor: error ? "red" : colors.borderGray,
             padding: 12,
             borderRadius: 6,
-            color: "#000",
+            color: colors.black,
           }}
         />
       </View>

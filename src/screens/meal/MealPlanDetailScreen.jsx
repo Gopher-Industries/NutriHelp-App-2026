@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import {
   buildNutritionSummary,
@@ -20,8 +21,10 @@ import {
   MEAL_TYPES,
 } from "./mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 export default function MealPlanDetailScreen({ navigation, route }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [selectedMealType, setSelectedMealType] = useState(route?.params?.mealType || "breakfast");
   const [groups, setGroups] = useState([]);
   const [glasses, setGlasses] = useState(0);
@@ -78,10 +81,13 @@ export default function MealPlanDetailScreen({ navigation, route }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <View style={styles.topRow}>
-          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={34} color="#111111" />
+          <Pressable
+            style={[styles.backButton, { width: sh(78), height: sh(78), borderRadius: sh(39) }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-back" size={fs(34)} color={colors.textNearBlack} />
           </Pressable>
-          <Ionicons name="restaurant-outline" size={30} color="#1877F2" />
+          <Ionicons name="restaurant-outline" size={fs(30)} color={colors.facebookBlue} />
         </View>
 
         <ScrollView
@@ -94,10 +100,10 @@ export default function MealPlanDetailScreen({ navigation, route }) {
             return (
               <Pressable
                 key={mealType}
-                style={[styles.tabChip, active && styles.tabChipActive]}
+                style={[styles.tabChip, active && styles.tabChipActive, { minHeight: sh(54) }]}
                 onPress={() => setSelectedMealType(mealType)}
               >
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                <Text style={[styles.tabText, active && styles.tabTextActive, { fontSize: fs(22) }]}>
                   {formatDisplayName(mealType)}
                 </Text>
               </Pressable>
@@ -108,15 +114,15 @@ export default function MealPlanDetailScreen({ navigation, route }) {
         <View style={styles.waterCard}>
           <View style={styles.waterHeader}>
             <View>
-              <Text style={styles.waterTitle}>Water Intake</Text>
-              <Text style={styles.waterSubtext}>
+              <Text style={[styles.waterTitle, { fontSize: fs(26) }]}>Water Intake</Text>
+              <Text style={[styles.waterSubtext, { fontSize: fs(15) }]}>
                 {glasses} of {goalGlasses} glasses consumed
               </Text>
-              <Text style={styles.waterMlText}>
+              <Text style={[styles.waterMlText, { fontSize: fs(16) }]}>
                 {amountMl} ML / {goalGlasses * 250} ML
               </Text>
             </View>
-            <Ionicons name="water-outline" size={28} color="#1990FF" />
+            <Ionicons name="water-outline" size={fs(28)} color={colors.linkBlue} />
           </View>
 
           <View style={styles.glassRow}>
@@ -126,8 +132,8 @@ export default function MealPlanDetailScreen({ navigation, route }) {
                 <Ionicons
                   key={index}
                   name="water-outline"
-                  size={28}
-                  color={active ? "#1990FF" : "#FFFFFF"}
+                  size={fs(28)}
+                  color={active ? colors.linkBlue : colors.white}
                   style={styles.glassIcon}
                 />
               );
@@ -135,7 +141,9 @@ export default function MealPlanDetailScreen({ navigation, route }) {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>{selectedGroup?.title || "Meal"}</Text>
+        <Text style={[styles.sectionTitle, { fontSize: fs(26) }]}>
+          {selectedGroup?.title || "Meal"}
+        </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.recipeRow}>
             {(selectedGroup?.recipes || []).map((recipe) => (
@@ -147,10 +155,12 @@ export default function MealPlanDetailScreen({ navigation, route }) {
         </ScrollView>
 
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Nutrition Summary</Text>
+          <Text style={[styles.summaryTitle, { fontSize: fs(26) }]}>Nutrition Summary</Text>
           {nutritionSummary.map((item) => (
-            <View key={item.label} style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: item.color }]}>{item.label}</Text>
+            <View key={item.label} style={[styles.summaryRow, { minHeight: sh(28) }]}>
+              <Text style={[styles.summaryLabel, { color: item.color, fontSize: fs(17) }]}>
+                {item.label}
+              </Text>
               <View style={styles.summaryTrack}>
                 <View
                   style={[
@@ -159,7 +169,7 @@ export default function MealPlanDetailScreen({ navigation, route }) {
                   ]}
                 />
               </View>
-              <Text style={styles.summaryValue}>{item.value}</Text>
+              <Text style={[styles.summaryValue, { fontSize: fs(16) }]}>{item.value}</Text>
             </View>
           ))}
         </View>
@@ -169,8 +179,8 @@ export default function MealPlanDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28 },
   topRow: {
     flexDirection: "row",
@@ -183,7 +193,7 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -194,19 +204,19 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   tabChipActive: {
-    borderColor: "#1877F2",
+    borderColor: colors.facebookBlue,
   },
-  tabText: { fontSize: 22, color: "#1877F2", fontWeight: "500" },
+  tabText: { fontSize: 22, color: colors.facebookBlue, fontWeight: "500" },
   tabTextActive: { fontWeight: "800" },
   waterCard: {
     borderRadius: 30,
-    backgroundColor: "#000000",
+    backgroundColor: colors.black,
     padding: 20,
     marginBottom: 22,
   },
@@ -215,15 +225,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 18,
   },
-  waterTitle: { fontSize: 26, fontWeight: "800", color: "#FFFFFF" },
-  waterSubtext: { fontSize: 15, color: "#FFFFFF", marginTop: 4 },
-  waterMlText: { fontSize: 16, color: "#1990FF", fontWeight: "800", marginTop: 8 },
+  waterTitle: { fontSize: 26, fontWeight: "800", color: colors.white },
+  waterSubtext: { fontSize: 15, color: colors.white, marginTop: 4 },
+  waterMlText: { fontSize: 16, color: colors.linkBlue, fontWeight: "800", marginTop: 8 },
   glassRow: { flexDirection: "row" },
   glassIcon: { marginRight: 10 },
   sectionTitle: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#111111",
+    color: colors.textNearBlack,
     marginBottom: 16,
   },
   recipeRow: { flexDirection: "row", gap: 14, marginBottom: 22 },
@@ -231,13 +241,13 @@ const styles = StyleSheet.create({
   recipeImage: { width: "100%", height: "100%" },
   summaryCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 34,
     paddingHorizontal: 20,
     paddingVertical: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
-  summaryTitle: { fontSize: 26, fontWeight: "800", color: "#111111", marginBottom: 18 },
+  summaryTitle: { fontSize: 26, fontWeight: "800", color: colors.textNearBlack, marginBottom: 18 },
   summaryRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -248,10 +258,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 10,
     borderRadius: 99,
-    backgroundColor: "#D9D9D9",
+    backgroundColor: colors.c_d9d9d9,
     marginHorizontal: 14,
     overflow: "hidden",
   },
   summaryFill: { height: "100%", borderRadius: 99 },
-  summaryValue: { width: 52, textAlign: "right", fontSize: 16, color: "#111111" },
+  summaryValue: { width: 52, textAlign: "right", fontSize: 16, color: colors.textNearBlack },
 });

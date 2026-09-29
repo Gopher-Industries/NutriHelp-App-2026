@@ -1,3 +1,4 @@
+import { colors } from "../theme";
 // src/components/Button.jsx
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import * as Haptics from "expo-haptics";
@@ -34,7 +35,7 @@ export default function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === "secondary" ? "#18233D" : "#FFFFFF"}
+          color={variant === "secondary" ? colors.textPrimary : colors.white}
         />
       ) : (
         <Text
@@ -62,21 +63,21 @@ const styles = StyleSheet.create({
   },
 
   primary: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: colors.successMaterial,
   },
 
   secondary: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: colors.borderSlate,
   },
 
   danger: {
-    backgroundColor: "#EF4444",
+    backgroundColor: colors.danger,
   },
 
   disabled: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
   },
 
   text: {
@@ -85,18 +86,18 @@ const styles = StyleSheet.create({
   },
 
   primaryText: {
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   secondaryText: {
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   dangerText: {
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   disabledText: {
-    color: "#9CA3AF",
+    color: colors.textMuted,
   },
 });

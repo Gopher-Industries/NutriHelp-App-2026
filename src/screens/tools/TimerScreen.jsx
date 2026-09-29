@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { colors } from "../../theme";
 const QUICK_TIMERS = [1, 5, 10, 15, 20, 25, 30, 35];
 
 function formatSeconds(totalSeconds) {
@@ -71,7 +72,7 @@ export default function TimerScreen({ navigation }) {
       >
         <View style={styles.topRow}>
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={34} color="#111111" />
+            <Ionicons name="chevron-back" size={34} color={colors.textNearBlack} />
           </Pressable>
           <Text style={styles.pageTitle}>Countdown</Text>
           <View style={styles.topSpacer} />
@@ -96,7 +97,7 @@ export default function TimerScreen({ navigation }) {
                   {heating ? (
                     <>
                       <Text style={styles.heatingTag}>Heating</Text>
-                      <Ionicons name="flame-outline" size={28} color="#FFE96B" />
+                      <Ionicons name="flame-outline" size={28} color={colors.warningYellowSoft} />
                     </>
                   ) : null}
                 </View>
@@ -109,7 +110,7 @@ export default function TimerScreen({ navigation }) {
               <Ionicons
                 name={isRunning ? "pause" : "play"}
                 size={28}
-                color="#000000"
+                color={colors.black}
               />
             </Pressable>
 
@@ -163,11 +164,11 @@ export default function TimerScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   content: {
     paddingHorizontal: 18,
@@ -185,21 +186,21 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     alignItems: "center",
     justifyContent: "center",
   },
   pageTitle: {
     fontSize: 25,
     fontWeight: "800",
-    color: "#FF4D00",
+    color: colors.warningOrangeHot,
   },
   topSpacer: {
     width: 78,
   },
   timerHero: {
     borderRadius: 40,
-    backgroundColor: "#201D17",
+    backgroundColor: colors.c_201d17,
     paddingHorizontal: 22,
     paddingVertical: 26,
     marginBottom: 24,
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   liveTime: {
     fontSize: 46,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.white,
     marginBottom: 24,
   },
   stageRow: {
@@ -219,14 +220,14 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 62,
     borderRadius: 18,
-    backgroundColor: "#4C401F",
+    backgroundColor: colors.c_4c401f,
     opacity: 0.55,
   },
   stageBoxActive: {
     opacity: 1,
   },
   stageBoxHeating: {
-    backgroundColor: "#FFD24A",
+    backgroundColor: colors.warningYellow,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -235,8 +236,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -32,
     alignSelf: "center",
-    backgroundColor: "#FFD24A",
-    color: "#111111",
+    backgroundColor: colors.warningYellow,
+    color: colors.textNearBlack,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -253,21 +254,21 @@ const styles = StyleSheet.create({
     width: 120,
     height: 50,
     borderRadius: 18,
-    backgroundColor: "#FFD24A",
+    backgroundColor: colors.warningYellow,
     alignItems: "center",
     justifyContent: "center",
   },
   durationChip: {
     minWidth: 118,
     borderRadius: 18,
-    backgroundColor: "#BFBFBF",
+    backgroundColor: colors.c_bfbfbf,
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
   durationChipText: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#111111",
+    color: colors.textNearBlack,
     textAlign: "center",
   },
   adjustRow: {
@@ -278,28 +279,28 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#6A655A",
+    borderColor: colors.c_6a655a,
     paddingVertical: 10,
     alignItems: "center",
   },
   adjustLabel: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   infoCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 34,
     paddingHorizontal: 20,
     paddingVertical: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     marginBottom: 18,
   },
   cardTitle: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#111111",
+    color: colors.textNearBlack,
     marginBottom: 18,
   },
   quickTimerGrid: {
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
   quickTimerButton: {
     width: "22%",
     minWidth: 72,
-    backgroundColor: "#E5E5E5",
+    backgroundColor: colors.c_e5e5e5,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
@@ -319,18 +320,18 @@ const styles = StyleSheet.create({
   quickTimerText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111111",
+    color: colors.textNearBlack,
   },
   howTitle: {
     fontSize: 42,
     fontWeight: "800",
-    color: "#111111",
+    color: colors.textNearBlack,
     marginBottom: 16,
   },
   helpText: {
     fontSize: 18,
     lineHeight: 26,
-    color: "#111111",
+    color: colors.textNearBlack,
     marginBottom: 4,
   },
 });

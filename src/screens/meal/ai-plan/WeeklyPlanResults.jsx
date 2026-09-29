@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,22 +8,26 @@ import {
   View,
 } from "react-native";
 
-import { ApiError, toErrorMessage } from "../../../api/baseApi";
+import { ApiError } from "../../../api/baseApi";
 import { saveMealToDaily } from "../../../api/mealPlanApi";
+import Button from "../../../components/common/Button";
+import EmptyState from "../../../components/common/EmptyState";
+import { useAccessibility } from "../../../context/AccessibilityContext";
 import { useUser } from "../../../context/UserContext";
 import { saveDailyMeal } from "../../../utils/dailyMealsStorage";
 import FeedbackCard from "./FeedbackCard";
 
+import { colors } from "../../../theme";
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const DAY_COLORS = [
-  "#005BBB",
-  "#2E7D32",
-  "#c05c00",
-  "#7B1FA2",
-  "#00838F",
-  "#B71C1C",
-  "#1565C0",
+  colors.accentBlue,
+  colors.successForest,
+  colors.warningOrangeDark,
+  colors.accentPurple,
+  colors.accentTeal,
+  colors.dangerDarker,
+  colors.primaryStrong,
 ];
 
 function parseNutrient(value) {
@@ -32,20 +35,20 @@ function parseNutrient(value) {
   return Number.isNaN(n) ? 0 : n;
 }
 
-function NutrientBadge({ label, value, highSodium }) {
+function NutrientBadge({ label, value, highSodium, fs }) {
   return (
     <View style={[styles.badge, highSodium && styles.badgeSodium]}>
-      <Text style={[styles.badgeLabel, highSodium && styles.badgeLabelSodium]}>
+      <Text style={[styles.badgeLabel, highSodium && styles.badgeLabelSodium, { fontSize: fs(10) }]}>
         {label}
       </Text>
-      <Text style={[styles.badgeValue, highSodium && styles.badgeValueSodium]}>
+      <Text style={[styles.badgeValue, highSodium && styles.badgeValueSodium, { fontSize: fs(12) }]}>
         {value}
       </Text>
     </View>
   );
 }
 
-function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) {
+function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated, fs, sh }) {
   const [expanded, setExpanded] = useState(false);
   const [saveState, setSaveState] = useState("idle");
   const [saveError, setSaveError] = useState("");
@@ -104,22 +107,25 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
 
   return (
     <View style={styles.mealCard}>
-      <Text style={styles.mealTypeLabel}>{mealType.toUpperCase()}</Text>
-      <Text style={styles.mealName}>{meal.name}</Text>
+      <Text style={[styles.mealTypeLabel, { fontSize: fs(10) }]}>{mealType.toUpperCase()}</Text>
+      <Text style={[styles.mealName, { fontSize: fs(15) }]}>{meal.name}</Text>
       {meal.description ? (
-        <Text style={styles.mealDesc}>{meal.description}</Text>
+        <Text style={[styles.mealDesc, { fontSize: fs(13), lineHeight: fs(18) }]}>
+          {meal.description}
+        </Text>
       ) : null}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
         <View style={styles.badgesRow}>
-          <NutrientBadge label="Cal" value={meal.calories ?? "—"} />
-          <NutrientBadge label="Protein" value={meal.proteins ?? "—"} />
-          <NutrientBadge label="Fat" value={meal.fats ?? "—"} />
-          <NutrientBadge label="Fiber" value={meal.fiber ?? "—"} />
+          <NutrientBadge label="Cal" value={meal.calories ?? "—"} fs={fs} />
+          <NutrientBadge label="Protein" value={meal.proteins ?? "—"} fs={fs} />
+          <NutrientBadge label="Fat" value={meal.fats ?? "—"} fs={fs} />
+          <NutrientBadge label="Fiber" value={meal.fiber ?? "—"} fs={fs} />
           <NutrientBadge
             label="Sodium"
             value={meal.sodium ?? "—"}
             highSodium={sodiumVal > 600}
+            fs={fs}
           />
         </View>
       </ScrollView>
@@ -127,25 +133,31 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
       {meal.ingredients?.length > 0 ? (
         <>
           <Pressable
-            style={styles.ingredientsToggle}
+            style={[styles.ingredientsToggle, { minHeight: sh(28) }]}
             onPress={() => setExpanded((prev) => !prev)}
           >
-            <Text style={styles.ingredientsToggleText}>
+            <Text style={[styles.ingredientsToggleText, { fontSize: fs(12) }]}>
               {expanded ? "Hide ingredients" : "Show ingredients"}
             </Text>
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
-              size={13}
-              color="#047857"
+              size={fs(13)}
+              color={colors.success}
             />
           </Pressable>
           {expanded ? (
             <View style={styles.ingredientsList}>
               {meal.ingredients.map((ing, i) => (
                 <View key={i} style={styles.ingredientRow}>
-                  <Text style={styles.ingredientDot}>•</Text>
-                  <Text style={styles.ingredientItem}>{ing.item}</Text>
-                  <Text style={styles.ingredientAmount}>{ing.amount}</Text>
+                  <Text style={[styles.ingredientDot, { fontSize: fs(12), lineHeight: fs(18) }]}>
+                    •
+                  </Text>
+                  <Text style={[styles.ingredientItem, { fontSize: fs(12), lineHeight: fs(18) }]}>
+                    {ing.item}
+                  </Text>
+                  <Text style={[styles.ingredientAmount, { fontSize: fs(12), lineHeight: fs(18) }]}>
+                    {ing.amount}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -155,36 +167,27 @@ function MealCard({ meal, mealType, day, isAuthenticated, onNotAuthenticated }) 
 
       {saveState === "saved" ? (
         <View style={styles.savedBadge}>
-          <Ionicons name="checkmark-circle" size={15} color="#047857" />
-          <Text style={styles.savedBadgeText}>Added to Daily Plan</Text>
+          <Ionicons name="checkmark-circle" size={fs(15)} color={colors.success} />
+          <Text style={[styles.savedBadgeText, { fontSize: fs(13) }]}>Added to Daily Plan</Text>
         </View>
       ) : (
-        <Pressable
-          style={[
-            styles.saveBtn,
-            saveState === "saving" && styles.saveBtnDisabled,
-          ]}
+        <Button
+          label={isAuthenticated ? "Add to Daily Plan" : "Log in to save"}
           onPress={handleSave}
-          disabled={saveState === "saving"}
-        >
-          {saveState === "saving" ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveBtnText}>
-              {isAuthenticated ? "Add to Daily Plan" : "Log in to save"}
-            </Text>
-          )}
-        </Pressable>
+          loading={saveState === "saving"}
+          style={[styles.saveBtn, { minHeight: sh(40), height: undefined }]}
+          textStyle={[styles.saveBtnText, { fontSize: fs(13) }]}
+        />
       )}
 
       {saveState === "error" && saveError ? (
-        <Text style={styles.saveError}>{saveError}</Text>
+        <Text style={[styles.saveError, { fontSize: fs(12) }]}>{saveError}</Text>
       ) : null}
     </View>
   );
 }
 
-function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated }) {
+function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated, fs, sh }) {
   const borderColor = DAY_COLORS[dayIndex % DAY_COLORS.length];
 
   const renderMeal = (meal, mealType) => {
@@ -197,13 +200,15 @@ function DayCard({ dayData, dayIndex, isAuthenticated, onNotAuthenticated }) {
         day={dayData.day}
         isAuthenticated={isAuthenticated}
         onNotAuthenticated={onNotAuthenticated}
+        fs={fs}
+        sh={sh}
       />
     );
   };
 
   return (
     <View style={[styles.dayCard, { borderLeftColor: borderColor }]}>
-      <Text style={[styles.dayTitle, { color: borderColor }]}>{dayData.day}</Text>
+      <Text style={[styles.dayTitle, { color: borderColor, fontSize: fs(17) }]}>{dayData.day}</Text>
       {renderMeal(dayData.breakfast, "Breakfast")}
       {renderMeal(dayData.lunch, "Lunch")}
       {renderMeal(dayData.dinner, "Dinner")}
@@ -220,6 +225,7 @@ export default function WeeklyPlanResults({
   onBack,
 }) {
   const { isAuthenticated, logout } = useUser();
+  const { fs, sh } = useAccessibility();
 
   const handleNotAuthenticated = useCallback(() => {
     logout();
@@ -228,14 +234,18 @@ export default function WeeklyPlanResults({
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={52} color="#EF4444" />
-        <Text style={styles.errorTitle}>Something went wrong</Text>
-        <Text style={styles.errorMsg}>{error}</Text>
-        <Pressable style={styles.retryBtn} onPress={onRegenerate}>
-          <Text style={styles.retryBtnText}>Try Again</Text>
-        </Pressable>
-        <Pressable style={styles.editBtn} onPress={onBack}>
-          <Text style={styles.editBtnText}>Edit Preferences</Text>
+        <Ionicons name="alert-circle-outline" size={fs(52)} color={colors.danger} />
+        <Text style={[styles.errorTitle, { fontSize: fs(20) }]}>Something went wrong</Text>
+        <Text style={[styles.errorMsg, { fontSize: fs(14), lineHeight: fs(20) }]}>{error}</Text>
+        <Button
+          label="Try Again"
+          onPress={onRegenerate}
+          variant="success"
+          style={[styles.retryBtn, { minHeight: sh(48), height: undefined }]}
+          textStyle={[styles.retryBtnText, { fontSize: fs(15) }]}
+        />
+        <Pressable style={[styles.editBtn, { minHeight: sh(44) }]} onPress={onBack}>
+          <Text style={[styles.editBtnText, { fontSize: fs(14) }]}>Edit Preferences</Text>
         </Pressable>
       </View>
     );
@@ -244,16 +254,19 @@ export default function WeeklyPlanResults({
   if (!mealPlan || mealPlan.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="restaurant-outline" size={52} color="#9CA3AF" />
-        <Text style={styles.errorTitle}>No plan returned</Text>
-        <Text style={styles.errorMsg}>
-          The server did not return a meal plan. Please try again.
-        </Text>
-        <Pressable style={styles.retryBtn} onPress={onRegenerate}>
-          <Text style={styles.retryBtnText}>Regenerate</Text>
-        </Pressable>
-        <Pressable style={styles.editBtn} onPress={onBack}>
-          <Text style={styles.editBtnText}>Edit Preferences</Text>
+        <EmptyState
+          message="No plan returned. The server did not return a meal plan. Please try again."
+          icon="restaurant-outline"
+        />
+        <Button
+          label="Regenerate"
+          onPress={onRegenerate}
+          variant="success"
+          style={[styles.retryBtn, { minHeight: sh(48), height: undefined }]}
+          textStyle={[styles.retryBtnText, { fontSize: fs(15) }]}
+        />
+        <Pressable style={[styles.editBtn, { minHeight: sh(44) }]} onPress={onBack}>
+          <Text style={[styles.editBtnText, { fontSize: fs(14) }]}>Edit Preferences</Text>
         </Pressable>
       </View>
     );
@@ -266,15 +279,18 @@ export default function WeeklyPlanResults({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.topBar}>
-        <Pressable style={styles.topBarBack} onPress={onBack} hitSlop={8}>
-          <Ionicons name="arrow-back" size={18} color="#374151" />
-          <Text style={styles.topBarBackText}>Edit</Text>
+        <Pressable style={[styles.topBarBack, { minHeight: sh(44) }]} onPress={onBack} hitSlop={8}>
+          <Ionicons name="arrow-back" size={fs(18)} color={colors.textGray700} />
+          <Text style={[styles.topBarBackText, { fontSize: fs(14) }]}>Edit</Text>
         </Pressable>
-        <Text style={styles.topBarTitle}>Your 7-Day Plan</Text>
-        <Pressable style={styles.regenBtn} onPress={onRegenerate}>
-          <Ionicons name="refresh" size={14} color="#FFFFFF" />
-          <Text style={styles.regenBtnText}>Regenerate</Text>
-        </Pressable>
+        <Text style={[styles.topBarTitle, { fontSize: fs(15) }]}>Your 7-Day Plan</Text>
+        <Button
+          label="Regenerate"
+          onPress={onRegenerate}
+          variant="success"
+          style={[styles.regenBtn, { minHeight: sh(36), height: undefined }]}
+          textStyle={[styles.regenBtnText, { fontSize: fs(13) }]}
+        />
       </View>
 
       {mealPlan.map((dayData, i) => (
@@ -284,6 +300,8 @@ export default function WeeklyPlanResults({
           dayIndex={i}
           isAuthenticated={isAuthenticated}
           onNotAuthenticated={handleNotAuthenticated}
+          fs={fs}
+          sh={sh}
         />
       ))}
 
@@ -293,7 +311,7 @@ export default function WeeklyPlanResults({
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: "#F8FAFC" },
+  scroll: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingBottom: 40 },
 
   topBar: {
@@ -302,9 +320,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: colors.border,
   },
   topBarBack: {
     flexDirection: "row",
@@ -313,27 +331,24 @@ const styles = StyleSheet.create({
     minWidth: 60,
     minHeight: 44,
   },
-  topBarBackText: { fontSize: 14, color: "#374151", fontWeight: "500" },
-  topBarTitle: { fontSize: 15, fontWeight: "700", color: "#253B63" },
+  topBarBackText: { fontSize: 14, color: colors.textGray700, fontWeight: "500" },
+  topBarTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
   regenBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    height: 36,
     borderRadius: 20,
-    minHeight: 36,
+    minWidth: 0,
   },
-  regenBtnText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
+  regenBtnText: { fontSize: 13, fontWeight: "600", color: colors.white },
 
   dayCard: {
     marginHorizontal: 14,
     marginTop: 14,
     borderRadius: 16,
     borderLeftWidth: 5,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
+    backgroundColor: colors.white,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -350,26 +365,26 @@ const styles = StyleSheet.create({
 
   mealCard: {
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
+    borderTopColor: colors.surfaceGray,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   mealTypeLabel: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#9CA3AF",
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 4,
   },
   mealName: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#111827",
+    color: colors.textGray900,
     marginBottom: 4,
   },
   mealDesc: {
     fontSize: 13,
-    color: "#6B7280",
+    color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -377,17 +392,17 @@ const styles = StyleSheet.create({
   badgesRow: { flexDirection: "row", gap: 6 },
   badge: {
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: colors.surfaceGray,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 5,
     minWidth: 54,
   },
-  badgeSodium: { backgroundColor: "#FEE2E2" },
-  badgeLabel: { fontSize: 10, color: "#6B7280", fontWeight: "600", marginBottom: 1 },
-  badgeLabelSodium: { color: "#DC2626" },
-  badgeValue: { fontSize: 12, color: "#111827", fontWeight: "600" },
-  badgeValueSodium: { color: "#B91C1C" },
+  badgeSodium: { backgroundColor: colors.surfaceRedSoft },
+  badgeLabel: { fontSize: 10, color: colors.textSecondary, fontWeight: "600", marginBottom: 1 },
+  badgeLabelSodium: { color: colors.dangerStrong },
+  badgeValue: { fontSize: 12, color: colors.textGray900, fontWeight: "600" },
+  badgeValueSodium: { color: colors.dangerDark },
 
   ingredientsToggle: {
     flexDirection: "row",
@@ -398,11 +413,11 @@ const styles = StyleSheet.create({
   },
   ingredientsToggleText: {
     fontSize: 12,
-    color: "#047857",
+    color: colors.success,
     fontWeight: "600",
   },
   ingredientsList: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 8,
     padding: 10,
     marginBottom: 8,
@@ -413,20 +428,20 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 6,
   },
-  ingredientDot: { fontSize: 12, color: "#9CA3AF", lineHeight: 18 },
-  ingredientItem: { flex: 1, fontSize: 12, color: "#374151", lineHeight: 18 },
-  ingredientAmount: { fontSize: 12, color: "#6B7280", lineHeight: 18 },
+  ingredientDot: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  ingredientItem: { flex: 1, fontSize: 12, color: colors.textGray700, lineHeight: 18 },
+  ingredientAmount: { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
 
   saveBtn: {
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { fontSize: 13, fontWeight: "700", color: "#FFFFFF" },
+  saveBtnText: { fontSize: 13, fontWeight: "700", color: colors.white },
   savedBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -434,26 +449,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingVertical: 8,
   },
-  savedBadgeText: { fontSize: 13, color: "#047857", fontWeight: "600" },
-  saveError: { fontSize: 12, color: "#EF4444", marginTop: 4 },
+  savedBadgeText: { fontSize: 13, color: colors.success, fontWeight: "600" },
+  saveError: { fontSize: 12, color: colors.danger, marginTop: 4 },
 
   errorContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     gap: 12,
   },
   errorTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     textAlign: "center",
   },
   errorMsg: {
     fontSize: 14,
-    color: "#6B7280",
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -461,17 +476,17 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: 32,
     borderRadius: 14,
-    backgroundColor: "#047857",
+    backgroundColor: colors.success,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
   },
-  retryBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  retryBtnText: { fontSize: 15, fontWeight: "700", color: colors.white },
   editBtn: {
     height: 44,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  editBtnText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+  editBtnText: { fontSize: 14, color: colors.textSecondary, fontWeight: "500" },
 });

@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -14,9 +13,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import profileApi from "../../api/profileApi";
+import Button from "../../components/common/Button";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
 
+import { colors } from "../../theme";
 const DIETARY_OPTIONS = [
   "Balanced",
   "Vegan",
@@ -54,7 +56,7 @@ function LabeledInput({
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textMuted}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
@@ -219,7 +221,7 @@ export default function EditProfileScreen({ navigation, route }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
-        <ActivityIndicator size="large" color="#0B5FA5" />
+        <LoadingSpinner />
       </SafeAreaView>
     );
   }
@@ -234,7 +236,7 @@ export default function EditProfileScreen({ navigation, route }) {
       >
         <View style={styles.topBar}>
           <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={22} color="#18233D" />
+            <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.logoText}>NutriHelp</Text>
           <View style={styles.iconSpacer} />
@@ -245,7 +247,7 @@ export default function EditProfileScreen({ navigation, route }) {
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <View style={styles.avatarAction}>
-            <Ionicons name="camera-outline" size={18} color="#0B5FA5" />
+            <Ionicons name="camera-outline" size={18} color={colors.primary} />
           </View>
           <Text style={styles.editPhotoLabel}>Edit photo</Text>
         </View>
@@ -256,7 +258,7 @@ export default function EditProfileScreen({ navigation, route }) {
             <TextInput
               style={[styles.input, errors.firstName ? styles.inputError : null]}
               placeholder="First name"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
               value={form.firstName}
               onChangeText={(v) => updateField("firstName", v)}
               autoCapitalize="words"
@@ -270,7 +272,7 @@ export default function EditProfileScreen({ navigation, route }) {
             <TextInput
               style={styles.input}
               placeholder="Last name"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
               value={form.lastName}
               onChangeText={(v) => updateField("lastName", v)}
               autoCapitalize="words"
@@ -301,7 +303,7 @@ export default function EditProfileScreen({ navigation, route }) {
           <TextInput
             style={[styles.input, errors.dateOfBirth ? styles.inputError : null]}
             placeholder="YYYY-MM-DD  e.g. 1990-05-20"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textMuted}
             value={form.dateOfBirth}
             onChangeText={(v) => updateField("dateOfBirth", v)}
             keyboardType="numbers-and-punctuation"
@@ -321,7 +323,7 @@ export default function EditProfileScreen({ navigation, route }) {
             <Text style={[styles.pickerText, !form.dietaryPreference && styles.pickerPlaceholder]}>
               {form.dietaryPreference || "Select a preference..."}
             </Text>
-            <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+            <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
           </Pressable>
         </View>
 
@@ -363,18 +365,13 @@ export default function EditProfileScreen({ navigation, route }) {
           error={errors.confirmPassword}
         />
 
-        <Pressable
-          style={[styles.saveButton, saving ? styles.buttonDisabled : null]}
+        <Button
+          label="Save Changes"
           onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : null}
-          <Text style={styles.saveButtonText}>
-            {saving ? "  Saving..." : "Save Changes"}
-          </Text>
-        </Pressable>
+          loading={saving}
+          style={styles.saveButton}
+          textStyle={styles.saveButtonText}
+        />
 
         <Pressable style={styles.cancelButton} onPress={() => navigation.goBack()}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -414,7 +411,7 @@ export default function EditProfileScreen({ navigation, route }) {
                     {option}
                   </Text>
                   {form.dietaryPreference === option ? (
-                    <Ionicons name="checkmark" size={20} color="#0B5FA5" />
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
                   ) : null}
                 </Pressable>
               ))}
@@ -427,9 +424,9 @@ export default function EditProfileScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  loadingWrap: { flex: 1, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  loadingWrap: { flex: 1, backgroundColor: colors.white, alignItems: "center", justifyContent: "center" },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 22, paddingBottom: 34 },
   topBar: {
     flexDirection: "row",
@@ -439,81 +436,80 @@ const styles = StyleSheet.create({
   },
   iconButton: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   iconSpacer: { width: 36, height: 36 },
-  logoText: { fontSize: 15, fontWeight: "700", color: "#18233D" },
+  logoText: { fontSize: 15, fontWeight: "700", color: colors.textPrimary },
   avatarSection: { alignItems: "center", marginBottom: 20 },
   avatarCircle: {
     width: 108,
     height: 108,
     borderRadius: 54,
-    backgroundColor: "#DCE7FB",
+    backgroundColor: colors.c_dce7fb,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { fontSize: 34, fontWeight: "900", color: "#173E6A" },
+  avatarText: { fontSize: 34, fontWeight: "900", color: colors.c_173e6a },
   avatarAction: {
     marginTop: -16,
     marginLeft: 72,
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
   },
-  editPhotoLabel: { marginTop: 6, fontSize: 12, fontWeight: "700", color: "#0B5FA5" },
+  editPhotoLabel: { marginTop: 6, fontSize: 12, fontWeight: "700", color: colors.primary },
   nameRow: { flexDirection: "row", marginBottom: 12 },
   nameHalf: { flex: 1, marginRight: 6 },
   nameHalfRight: { flex: 1, marginLeft: 6 },
   inputGroup: { marginBottom: 12 },
-  inputLabel: { marginBottom: 6, fontSize: 10, fontWeight: "800", color: "#6B7280" },
+  inputLabel: { marginBottom: 6, fontSize: 10, fontWeight: "800", color: colors.textSecondary },
   input: {
     height: 48,
     borderRadius: 10,
-    backgroundColor: "#EAF0FF",
+    backgroundColor: colors.c_eaf0ff,
     borderWidth: 1,
-    borderColor: "#D8E1F5",
+    borderColor: colors.c_d8e1f5,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: "#18233D",
+    color: colors.textPrimary,
   },
-  inputError: { borderColor: "#EF4444", backgroundColor: "#FFF5F5" },
-  errorText: { marginTop: 4, fontSize: 12, color: "#EF4444" },
+  inputError: { borderColor: colors.danger, backgroundColor: colors.c_fff5f5 },
+  errorText: { marginTop: 4, fontSize: 12, color: colors.danger },
   pickerButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingRight: 14,
   },
-  pickerText: { fontSize: 14, color: "#18233D", flex: 1 },
-  pickerPlaceholder: { color: "#9CA3AF" },
-  divider: { height: 1, backgroundColor: "#E5E7EB", marginVertical: 16 },
-  sectionHeading: { fontSize: 14, fontWeight: "800", color: "#374151", marginBottom: 12 },
+  pickerText: { fontSize: 14, color: colors.textPrimary, flex: 1 },
+  pickerPlaceholder: { color: colors.textMuted },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 16 },
+  sectionHeading: { fontSize: 14, fontWeight: "800", color: colors.textGray700, marginBottom: 12 },
   saveButton: {
     marginTop: 8,
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
   },
-  saveButtonText: { fontSize: 15, fontWeight: "800", color: "#FFFFFF" },
+  saveButtonText: { fontSize: 15, fontWeight: "800", color: colors.white },
   cancelButton: {
     marginTop: 10,
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#E1E8F7",
+    backgroundColor: colors.c_e1e8f7,
     alignItems: "center",
     justifyContent: "center",
   },
-  cancelButtonText: { fontSize: 15, fontWeight: "700", color: "#55627D" },
-  buttonDisabled: { opacity: 0.7 },
+  cancelButtonText: { fontSize: 15, fontWeight: "700", color: colors.c_55627d },
   pickerOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.3)" },
   pickerBackdrop: { flex: 1 },
   pickerSheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -526,10 +522,10 @@ const styles = StyleSheet.create({
     width: 52,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#D0D5DD",
+    backgroundColor: colors.c_d0d5dd,
     marginBottom: 16,
   },
-  pickerSheetTitle: { fontSize: 18, fontWeight: "800", color: "#18233D", marginBottom: 12 },
+  pickerSheetTitle: { fontSize: 18, fontWeight: "800", color: colors.textPrimary, marginBottom: 12 },
   pickerOption: {
     flexDirection: "row",
     alignItems: "center",
@@ -537,9 +533,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.surfaceGray,
   },
-  pickerOptionSelected: { backgroundColor: "#EAF0FF", borderRadius: 8, paddingHorizontal: 8 },
-  pickerOptionText: { fontSize: 16, color: "#374151" },
-  pickerOptionTextSelected: { fontWeight: "700", color: "#0B5FA5" },
+  pickerOptionSelected: { backgroundColor: colors.c_eaf0ff, borderRadius: 8, paddingHorizontal: 8 },
+  pickerOptionText: { fontSize: 16, color: colors.textGray700 },
+  pickerOptionTextSelected: { fontWeight: "700", color: colors.primary },
 });

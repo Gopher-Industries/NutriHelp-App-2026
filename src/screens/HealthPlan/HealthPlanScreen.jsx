@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,9 +11,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { generateHealthPlan, HEALTH_GOALS } from "../../services/healthPlanApi";
+import Button from "../../components/common/Button";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
 import { useAccessibility } from "../../context/AccessibilityContext";
 
+import { colors } from "../../theme";
 const GOAL_META = {
   "Weight Loss": { emoji: "⚖️", desc: "Burn fat, improve body composition" },
   "Muscle Gain": { emoji: "💪", desc: "Build strength and lean muscle" },
@@ -40,7 +43,7 @@ function GoalCard({ goal, selected, onPress }) {
         <Text style={styles.goalDesc}>{meta.desc}</Text>
       </View>
       {selected && (
-        <Ionicons name="checkmark-circle" size={20} color="#0B5FA5" />
+        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
       )}
     </Pressable>
   );
@@ -61,7 +64,7 @@ function WeekCard({ week }) {
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color="#94A3B8"
+          color={colors.textSlate400}
         />
       </Pressable>
 
@@ -69,7 +72,7 @@ function WeekCard({ week }) {
         <View style={styles.weekBody}>
           {/* Calories */}
           <View style={styles.calorieBadge}>
-            <Ionicons name="flame-outline" size={14} color="#F59E0B" />
+            <Ionicons name="flame-outline" size={14} color={colors.warning} />
             <Text style={styles.calorieText}>
               {" "}
               {week.target_calories_per_day} kcal / day
@@ -117,13 +120,13 @@ function WeekCard({ week }) {
 
 function InfoCard({ icon, title, children }) {
   return (
-    <View style={styles.infoCard}>
+    <Card style={styles.infoCard}>
       <View style={styles.infoCardHeader}>
-        <Ionicons name={icon} size={18} color="#0B5FA5" />
+        <Ionicons name={icon} size={18} color={colors.primary} />
         <Text style={styles.infoCardTitle}> {title}</Text>
       </View>
       {children}
-    </View>
+    </Card>
   );
 }
 
@@ -134,7 +137,7 @@ function ConditionWarningBanner({ activeWarnings }) {
   return (
     <View style={styles.conditionBanner}>
       <View style={styles.conditionBannerHeader}>
-        <Ionicons name="medkit-outline" size={16} color="#B45309" />
+        <Ionicons name="medkit-outline" size={16} color={colors.warningDark} />
         <Text style={styles.conditionBannerTitle}> Dietary considerations for your conditions</Text>
       </View>
       {activeWarnings.map((w) => (
@@ -192,8 +195,10 @@ export default function HealthPlanScreen() {
           <Text style={styles.screenTitle}>AI Health Plan</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0B5FA5" />
-          <Text style={styles.loadingTitle}>Generating your personalised plan…</Text>
+          <LoadingSpinner
+            message="Generating your personalised plan…"
+            textStyle={styles.loadingTitle}
+          />
           <Text style={styles.loadingSubtitle}>
             This may take up to 60 seconds on first load. Please wait.
           </Text>
@@ -210,7 +215,7 @@ export default function HealthPlanScreen() {
         <View style={styles.screenHeader}>
           <Text style={styles.screenTitle}>AI Health Plan</Text>
           <Pressable style={styles.regenerateBtn} onPress={handleRegenerate}>
-            <Ionicons name="refresh-outline" size={16} color="#0B5FA5" />
+            <Ionicons name="refresh-outline" size={16} color={colors.primary} />
             <Text style={styles.regenerateBtnText}> Regenerate</Text>
           </Pressable>
         </View>
@@ -282,7 +287,7 @@ export default function HealthPlanScreen() {
               if (error) setError(null);
             }}
             placeholder="e.g. 35-year-old male, mild hypertension, sedentary lifestyle, wants to lose 10 kg…"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.textSlate400}
             multiline
             numberOfLines={5}
             textAlignVertical="top"
@@ -311,20 +316,19 @@ export default function HealthPlanScreen() {
         {/* Error */}
         {error ? (
           <View style={styles.errorBox}>
-            <Ionicons name="alert-circle-outline" size={15} color="#EF4444" />
+            <Ionicons name="alert-circle-outline" size={15} color={colors.danger} />
             <Text style={styles.errorText}> {error}</Text>
           </View>
         ) : null}
 
         {/* Generate button */}
-        <Pressable
-          style={[styles.generateBtn, !canSubmit && styles.generateBtnDisabled]}
+        <Button
+          label="Generate My Plan"
           onPress={handleGenerate}
           disabled={!canSubmit}
-        >
-          <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-          <Text style={styles.generateBtnText}> Generate My Plan</Text>
-        </Pressable>
+          style={[styles.generateBtn, !canSubmit && styles.generateBtnDisabled]}
+          textStyle={styles.generateBtnText}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -334,7 +338,7 @@ export default function HealthPlanScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
 
   screenHeader: {
     flexDirection: "row",
@@ -343,9 +347,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.surfaceSlate,
   },
-  screenTitle: { fontSize: 22, fontWeight: "800", color: "#253B63" },
+  screenTitle: { fontSize: 22, fontWeight: "800", color: colors.textNavy },
 
   // Loading
   loadingContainer: {
@@ -357,13 +361,13 @@ const styles = StyleSheet.create({
   loadingTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     textAlign: "center",
     marginTop: 20,
   },
   loadingSubtitle: {
     fontSize: 14,
-    color: "#94A3B8",
+    color: colors.textSlate400,
     textAlign: "center",
     lineHeight: 21,
     marginTop: 8,
@@ -373,7 +377,7 @@ const styles = StyleSheet.create({
   formContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   formSubtitle: {
     fontSize: 14,
-    color: "#667085",
+    color: colors.textSecondaryAlt,
     lineHeight: 21,
     marginBottom: 24,
   },
@@ -382,26 +386,26 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 10,
   },
 
   textArea: {
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: colors.borderSlateSoft,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 12,
     fontSize: 15,
-    color: "#253B63",
-    backgroundColor: "#F8FAFC",
+    color: colors.textNavy,
+    backgroundColor: colors.surface,
     minHeight: 120,
   },
-  inputError: { borderColor: "#EF4444" },
+  inputError: { borderColor: colors.danger },
   charCounter: {
     fontSize: 12,
-    color: "#94A3B8",
+    color: colors.textSlate400,
     textAlign: "right",
     marginTop: 4,
   },
@@ -411,34 +415,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#E2E8F0",
+    borderColor: colors.borderSlateSoft,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: colors.surfaceNeutral,
     gap: 12,
   },
   goalCardSelected: {
-    borderColor: "#0B5FA5",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceBlue,
   },
   goalEmoji: { fontSize: 26 },
   goalCardText: { flex: 1 },
-  goalName: { fontSize: 15, fontWeight: "700", color: "#253B63" },
-  goalNameSelected: { color: "#0B5FA5" },
-  goalDesc: { fontSize: 12, color: "#94A3B8", marginTop: 2 },
+  goalName: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
+  goalNameSelected: { color: colors.primary },
+  goalDesc: { fontSize: 12, color: colors.textSlate400, marginTop: 2 },
 
   // Error
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF2F2",
+    backgroundColor: colors.surfaceRed,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 16,
   },
-  errorText: { fontSize: 13, color: "#EF4444", flex: 1 },
+  errorText: { fontSize: 13, color: colors.danger, flex: 1 },
 
   // Generate button
   generateBtn: {
@@ -447,12 +451,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     marginTop: 4,
     gap: 6,
   },
-  generateBtnDisabled: { backgroundColor: "#CBD5E1" },
-  generateBtnText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+  generateBtnDisabled: { backgroundColor: colors.borderSlate },
+  generateBtnText: { fontSize: 16, fontWeight: "700", color: colors.white },
 
   // Results
   resultsContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
@@ -463,34 +467,33 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#0B5FA5",
+    borderColor: colors.primary,
   },
-  regenerateBtnText: { fontSize: 13, fontWeight: "600", color: "#0B5FA5" },
+  regenerateBtnText: { fontSize: 13, fontWeight: "600", color: colors.primary },
 
   infoCard: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.borderSlateSoft,
+    backgroundColor: colors.surface,
     padding: 16,
     marginBottom: 16,
   },
   infoCardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  infoCardTitle: { fontSize: 15, fontWeight: "700", color: "#253B63" },
+  infoCardTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
 
   // Weekly plan
   weeksSection: { marginBottom: 16 },
   weeksSectionTitle: {
     fontSize: 17,
     fontWeight: "800",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 12,
   },
 
   weekCard: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: colors.borderSlateSoft,
     marginBottom: 10,
     overflow: "hidden",
   },
@@ -499,51 +502,51 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     padding: 14,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: colors.surfaceNeutral,
   },
   weekBadge: {
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
     minWidth: 56,
     alignItems: "center",
   },
-  weekBadgeText: { fontSize: 12, fontWeight: "700", color: "#FFFFFF" },
-  weekFocus: { flex: 1, fontSize: 14, fontWeight: "600", color: "#253B63" },
+  weekBadgeText: { fontSize: 12, fontWeight: "700", color: colors.white },
+  weekFocus: { flex: 1, fontSize: 14, fontWeight: "600", color: colors.textNavy },
 
-  weekBody: { padding: 14, borderTopWidth: 1, borderTopColor: "#F1F5F9" },
+  weekBody: { padding: 14, borderTopWidth: 1, borderTopColor: colors.surfaceSlate },
   calorieBadge: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: "#FFFBEB",
+    backgroundColor: colors.surfaceAmber,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginBottom: 12,
   },
-  calorieText: { fontSize: 13, fontWeight: "600", color: "#B45309" },
+  calorieText: { fontSize: 13, fontWeight: "600", color: colors.warningDark },
 
   section: { marginBottom: 12 },
   sectionLabel: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#94A3B8",
+    color: colors.textSlate400,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 6,
   },
   bulletRow: { flexDirection: "row", marginBottom: 4 },
-  bullet: { fontSize: 14, color: "#0B5FA5", marginRight: 6, lineHeight: 20 },
-  bulletText: { fontSize: 14, color: "#374151", lineHeight: 20, flex: 1 },
-  bodyText: { fontSize: 14, color: "#374151", lineHeight: 22 },
+  bullet: { fontSize: 14, color: colors.primary, marginRight: 6, lineHeight: 20 },
+  bulletText: { fontSize: 14, color: colors.textGray700, lineHeight: 20, flex: 1 },
+  bodyText: { fontSize: 14, color: colors.textGray700, lineHeight: 22 },
 
   conditionBanner: {
-    backgroundColor: "#FFFBEB",
+    backgroundColor: colors.surfaceAmber,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: colors.c_fde68a,
     padding: 14,
     marginBottom: 16,
   },
@@ -552,8 +555,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  conditionBannerTitle: { fontSize: 13, fontWeight: "700", color: "#92400E" },
+  conditionBannerTitle: { fontSize: 13, fontWeight: "700", color: colors.warningDarker },
   conditionWarningRow: { flexDirection: "row", marginBottom: 4 },
-  conditionWarningBullet: { fontSize: 13, color: "#B45309", marginRight: 6, lineHeight: 19 },
-  conditionWarningText: { fontSize: 13, color: "#92400E", lineHeight: 19, flex: 1 },
+  conditionWarningBullet: { fontSize: 13, color: colors.warningDark, marginRight: 6, lineHeight: 19 },
+  conditionWarningText: { fontSize: 13, color: colors.warningDarker, lineHeight: 19, flex: 1 },
 });

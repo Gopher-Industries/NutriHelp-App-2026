@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
+import { colors } from "../../theme";
 export default function NavigationHeader({
   title,
   showBackButton = false,
@@ -15,12 +16,12 @@ export default function NavigationHeader({
     <View
       style={{
         height: 60,
-        backgroundColor: isDark ? "#111827" : "#ffffff", 
+        backgroundColor: isDark ? colors.textGray900 : colors.white, 
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: colors.borderLight,
       }}
     >
       {showBackButton && (
@@ -35,7 +36,7 @@ export default function NavigationHeader({
           <Ionicons
             name="arrow-back"
             size={24}
-            color={isDark ? "#fff" : "#000"} 
+            color={isDark ? colors.white : colors.black} 
           />
         </TouchableOpacity>
       )}
@@ -44,7 +45,7 @@ export default function NavigationHeader({
         style={{
           fontSize: 18,
           fontWeight: "600",
-          color: isDark ? "#fff" : "#000", 
+          color: isDark ? colors.white : colors.black, 
         }}
       >
         {title}
