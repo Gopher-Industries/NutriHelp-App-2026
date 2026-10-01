@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Platform,
@@ -15,6 +14,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import recipeApi from "../../api/recipeApi";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import {
   COLUMN_GAP,
   FilterChips,
@@ -23,17 +25,18 @@ import {
 } from "./RecipeListScreen";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { colors } from "../../theme";
 const C = {
-  primary: "#1A6DB5",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  gray100: "#f3f4f6",
-  gray500: "#6b7280",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  gray100: colors.surfaceGray,
+  gray500: colors.textSecondary,
+  white: colors.white,
 };
 
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -41,7 +44,7 @@ const SURFACE_SHADOW = {
 };
 
 const SURFACE_SHADOW_SUBTLE = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
@@ -252,6 +255,8 @@ function DebouncedSearchBar({
   onBlur,
   onClear,
   onSubmitEditing,
+  fs,
+  sh,
 }) {
   return (
     <View style={styles.searchBarWrap}>
@@ -260,17 +265,24 @@ function DebouncedSearchBar({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textMuted}
           autoFocus={autoFocus}
           onFocus={onFocus}
           onBlur={onBlur}
           onSubmitEditing={onSubmitEditing}
           returnKeyType="search"
-          style={styles.searchInput}
+          style={[
+            styles.searchInput,
+            { fontSize: fs(16), minHeight: sh(48), height: undefined },
+          ]}
         />
         {isFocused && value.trim().length > 0 ? (
-          <Pressable onPress={onClear} style={styles.clearBtn} hitSlop={8}>
-            <Text style={styles.clearBtnText}>X</Text>
+          <Pressable
+            onPress={onClear}
+            style={[styles.clearBtn, { width: sh(36), height: sh(36) }]}
+            hitSlop={8}
+          >
+            <Text style={[styles.clearBtnText, { fontSize: fs(18) }]}>X</Text>
           </Pressable>
         ) : null}
       </View>
@@ -278,7 +290,7 @@ function DebouncedSearchBar({
   );
 }
 
-function FeaturedRecipeCard({ recipe, onPress }) {
+function FeaturedRecipeCard({ recipe, onPress, fs }) {
   const imageUri = String(recipe?.imageUrl ?? "").trim();
 
   return (
@@ -287,18 +299,18 @@ function FeaturedRecipeCard({ recipe, onPress }) {
         <Image source={{ uri: imageUri }} style={styles.featuredImage} resizeMode="cover" />
       ) : (
         <View style={styles.featuredImagePlaceholder}>
-          <Ionicons name="image-outline" size={30} color="#A8A29E" />
+          <Ionicons name="image-outline" size={fs(30)} color={colors.c_a8a29e} />
         </View>
       )}
       <View style={styles.featuredBody}>
-        <Text style={styles.featuredTitle} numberOfLines={2}>
+        <Text style={[styles.featuredTitle, { fontSize: fs(15) }]} numberOfLines={2}>
           {recipe?.title ?? "Untitled Recipe"}
         </Text>
-        <Text style={styles.featuredMetaText} numberOfLines={1}>
+        <Text style={[styles.featuredMetaText, { fontSize: fs(12) }]} numberOfLines={1}>
           {formatRatingSummary(recipe)}
         </Text>
         {getAuthorLabel(recipe) ? (
-          <Text style={styles.featuredMetaText} numberOfLines={1}>
+          <Text style={[styles.featuredMetaText, { fontSize: fs(12) }]} numberOfLines={1}>
             By {getAuthorLabel(recipe)}
           </Text>
         ) : null}
@@ -309,6 +321,7 @@ function FeaturedRecipeCard({ recipe, onPress }) {
 
 export default function SearchRecipesScreen({ navigation }) {
   const { width } = useWindowDimensions();
+  const { fs, sh } = useAccessibility();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState("library");
@@ -571,10 +584,13 @@ export default function SearchRecipesScreen({ navigation }) {
 
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyMessage}>{message}</Text>
+        <EmptyState message={message} style={styles.emptyStateInner} />
         {displayTerm.length > 0 ? (
-          <Pressable onPress={handleClearSearch} style={styles.emptyClearBtn}>
-            <Text style={styles.emptyClearText}>Clear search</Text>
+          <Pressable
+            onPress={handleClearSearch}
+            style={[styles.emptyClearBtn, { minHeight: sh(44) }]}
+          >
+            <Text style={[styles.emptyClearText, { fontSize: fs(16) }]}>Clear search</Text>
           </Pressable>
         ) : null}
       </View>
@@ -599,15 +615,17 @@ export default function SearchRecipesScreen({ navigation }) {
         }}
         onClear={handleClearSearch}
         onSubmitEditing={() => commitSearch(query)}
+        fs={fs}
+        sh={sh}
       />
 
       {isSearchFocused ? (
         <View style={styles.suggestionsPanel}>
           {!isShowingRecentSearches ? (
-            <Text style={styles.suggestionsHeading}>Suggestions</Text>
+            <Text style={[styles.suggestionsHeading, { fontSize: fs(14) }]}>Suggestions</Text>
           ) : null}
           {displayedSuggestions.length === 0 ? (
-            <Text style={styles.suggestionsEmpty}>
+            <Text style={[styles.suggestionsEmpty, { fontSize: fs(16) }]}>
               {isShowingRecentSearches ? "No recent searches yet." : "No matching recipes."}
             </Text>
           ) : (
@@ -620,12 +638,16 @@ export default function SearchRecipesScreen({ navigation }) {
               {...verticalScrollProps}
             >
               {displayedSuggestions.map((item) => (
-                <Pressable key={item} onPress={() => handleSuggestionPress(item)} style={styles.suggestionRow}>
-                  <Text style={styles.suggestionText} numberOfLines={1}>
+                <Pressable
+                  key={item}
+                  onPress={() => handleSuggestionPress(item)}
+                  style={[styles.suggestionRow, { minHeight: sh(44) }]}
+                >
+                  <Text style={[styles.suggestionText, { fontSize: fs(16) }]} numberOfLines={1}>
                     {item}
                   </Text>
                   {isShowingRecentSearches ? (
-                    <Ionicons name="time-outline" size={16} color="#94A3B8" />
+                    <Ionicons name="time-outline" size={fs(16)} color={colors.textSlate400} />
                   ) : null}
                 </Pressable>
               ))}
@@ -634,16 +656,22 @@ export default function SearchRecipesScreen({ navigation }) {
         </View>
       ) : null}
 
-      <Text style={styles.sourceHint}>{sourceHint}</Text>
+      <Text style={[styles.sourceHint, { fontSize: fs(13) }]}>{sourceHint}</Text>
 
-      <Text style={styles.filterHeading}>Cuisine</Text>
-      <FilterChips filters={cuisines} selectedFilter={selectedCuisine} onSelect={setSelectedCuisine} />
+      <Text style={[styles.filterHeading, { fontSize: fs(14) }]}>Cuisine</Text>
+      <FilterChips
+        filters={cuisines}
+        selectedFilter={selectedCuisine}
+        onSelect={setSelectedCuisine}
+        fs={fs}
+        sh={sh}
+      />
 
       {featuredRecipes.length > 0 ? (
         <View style={styles.featuredSection}>
           <View style={styles.featuredHeader}>
-            <Text style={styles.featuredHeading}>Featured</Text>
-            <Text style={styles.featuredSubheading}>
+            <Text style={[styles.featuredHeading, { fontSize: fs(18) }]}>Featured</Text>
+            <Text style={[styles.featuredSubheading, { fontSize: fs(13) }]}>
               {selectedSource === "community" ? "Top community picks" : "Top library picks"}
             </Text>
           </View>
@@ -658,6 +686,7 @@ export default function SearchRecipesScreen({ navigation }) {
                 key={`featured-${item.id}`}
                 recipe={item}
                 onPress={handleRecipePress}
+                fs={fs}
               />
             ))}
           </ScrollView>
@@ -665,10 +694,13 @@ export default function SearchRecipesScreen({ navigation }) {
       ) : null}
 
       {isLoading ? (
-        <View style={styles.loadingRow}>
-          <ActivityIndicator size="small" color={C.primary} />
-          <Text style={styles.loadingText}>Searching…</Text>
-        </View>
+        <LoadingSpinner
+          size="small"
+          color={C.primary}
+          message="Searching…"
+          style={styles.loadingRow}
+          textStyle={[styles.loadingText, { fontSize: fs(16) }]}
+        />
       ) : null}
     </View>
   );
@@ -677,21 +709,25 @@ export default function SearchRecipesScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.pageChrome}>
         <View style={styles.header}>
-          <Pressable onPress={() => navigation?.goBack?.()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="arrow-back" size={22} color="#253B63" />
+          <Pressable
+            onPress={() => navigation?.goBack?.()}
+            style={[styles.backBtn, { width: sh(44), height: sh(44) }]}
+            hitSlop={8}
+          >
+            <Ionicons name="arrow-back" size={fs(22)} color={colors.textNavy} />
           </Pressable>
-          <Text style={styles.headerTitle}>Search recipes</Text>
+          <Text style={[styles.headerTitle, { fontSize: fs(17) }]}>Search recipes</Text>
           <Pressable
             onPress={handleToggleSource}
-            style={styles.sourceToggleBtn}
+            style={[styles.sourceToggleBtn, { width: sh(44), height: sh(44) }]}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={`Switch source. Current: ${sourceLabel}`}
           >
             <Ionicons
               name={selectedSource === "community" ? "globe" : "globe-outline"}
-              size={22}
-              color={selectedSource === "community" ? C.primary : "#253B63"}
+              size={fs(22)}
+              color={selectedSource === "community" ? C.primary : colors.textNavy}
             />
           </Pressable>
         </View>
@@ -701,12 +737,18 @@ export default function SearchRecipesScreen({ navigation }) {
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={{ width: cardWidth }}>
-              <RecipeCard recipe={item} onPress={handleRecipePress} cardWidth={cardWidth} />
+              <RecipeCard
+                recipe={item}
+                onPress={handleRecipePress}
+                cardWidth={cardWidth}
+                fs={fs}
+                sh={sh}
+              />
               <View style={styles.cardMetaRow}>
-                <Text style={styles.cardMetaLeft} numberOfLines={1}>
+                <Text style={[styles.cardMetaLeft, { fontSize: fs(12) }]} numberOfLines={1}>
                   {getAuthorLabel(item) ? `By ${getAuthorLabel(item)}` : "NutriHelp"}
                 </Text>
-                <Text style={styles.cardMetaRight} numberOfLines={1}>
+                <Text style={[styles.cardMetaRight, { fontSize: fs(12) }]} numberOfLines={1}>
                   {formatRatingSummary(item)}
                 </Text>
               </View>
@@ -732,7 +774,7 @@ export default function SearchRecipesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   pageChrome: { flex: 1 },
   header: {
     flexDirection: "row",
@@ -740,8 +782,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   backBtn: {
     width: 44,
@@ -754,7 +796,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   sourceToggleBtn: {
     width: 44,
@@ -762,12 +804,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   listHeader: {
     paddingTop: 20,
     paddingBottom: 8,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: colors.surface,
   },
   searchBarWrap: { marginBottom: 16 },
   searchRow: {
@@ -776,7 +818,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingRight: 8,
   },
@@ -785,7 +827,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#111827",
+    color: colors.textGray900,
     minHeight: 44,
   },
   clearBtn: {
@@ -802,7 +844,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   suggestionsHeading: {
@@ -860,7 +902,7 @@ const styles = StyleSheet.create({
     width: 236,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     overflow: "hidden",
     backgroundColor: C.white,
     marginRight: 10,
@@ -871,7 +913,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
   },
   featuredBody: { padding: 10 },
   featuredTitle: {
@@ -887,7 +929,7 @@ const styles = StyleSheet.create({
   loadingRow: { alignItems: "center", paddingVertical: 24 },
   loadingText: { marginTop: 8, fontSize: 16, color: C.primary },
   list: { flex: 1, minHeight: 0 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 24, backgroundColor: "#F8FAFC" },
+  listContent: { paddingHorizontal: 16, paddingBottom: 24, backgroundColor: colors.surface },
   cardMetaRow: {
     marginTop: 6,
     marginBottom: 2,
@@ -913,12 +955,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 16,
     paddingVertical: 32,
   },
-  emptyMessage: { textAlign: "center", fontSize: 18, color: C.slate800 },
+  emptyStateInner: { marginTop: 0, paddingHorizontal: 0 },
   emptyClearBtn: {
     marginTop: 16,
     minHeight: 44,

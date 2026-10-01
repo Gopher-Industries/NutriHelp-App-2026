@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Modal,
   Pressable,
@@ -16,6 +15,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import recipeApi from "../../api/recipeApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import {
   getDailyMeals,
@@ -24,10 +27,11 @@ import {
 } from "../../utils/dailyMealsStorage";
 import { formatDisplayName, groupMealsByType, MEAL_TYPES } from "./mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const MEAL_ACCENTS = {
-  breakfast: "#F59E0B",
-  lunch: "#22C55E",
-  dinner: "#3B82F6",
+  breakfast: colors.warning,
+  lunch: colors.successBright,
+  dinner: colors.info,
 };
 
 const RECIPE_IMAGE_FALLBACKS = [
@@ -174,47 +178,65 @@ function buildRecipeDetailPayload(meal) {
   };
 }
 
-function EmptyMealCard({ mealType, onAdd }) {
+function EmptyMealCard({ mealType, onAdd, fs, sh }) {
   return (
     <View style={styles.slotCard}>
-      <View style={styles.slotCardEmptyInner}>
-        <Text style={styles.slotEmptyTitle}>No meal selected</Text>
-        <Text style={styles.slotEmptySubtitle}>Choose a dish for {formatDisplayName(mealType)}</Text>
+      <View style={[styles.slotCardEmptyInner, { minHeight: sh(96) }]}>
+        <Text style={[styles.slotEmptyTitle, { fontSize: fs(15) }]}>No meal selected</Text>
+        <Text style={[styles.slotEmptySubtitle, { fontSize: fs(13) }]}>
+          Choose a dish for {formatDisplayName(mealType)}
+        </Text>
       </View>
-      <Pressable style={styles.slotPrimaryButton} onPress={onAdd}>
-        <Text style={styles.slotPrimaryButtonText}>+ Choose Meal</Text>
-      </Pressable>
+      <Button
+        label="+ Choose Meal"
+        onPress={onAdd}
+        style={[styles.slotPrimaryButton, { minHeight: sh(42), height: undefined }]}
+        textStyle={[styles.slotPrimaryButtonText, { fontSize: fs(14) }]}
+      />
     </View>
   );
 }
 
-function FilledMealCard({ meal, accentColor, onViewDetail, onRemove }) {
+function FilledMealCard({ meal, accentColor, onViewDetail, onRemove, fs, sh }) {
   return (
     <View style={styles.slotCard}>
       <Pressable
-        style={styles.removeMealBtn}
+        style={[
+          styles.removeMealBtn,
+          { width: sh(30), height: sh(30), borderRadius: sh(15) },
+        ]}
         onPress={onRemove}
         accessibilityRole="button"
         accessibilityLabel="Remove selected meal"
       >
-        <Ionicons name="close" size={16} color="#64748B" />
+        <Ionicons name="close" size={fs(16)} color={colors.textSlate500} />
       </Pressable>
       <View style={styles.filledRow}>
-        <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} resizeMode="cover" />
+        <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} resizeMode="cover" accessible={false} />
         <View style={styles.mealInfo}>
-          <Text style={styles.mealTitle} numberOfLines={2}>
+          <Text style={[styles.mealTitle, { fontSize: fs(16) }]} numberOfLines={2}>
             {meal.title}
           </Text>
-          <Text style={[styles.mealCuisine, { color: accentColor }]} numberOfLines={1}>
+          <Text
+            style={[styles.mealCuisine, { color: accentColor, fontSize: fs(13) }]}
+            numberOfLines={1}
+          >
             {meal.cuisine || "Recipe Library"}
           </Text>
-          <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} kcal</Text>
+          <Text style={[styles.mealCalories, { fontSize: fs(13) }]}>
+            {Math.round(meal.calories || 0)} kcal
+          </Text>
         </View>
       </View>
 
       <View style={styles.slotActionRow}>
-        <Pressable style={styles.slotOutlineButton} onPress={onViewDetail}>
-          <Text style={styles.slotOutlineButtonText}>View detail</Text>
+        <Pressable
+          style={[styles.slotOutlineButton, { minHeight: sh(42) }]}
+          onPress={onViewDetail}
+          accessibilityRole="button"
+          accessibilityLabel={`View details for ${meal.title}`}
+        >
+          <Text style={[styles.slotOutlineButtonText, { fontSize: fs(14) }]}>View detail</Text>
         </Pressable>
       </View>
     </View>
@@ -223,6 +245,7 @@ function FilledMealCard({ meal, accentColor, onViewDetail, onRemove }) {
 
 export default function WeeklyPlanScreen({ navigation }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
   const [status, setStatus] = useState("loading");
   const [groups, setGroups] = useState([]);
@@ -503,11 +526,14 @@ export default function WeeklyPlanScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <Pressable onPress={() => jumpMonth(-1)} style={styles.monthArrowBtn}>
-            <Ionicons name="chevron-back" size={18} color="#253B63" />
+          <Pressable
+            onPress={() => jumpMonth(-1)}
+            style={[styles.monthArrowBtn, { width: sh(36), height: sh(36), borderRadius: sh(18) }]}
+          >
+            <Ionicons name="chevron-back" size={fs(18)} color={colors.textNavy} />
           </Pressable>
           <Pressable
-            style={styles.monthLabelBtn}
+            style={[styles.monthLabelBtn, { minHeight: sh(36) }]}
             onPress={() => {
               setMonthCursor({
                 month: selectedDate.getMonth(),
@@ -516,11 +542,14 @@ export default function WeeklyPlanScreen({ navigation }) {
               setMonthPickerVisible(true);
             }}
           >
-            <Text style={styles.monthLabelText}>{monthLabel}</Text>
-            <Ionicons name="chevron-down" size={16} color="#253B63" />
+            <Text style={[styles.monthLabelText, { fontSize: fs(18) }]}>{monthLabel}</Text>
+            <Ionicons name="chevron-down" size={fs(16)} color={colors.textNavy} />
           </Pressable>
-          <Pressable onPress={() => jumpMonth(1)} style={styles.monthArrowBtn}>
-            <Ionicons name="chevron-forward" size={18} color="#253B63" />
+          <Pressable
+            onPress={() => jumpMonth(1)}
+            style={[styles.monthArrowBtn, { width: sh(36), height: sh(36), borderRadius: sh(18) }]}
+          >
+            <Ionicons name="chevron-forward" size={fs(18)} color={colors.textNavy} />
           </Pressable>
         </View>
 
@@ -541,13 +570,26 @@ export default function WeeklyPlanScreen({ navigation }) {
                   styles.dayChip,
                   active ? styles.dayChipActive : null,
                   isToday && !active ? styles.dayChipToday : null,
+                  { minHeight: sh(58), height: undefined },
                 ]}
                 onPress={() => setSelectedDate(startOfDay(date))}
               >
-                <Text style={[styles.dayNumber, active ? styles.dayNumberActive : null]}>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    { fontSize: fs(16) },
+                    active ? styles.dayNumberActive : null,
+                  ]}
+                >
                   {date.getDate()}
                 </Text>
-                <Text style={[styles.dayWeek, active ? styles.dayWeekActive : null]}>
+                <Text
+                  style={[
+                    styles.dayWeek,
+                    { fontSize: fs(11) },
+                    active ? styles.dayWeekActive : null,
+                  ]}
+                >
                   {date.toLocaleDateString("en-US", { weekday: "short" })}
                 </Text>
               </Pressable>
@@ -555,34 +597,52 @@ export default function WeeklyPlanScreen({ navigation }) {
           })}
         </ScrollView>
 
-        <Text style={styles.pageTitle}>Meal Plan</Text>
-        <Text style={styles.pageSubtitle}>Choose meals for each meal time from Recipe Library</Text>
+        <Text style={[styles.pageTitle, { fontSize: fs(28) }]}>Meal Plan</Text>
+        <Text style={[styles.pageSubtitle, { fontSize: fs(14) }]}>
+          Choose meals for each meal time from Recipe Library
+        </Text>
         <Pressable
-          style={styles.aiHeroCard}
+          style={[styles.aiHeroCard, { minHeight: sh(64) }]}
           onPress={() => navigation.navigate("AIWeeklyPlanScreen")}
-          android_ripple={{ color: "#A7F3D0" }}
+          android_ripple={{ color: colors.c_a7f3d0 }}
+          accessibilityRole="button"
+          accessibilityLabel="Generate AI 7-day meal plan"
         >
-          <View style={styles.aiHeroIconWrap}>
-            <Text style={styles.aiHeroIconEmoji}>✨</Text>
+          <View
+            style={[
+              styles.aiHeroIconWrap,
+              { width: sh(44), height: sh(44), borderRadius: sh(12) },
+            ]}
+          >
+            <Text style={[styles.aiHeroIconEmoji, { fontSize: fs(22) }]}>✨</Text>
           </View>
           <View style={styles.aiHeroTextWrap}>
-            <Text style={styles.aiHeroTitle}>AI 7-day meal plan</Text>
-            <Text style={styles.aiHeroSubtitle}>Generate a personalised weekly plan</Text>
+            <Text style={[styles.aiHeroTitle, { fontSize: fs(15) }]}>AI 7-day meal plan</Text>
+            <Text style={[styles.aiHeroSubtitle, { fontSize: fs(12) }]}>
+              Generate a personalised weekly plan
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#047857" />
+          <Ionicons name="chevron-forward" size={fs(18)} color={colors.success} />
         </Pressable>
 
         {status === "loading" ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color="#2A78C5" />
-            <Text style={styles.loadingText}>Loading meal plan...</Text>
-          </View>
+          <LoadingSpinner
+            message="Loading meal plan..."
+            color={colors.primaryMuted}
+            style={styles.loadingBox}
+            textStyle={[styles.loadingText, { fontSize: fs(14) }]}
+          />
         ) : status === "error" ? (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>Could not load your meal plan.</Text>
-            <Pressable style={styles.retryBtn} onPress={() => loadDailyPlan(selectedDate)}>
-              <Text style={styles.retryBtnText}>Retry</Text>
-            </Pressable>
+            <Text style={[styles.errorText, { fontSize: fs(15) }]}>
+              Could not load your meal plan.
+            </Text>
+            <Button
+              label="Retry"
+              onPress={() => loadDailyPlan(selectedDate)}
+              style={[styles.retryBtn, { minHeight: sh(40), height: undefined }]}
+              textStyle={styles.retryBtnText}
+            />
           </View>
         ) : (
           <View style={styles.sectionWrap}>
@@ -595,16 +655,18 @@ export default function WeeklyPlanScreen({ navigation }) {
               );
               const localMeals = Array.isArray(draftMeals?.[mealType]) ? draftMeals[mealType] : [];
               const meals = hasLocalOverride ? localMeals : liveMeals;
-              const accentColor = MEAL_ACCENTS[mealType] || "#2563EB";
+              const accentColor = MEAL_ACCENTS[mealType] || colors.infoStrong;
               const saving = savingMealType === mealType;
 
               return (
                 <View key={mealType} style={styles.slotSection}>
                   <View style={styles.slotHeader}>
-                    <Text style={[styles.slotLabel, { color: accentColor }]}>
+                    <Text style={[styles.slotLabel, { color: accentColor, fontSize: fs(17) }]}>
                       {formatDisplayName(mealType)}
                     </Text>
-                    {saving ? <ActivityIndicator size="small" color={accentColor} /> : null}
+                    {saving ? (
+                      <LoadingSpinner size="small" color={accentColor} />
+                    ) : null}
                   </View>
 
                   {meals.length > 0 ? (
@@ -615,6 +677,8 @@ export default function WeeklyPlanScreen({ navigation }) {
                             key={`${mealType}-${String(meal?._id ?? meal?.id ?? meal?.recipeId ?? index)}`}
                             meal={meal}
                             accentColor={accentColor}
+                            fs={fs}
+                            sh={sh}
                             onViewDetail={() => handleOpenRecipeDetail(meal)}
                             onRemove={() =>
                               handleRemoveMeal(
@@ -626,12 +690,20 @@ export default function WeeklyPlanScreen({ navigation }) {
                           />
                         ))}
                       </View>
-                      <Pressable style={styles.slotPrimaryButton} onPress={() => openAddMeal(mealType)}>
-                        <Text style={styles.slotPrimaryButtonText}>+ Add another meal</Text>
-                      </Pressable>
+                      <Button
+                        label="+ Add another meal"
+                        onPress={() => openAddMeal(mealType)}
+                        style={[styles.slotPrimaryButton, { minHeight: sh(42), height: undefined }]}
+                        textStyle={[styles.slotPrimaryButtonText, { fontSize: fs(14) }]}
+                      />
                     </>
                   ) : (
-                    <EmptyMealCard mealType={mealType} onAdd={() => openAddMeal(mealType)} />
+                    <EmptyMealCard
+                      mealType={mealType}
+                      onAdd={() => openAddMeal(mealType)}
+                      fs={fs}
+                      sh={sh}
+                    />
                   )}
                 </View>
               );
@@ -645,42 +717,57 @@ export default function WeeklyPlanScreen({ navigation }) {
           <Pressable style={styles.sheetBackdrop} onPress={() => setSheetVisible(false)} />
           <View style={styles.sheetContainer}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Choose {formatDisplayName(sheetMealType)}</Text>
+            <Text style={[styles.sheetTitle, { fontSize: fs(18) }]}>
+              Choose {formatDisplayName(sheetMealType)}
+            </Text>
 
             <TextInput
-              style={styles.searchInput}
+              style={[
+                styles.searchInput,
+                { fontSize: fs(15), minHeight: sh(46), height: undefined },
+              ]}
               placeholder="Search recipe library..."
-              placeholderTextColor="#98A2B3"
+              placeholderTextColor={colors.textMutedAlt}
               value={searchText}
               onChangeText={setSearchText}
             />
 
             {recipesLoading ? (
-              <View style={styles.sheetLoadingWrap}>
-                <ActivityIndicator size="large" color="#2A78C5" />
-                <Text style={styles.sheetLoadingText}>Loading recipes...</Text>
-              </View>
+              <LoadingSpinner
+                message="Loading recipes..."
+                color={colors.primaryMuted}
+                style={styles.sheetLoadingWrap}
+                textStyle={[styles.sheetLoadingText, { fontSize: fs(14) }]}
+              />
             ) : (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {visibleOptions.length === 0 ? (
-                  <View style={styles.emptyResults}>
-                    <Text style={styles.emptyResultsText}>No recipes found for this meal time.</Text>
-                  </View>
+                  <EmptyState
+                    message="No recipes found for this meal time."
+                    style={styles.emptyResults}
+                  />
                 ) : (
                   visibleOptions.map((meal) => (
-                    <View key={meal.id} style={styles.optionRow}>
+                    <View key={meal.id} style={[styles.optionRow, { minHeight: sh(58) }]}>
                       <Image source={{ uri: meal.imageUrl }} style={styles.optionImage} resizeMode="cover" />
                       <View style={styles.optionInfo}>
-                        <Text style={styles.optionTitle} numberOfLines={2}>
+                        <Text style={[styles.optionTitle, { fontSize: fs(15) }]} numberOfLines={2}>
                           {meal.title}
                         </Text>
-                        <Text style={styles.optionMeta} numberOfLines={1}>
+                        <Text style={[styles.optionMeta, { fontSize: fs(12) }]} numberOfLines={1}>
                           {meal.cuisine || "Recipe Library"}
                         </Text>
-                        <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} kcal</Text>
+                        <Text style={[styles.optionCalories, { fontSize: fs(12) }]}>
+                          {Math.round(meal.calories || 0)} kcal
+                        </Text>
                       </View>
-                      <Pressable style={styles.optionAddButton} onPress={() => handleSelectMeal(meal)}>
-                        <Text style={styles.optionAddButtonText}>Add</Text>
+                      <Pressable
+                        style={[styles.optionAddButton, { minHeight: sh(36) }]}
+                        onPress={() => handleSelectMeal(meal)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Add ${meal.title}`}
+                      >
+                        <Text style={[styles.optionAddButtonText, { fontSize: fs(13) }]}>Add</Text>
                       </Pressable>
                     </View>
                   ))
@@ -702,7 +789,10 @@ export default function WeeklyPlanScreen({ navigation }) {
           <View style={styles.pickerCard}>
             <View style={styles.pickerYearRow}>
               <Pressable
-                style={styles.pickerYearArrow}
+                style={[
+                  styles.pickerYearArrow,
+                  { width: sh(34), height: sh(34), borderRadius: sh(17) },
+                ]}
                 onPress={() =>
                   setMonthCursor((prev) => ({
                     ...prev,
@@ -710,11 +800,14 @@ export default function WeeklyPlanScreen({ navigation }) {
                   }))
                 }
               >
-                <Ionicons name="chevron-back" size={18} color="#253B63" />
+                <Ionicons name="chevron-back" size={fs(18)} color={colors.textNavy} />
               </Pressable>
-              <Text style={styles.pickerYearText}>{monthCursor.year}</Text>
+              <Text style={[styles.pickerYearText, { fontSize: fs(20) }]}>{monthCursor.year}</Text>
               <Pressable
-                style={styles.pickerYearArrow}
+                style={[
+                  styles.pickerYearArrow,
+                  { width: sh(34), height: sh(34), borderRadius: sh(17) },
+                ]}
                 onPress={() =>
                   setMonthCursor((prev) => ({
                     ...prev,
@@ -722,7 +815,7 @@ export default function WeeklyPlanScreen({ navigation }) {
                   }))
                 }
               >
-                <Ionicons name="chevron-forward" size={18} color="#253B63" />
+                <Ionicons name="chevron-forward" size={fs(18)} color={colors.textNavy} />
               </Pressable>
             </View>
 
@@ -732,10 +825,20 @@ export default function WeeklyPlanScreen({ navigation }) {
                 return (
                   <Pressable
                     key={name}
-                    style={[styles.monthCell, active ? styles.monthCellActive : null]}
+                    style={[
+                      styles.monthCell,
+                      active ? styles.monthCellActive : null,
+                      { minHeight: sh(38) },
+                    ]}
                     onPress={() => setMonthCursor((prev) => ({ ...prev, month: idx }))}
                   >
-                    <Text style={[styles.monthCellText, active ? styles.monthCellTextActive : null]}>
+                    <Text
+                      style={[
+                        styles.monthCellText,
+                        { fontSize: fs(12) },
+                        active ? styles.monthCellTextActive : null,
+                      ]}
+                    >
                       {name.slice(0, 3)}
                     </Text>
                   </Pressable>
@@ -744,12 +847,18 @@ export default function WeeklyPlanScreen({ navigation }) {
             </View>
 
             <View style={styles.pickerActionRow}>
-              <Pressable style={styles.pickerCancelBtn} onPress={() => setMonthPickerVisible(false)}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
+              <Pressable
+                style={[styles.pickerCancelBtn, { minHeight: sh(40) }]}
+                onPress={() => setMonthPickerVisible(false)}
+              >
+                <Text style={[styles.pickerCancelText, { fontSize: fs(14) }]}>Cancel</Text>
               </Pressable>
-              <Pressable style={styles.pickerApplyBtn} onPress={applyMonthCursor}>
-                <Text style={styles.pickerApplyText}>Apply</Text>
-              </Pressable>
+              <Button
+                label="Apply"
+                onPress={applyMonthCursor}
+                style={[styles.pickerApplyBtn, { minHeight: sh(40), height: undefined }]}
+                textStyle={[styles.pickerApplyText, { fontSize: fs(14) }]}
+              />
             </View>
           </View>
         </View>
@@ -759,8 +868,8 @@ export default function WeeklyPlanScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
 
   headerRow: {
@@ -774,10 +883,10 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   monthLabelBtn: {
     flexDirection: "row",
@@ -787,11 +896,11 @@ const styles = StyleSheet.create({
     minHeight: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     paddingHorizontal: 14,
   },
-  monthLabelText: { fontSize: 18, fontWeight: "700", color: "#253B63" },
+  monthLabelText: { fontSize: 18, fontWeight: "700", color: colors.textNavy },
 
   dayRow: {
     paddingBottom: 8,
@@ -803,34 +912,34 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   dayChipActive: {
-    borderColor: "#2A78C5",
-    backgroundColor: "#2A78C5",
+    borderColor: colors.primaryMuted,
+    backgroundColor: colors.primaryMuted,
   },
   dayChipToday: {
-    borderColor: "#93C5FD",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.c_93c5fd,
+    backgroundColor: colors.surfaceBlue,
   },
-  dayNumber: { fontSize: 16, fontWeight: "800", color: "#253B63" },
-  dayNumberActive: { color: "#FFFFFF" },
-  dayWeek: { marginTop: 2, fontSize: 11, color: "#6B7280" },
-  dayWeekActive: { color: "#DBEAFE" },
+  dayNumber: { fontSize: 16, fontWeight: "800", color: colors.textNavy },
+  dayNumberActive: { color: colors.white },
+  dayWeek: { marginTop: 2, fontSize: 11, color: colors.textSecondary },
+  dayWeekActive: { color: colors.surfaceInfo },
 
-  pageTitle: { marginTop: 6, fontSize: 28, fontWeight: "800", color: "#253B63" },
-  pageSubtitle: { marginTop: 4, marginBottom: 14, fontSize: 14, color: "#667085" },
+  pageTitle: { marginTop: 6, fontSize: 28, fontWeight: "800", color: colors.textNavy },
+  pageSubtitle: { marginTop: 4, marginBottom: 14, fontSize: 14, color: colors.textSecondaryAlt },
   aiHeroCard: {
     marginBottom: 14,
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#86EFAC",
-    backgroundColor: "#ECFDF5",
+    borderColor: colors.c_86efac,
+    backgroundColor: colors.surfaceGreen,
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 12,
@@ -841,27 +950,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#D1FAE5",
+    backgroundColor: colors.c_d1fae5,
     marginRight: 10,
   },
   aiHeroIconEmoji: { fontSize: 22 },
   aiHeroTextWrap: { flex: 1, minWidth: 0 },
-  aiHeroTitle: { fontSize: 15, fontWeight: "800", color: "#047857" },
-  aiHeroSubtitle: { marginTop: 2, fontSize: 12, color: "#059669" },
+  aiHeroTitle: { fontSize: 15, fontWeight: "800", color: colors.success },
+  aiHeroSubtitle: { marginTop: 2, fontSize: 12, color: colors.successTeal },
 
   loadingBox: { paddingVertical: 40, alignItems: "center" },
-  loadingText: { marginTop: 10, fontSize: 14, color: "#667085" },
+  loadingText: { marginTop: 10, fontSize: 14, color: colors.textSecondaryAlt },
   errorBox: { paddingVertical: 28, alignItems: "center" },
-  errorText: { fontSize: 15, color: "#B91C1C", marginBottom: 12 },
+  errorText: { fontSize: 15, color: colors.dangerDark, marginBottom: 12 },
   retryBtn: {
     minHeight: 40,
     borderRadius: 20,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     paddingHorizontal: 18,
     alignItems: "center",
     justifyContent: "center",
   },
-  retryBtnText: { color: "#FFFFFF", fontWeight: "700" },
+  retryBtnText: { color: colors.white, fontWeight: "700" },
 
   sectionWrap: { gap: 14 },
   slotSection: { marginBottom: 2 },
@@ -881,10 +990,10 @@ const styles = StyleSheet.create({
     position: "relative",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     padding: 12,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -899,31 +1008,31 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: colors.borderSlateSoft,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   slotCardEmptyInner: {
     minHeight: 96,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
     paddingHorizontal: 10,
   },
-  slotEmptyTitle: { fontSize: 15, fontWeight: "700", color: "#253B63" },
-  slotEmptySubtitle: { marginTop: 4, fontSize: 13, color: "#98A2B3", textAlign: "center" },
+  slotEmptyTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
+  slotEmptySubtitle: { marginTop: 4, fontSize: 13, color: colors.textMutedAlt, textAlign: "center" },
 
   filledRow: { flexDirection: "row", alignItems: "center" },
-  mealImage: { width: 84, height: 84, borderRadius: 12, backgroundColor: "#E5E7EB" },
+  mealImage: { width: 84, height: 84, borderRadius: 12, backgroundColor: colors.border },
   mealInfo: { marginLeft: 10, flex: 1, minWidth: 0 },
-  mealTitle: { fontSize: 16, fontWeight: "700", color: "#253B63" },
+  mealTitle: { fontSize: 16, fontWeight: "700", color: colors.textNavy },
   mealCuisine: { marginTop: 4, fontSize: 13, fontWeight: "600" },
-  mealCalories: { marginTop: 4, fontSize: 13, color: "#667085" },
+  mealCalories: { marginTop: 4, fontSize: 13, color: colors.textSecondaryAlt },
 
   slotActionRow: { marginTop: 12, flexDirection: "row", gap: 10 },
   slotOutlineButton: {
@@ -931,24 +1040,24 @@ const styles = StyleSheet.create({
     minHeight: 42,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2A78C5",
+    borderColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
-  slotOutlineButtonText: { fontSize: 14, fontWeight: "700", color: "#2A78C5" },
+  slotOutlineButtonText: { fontSize: 14, fontWeight: "700", color: colors.primaryMuted },
   slotPrimaryButton: {
     flex: 1,
     minHeight: 42,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
   },
-  slotPrimaryButtonText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+  slotPrimaryButtonText: { fontSize: 14, fontWeight: "700", color: colors.white },
 
   sheetLoading: { alignItems: "center", paddingVertical: 32 },
-  sheetLoadingText: { marginTop: 10, fontSize: 14, color: "#98A2B3" },
+  sheetLoadingText: { marginTop: 10, fontSize: 14, color: colors.textMutedAlt },
 
   sheetOverlay: {
     flex: 1,
@@ -960,7 +1069,7 @@ const styles = StyleSheet.create({
     maxHeight: "72%",
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
@@ -970,30 +1079,30 @@ const styles = StyleSheet.create({
     width: 48,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#D1D5DB",
+    backgroundColor: colors.borderStrong,
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 18, fontWeight: "800", color: "#253B63", marginBottom: 10 },
+  sheetTitle: { fontSize: 18, fontWeight: "800", color: colors.textNavy, marginBottom: 10 },
   searchInput: {
     height: 46,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#F9FAFB",
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceSoft,
     paddingHorizontal: 14,
     fontSize: 15,
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 8,
   },
   sheetLoadingWrap: { alignItems: "center", paddingVertical: 28 },
-  sheetLoadingText: { marginTop: 8, fontSize: 14, color: "#667085" },
+  sheetLoadingText: { marginTop: 8, fontSize: 14, color: colors.textSecondaryAlt },
   emptyResults: { alignItems: "center", paddingVertical: 30 },
-  emptyResultsText: { fontSize: 14, color: "#98A2B3" },
+  emptyResultsText: { fontSize: 14, color: colors.textMutedAlt },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.surfaceSlate,
     paddingVertical: 10,
     gap: 10,
   },
@@ -1001,21 +1110,21 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 10,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
   },
   optionInfo: { flex: 1, minWidth: 0 },
-  optionTitle: { fontSize: 15, fontWeight: "700", color: "#253B63" },
-  optionMeta: { marginTop: 2, fontSize: 12, color: "#64748B" },
-  optionCalories: { marginTop: 2, fontSize: 12, color: "#2A78C5", fontWeight: "600" },
+  optionTitle: { fontSize: 15, fontWeight: "700", color: colors.textNavy },
+  optionMeta: { marginTop: 2, fontSize: 12, color: colors.textSlate500 },
+  optionCalories: { marginTop: 2, fontSize: 12, color: colors.primaryMuted, fontWeight: "600" },
   optionAddButton: {
     minHeight: 36,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     paddingHorizontal: 12,
   },
-  optionAddButtonText: { color: "#FFFFFF", fontWeight: "700", fontSize: 13 },
+  optionAddButtonText: { color: colors.white, fontWeight: "700", fontSize: 13 },
 
   pickerOverlay: {
     flex: 1,
@@ -1031,7 +1140,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 360,
     borderRadius: 18,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     padding: 14,
   },
   pickerYearRow: {
@@ -1045,11 +1154,11 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  pickerYearText: { fontSize: 20, fontWeight: "800", color: "#253B63" },
+  pickerYearText: { fontSize: 20, fontWeight: "800", color: colors.textNavy },
   monthGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1061,22 +1170,22 @@ const styles = StyleSheet.create({
     minHeight: 38,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   monthCellActive: {
-    borderColor: "#2A78C5",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.primaryMuted,
+    backgroundColor: colors.surfaceBlue,
   },
   monthCellText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#475569",
+    color: colors.c_475569,
   },
   monthCellTextActive: {
-    color: "#1D4ED8",
+    color: colors.infoDark,
   },
   pickerActionRow: {
     marginTop: 14,
@@ -1088,19 +1197,19 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
-  pickerCancelText: { fontSize: 14, fontWeight: "700", color: "#475569" },
+  pickerCancelText: { fontSize: 14, fontWeight: "700", color: colors.c_475569 },
   pickerApplyBtn: {
     flex: 1,
     minHeight: 40,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
   },
-  pickerApplyText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+  pickerApplyText: { fontSize: 14, fontWeight: "700", color: colors.white },
 });

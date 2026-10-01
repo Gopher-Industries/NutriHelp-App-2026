@@ -17,7 +17,9 @@ import {
 import Svg, { Circle } from "react-native-svg";
 
 import { getTodayIntakeLocal, saveTodayIntakeLocal } from "../api/waterIntakeApi";
+import { useToast } from "../context/ToastContext";
 
+import { colors } from "../theme";
 const DAILY_GOAL_CUPS = 8;
 const REMINDERS_KEY = "nutrihelp.water.dailyReminders";
 const WATER_NOTIFICATION_KEY = "nutrihelp.water.notificationId";
@@ -93,7 +95,7 @@ function ProgressRing({ current, goal }) {
               cx={cx}
               cy={cy}
               r={radius}
-              stroke={filled ? "#2A78C5" : "#DBEAFE"}
+              stroke={filled ? colors.primaryMuted : colors.surfaceInfo}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               fill="none"
@@ -121,6 +123,7 @@ function QuickAction({ label, onPress }) {
 }
 
 export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
+  const { showToast } = useToast();
   const [glasses, setGlasses] = useState(0);
   const [remindersEnabled, setRemindersEnabled] = useState(false);
   const [customVisible, setCustomVisible] = useState(false);
@@ -179,8 +182,8 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
 
   const applyCustomAmount = async () => {
     const parsed = parseInt(customValue, 10);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      Alert.alert("Custom intake", "Please enter a valid number of cups.");
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+      showToast("Please enter a valid number of cups.", "error");
       return;
     }
     await persistIntake(glasses + parsed);
@@ -213,7 +216,7 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
           onPress={() => adjustGlasses(-1)}
           disabled={glasses <= 0}
         >
-          <Ionicons name="remove" size={24} color={glasses <= 0 ? "#CBD5E1" : "#2A78C5"} />
+          <Ionicons name="remove" size={24} color={glasses <= 0 ? colors.borderSlate : colors.primaryMuted} />
         </Pressable>
 
         <View style={styles.counterCenter}>
@@ -226,7 +229,7 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
           onPress={() => adjustGlasses(1)}
           disabled={glasses >= dailyGoal}
         >
-          <Ionicons name="add" size={24} color={glasses >= dailyGoal ? "#CBD5E1" : "#2A78C5"} />
+          <Ionicons name="add" size={24} color={glasses >= dailyGoal ? colors.borderSlate : colors.primaryMuted} />
         </Pressable>
       </View>
 
@@ -238,7 +241,7 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
 
       <View style={styles.remindersCard}>
         <View style={styles.remindersLeft}>
-          <Ionicons name="notifications-outline" size={20} color="#2A78C5" />
+          <Ionicons name="notifications-outline" size={20} color={colors.primaryMuted} />
           <View style={{ marginLeft: 12 }}>
             <Text style={styles.remindersTitle}>Hourly reminders</Text>
             <Text style={styles.remindersSubtitle}>
@@ -251,13 +254,13 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
         <Switch
           value={remindersEnabled}
           onValueChange={handleToggleReminders}
-          trackColor={{ false: "#E5E7EB", true: "#BFDBFE" }}
-          thumbColor={remindersEnabled ? "#2A78C5" : "#9CA3AF"}
+          trackColor={{ false: colors.border, true: colors.surfaceInfoStrong }}
+          thumbColor={remindersEnabled ? colors.primaryMuted : colors.textMuted}
         />
       </View>
 
       <View style={styles.tipCard}>
-        <Ionicons name="bulb-outline" size={16} color="#2A78C5" style={{ marginBottom: 6 }} />
+        <Ionicons name="bulb-outline" size={16} color={colors.primaryMuted} style={{ marginBottom: 6 }} />
         <Text style={styles.tipText}>
           Drinking enough water supports digestion, energy levels, and overall health. Aim for 8
           cups per day.
@@ -281,7 +284,7 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
               onChangeText={setCustomValue}
               keyboardType="number-pad"
               placeholder="1"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
             />
 
             <Pressable style={styles.modalPrimaryBtn} onPress={applyCustomAmount}>
@@ -299,22 +302,22 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 36 },
 
   ringWrap: { alignItems: "center", justifyContent: "center", marginBottom: 20 },
   ringCenter: { position: "absolute", alignItems: "center" },
-  ringCurrent: { fontSize: 52, fontWeight: "800", color: "#253B63" },
-  ringLabel: { fontSize: 14, color: "#94A3B8", fontWeight: "500" },
+  ringCurrent: { fontSize: 52, fontWeight: "800", color: colors.textNavy },
+  ringLabel: { fontSize: 14, color: colors.textSlate400, fontWeight: "500" },
 
   statusTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     textAlign: "center",
     marginBottom: 6,
   },
-  statusSubtitle: { fontSize: 14, color: "#667085", textAlign: "center", marginBottom: 24 },
+  statusSubtitle: { fontSize: 14, color: colors.textSecondaryAlt, textAlign: "center", marginBottom: 24 },
 
   counterCard: {
     flexDirection: "row",
@@ -322,12 +325,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     paddingHorizontal: 20,
     paddingVertical: 16,
     marginBottom: 14,
-    shadowColor: "#000",
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -338,14 +341,14 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: "#2A78C5",
+    borderColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },
-  counterBtnDisabled: { borderColor: "#E5E7EB" },
+  counterBtnDisabled: { borderColor: colors.border },
   counterCenter: { alignItems: "center" },
-  counterValue: { fontSize: 40, fontWeight: "800", color: "#253B63" },
-  counterLabel: { fontSize: 13, color: "#94A3B8", fontWeight: "500" },
+  counterValue: { fontSize: 40, fontWeight: "800", color: colors.textNavy },
+  counterLabel: { fontSize: 13, color: colors.textSlate400, fontWeight: "500" },
 
   quickRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
   quickActionBtn: {
@@ -353,12 +356,12 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 1.5,
-    borderColor: "#BFDBFE",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.surfaceInfoStrong,
+    backgroundColor: colors.surfaceBlue,
     alignItems: "center",
     justifyContent: "center",
   },
-  quickActionText: { fontSize: 14, fontWeight: "600", color: "#2A78C5" },
+  quickActionText: { fontSize: 14, fontWeight: "600", color: colors.primaryMuted },
 
   remindersCard: {
     flexDirection: "row",
@@ -366,29 +369,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     padding: 16,
     marginBottom: 14,
-    shadowColor: "#000",
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
   remindersLeft: { flexDirection: "row", alignItems: "center" },
-  remindersTitle: { fontSize: 15, fontWeight: "600", color: "#253B63" },
-  remindersSubtitle: { fontSize: 12, color: "#94A3B8", marginTop: 2 },
+  remindersTitle: { fontSize: 15, fontWeight: "600", color: colors.textNavy },
+  remindersSubtitle: { fontSize: 12, color: colors.textSlate400, marginTop: 2 },
 
   tipCard: {
     borderRadius: 16,
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
+    borderColor: colors.surfaceInfoStrong,
     padding: 16,
     alignItems: "flex-start",
   },
-  tipText: { fontSize: 13, color: "#3B82F6", lineHeight: 20 },
+  tipText: { fontSize: 13, color: colors.info, lineHeight: 20 },
 
   modalOverlay: {
     flex: 1,
@@ -400,36 +403,36 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "100%",
     borderRadius: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     padding: 22,
   },
-  modalTitle: { fontSize: 20, fontWeight: "800", color: "#253B63", marginBottom: 6 },
-  modalSubtitle: { fontSize: 14, color: "#667085", lineHeight: 21, marginBottom: 16 },
+  modalTitle: { fontSize: 20, fontWeight: "800", color: colors.textNavy, marginBottom: 6 },
+  modalSubtitle: { fontSize: 14, color: colors.textSecondaryAlt, lineHeight: 21, marginBottom: 16 },
   modalInput: {
     height: 52,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: colors.borderSlate,
     paddingHorizontal: 16,
     fontSize: 20,
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 14,
   },
   modalPrimaryBtn: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
   },
-  modalPrimaryText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  modalPrimaryText: { fontSize: 15, fontWeight: "700", color: colors.white },
   modalSecondaryBtn: {
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: colors.surfaceSlate,
     alignItems: "center",
     justifyContent: "center",
   },
-  modalSecondaryText: { fontSize: 15, fontWeight: "600", color: "#667085" },
+  modalSecondaryText: { fontSize: 15, fontWeight: "600", color: colors.textSecondaryAlt },
 });

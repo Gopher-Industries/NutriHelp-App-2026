@@ -14,6 +14,7 @@ import { ApiError, toErrorMessage } from "../../api/baseApi";
 import { exchangeGoogleToken, loginUser } from "../../api/authApi";
 import { useUser } from "../../context/UserContext";
 import useFormValidation from "../../hooks/useFormValidation";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import useAppTheme from "../../hooks/useAppTheme";
 import supabase from "../../utils/supabase";
 
@@ -40,6 +41,7 @@ const loginSchema = {
 };
 
 export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
+  const { fs, sh } = useAccessibility();
   const { login } = useUser();
 
   // FE-24: Get light/dark theme colours
@@ -69,16 +71,17 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
 
     try {
       const response = await loginUser(values.email, values.password);
-
+       // Keep the Remember Me choice when the user continues to MFA.
       if (response.mfaRequired) {
         goTo("mfa", {
           email: response.email,
           password: values.password,
+          rememberMe: rememberMe,
         });
         return;
       }
 
-      await login(response);
+      await login(response, null, null, rememberMe);
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 401) {
@@ -154,10 +157,8 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
         throw new Error("Missing Google session token.");
       }
 
-      const backendSession =
-        await exchangeGoogleToken(supabaseAccessToken);
-
-      await login(backendSession);
+      const backendSession = await exchangeGoogleToken(supabaseAccessToken);
+      await login(backendSession, null, null, rememberMe);
     } catch (error) {
       setGeneralError(
         toErrorMessage(
@@ -188,6 +189,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               <Text
                 style={[
                   styles.title,
+                  { fontSize: fs(24) },
                   {
                     color: colors.text,
                   },
@@ -199,6 +201,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               <Text
                 style={[
                   styles.subtitle,
+                  { fontSize: fs(13), lineHeight: fs(19) },
                   {
                     color: colors.textSecondary,
                   },
@@ -223,6 +226,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
                 <Text
                   style={[
                     styles.errorBoxText,
+                    { fontSize: fs(12) },
                     {
                       color: colors.error,
                     },
@@ -269,7 +273,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
             {/* REMEMBER ME */}
 
             <Pressable
-              style={styles.rememberRow}
+              style={[styles.rememberRow, { minHeight: sh(32) }]}
               onPress={() =>
                 setRememberMe((previous) => !previous)
               }
@@ -277,6 +281,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               <View
                 style={[
                   styles.checkbox,
+                  { width: sh(16), height: sh(16) },
                   {
                     borderColor: rememberMe
                       ? colors.primary
@@ -289,13 +294,14 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
                 ]}
               >
                 {rememberMe ? (
-                  <Text style={styles.checkmark}>✓</Text>
+                  <Text style={[styles.checkmark, { fontSize: fs(11), lineHeight: fs(12) }]}>✓</Text>
                 ) : null}
               </View>
 
               <Text
                 style={[
                   styles.rememberText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.textSecondary,
                   },
@@ -320,6 +326,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               <Text
                 style={[
                   styles.dividerText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.textSecondary,
                   },
@@ -360,6 +367,7 @@ export default function LoginScreen({ goTo = (_nextScreen, _params) => {} }) {
               <Text
                 style={[
                   styles.footerText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.textSecondary,
                   },
@@ -409,16 +417,12 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "left",
-    fontSize: 24,
     fontWeight: "800",
   },
 
   subtitle: {
     marginTop: 8,
     textAlign: "left",
-    fontSize: 13,
-    lineHeight: 19,
-    maxWidth: 280,
   },
 
   errorBox: {
@@ -430,7 +434,6 @@ const styles = StyleSheet.create({
   },
 
   errorBoxText: {
-    fontSize: 12,
     fontWeight: "500",
   },
 
@@ -442,8 +445,6 @@ const styles = StyleSheet.create({
 
   checkbox: {
     marginRight: 8,
-    width: 16,
-    height: 16,
     borderRadius: 3,
     borderWidth: 1,
     alignItems: "center",
@@ -451,15 +452,12 @@ const styles = StyleSheet.create({
   },
 
   checkmark: {
-    fontSize: 11,
     fontWeight: "800",
     color: "#FFFFFF",
-    lineHeight: 12,
     marginTop: -2,
   },
 
   rememberText: {
-    fontSize: 12,
   },
 
   dividerRow: {
@@ -475,7 +473,6 @@ const styles = StyleSheet.create({
 
   dividerText: {
     marginHorizontal: 12,
-    fontSize: 12,
   },
 
   footer: {
@@ -484,7 +481,6 @@ const styles = StyleSheet.create({
 
   footerText: {
     textAlign: "center",
-    fontSize: 12,
   },
 
   footerLinkDark: {

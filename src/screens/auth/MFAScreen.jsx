@@ -12,6 +12,7 @@ import {
 
 import { resendMFA, verifyMFA } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import useAppTheme from "../../hooks/useAppTheme";
 
@@ -39,12 +40,14 @@ function maskEmail(email) {
 
   return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`;
 }
-
+ 
 export default function MFAScreen({
   email = "",
   password = "",
   goTo = (_nextScreen, _params) => {},
+    rememberMe = false,
 }) {
+  const { fs, sh } = useAccessibility();
   const hiddenInputRef = useRef(null);
   const { login } = useUser();
   const { colors } = useAppTheme();
@@ -98,7 +101,8 @@ export default function MFAScreen({
 
     try {
       const response = await verifyMFA(email, password, code);
-      await login(response);
+      // Preserve the Remember Me choice after MFA verification.
+      await login(response, null, null, rememberMe);
     } catch (verifyError) {
       setError(
         toErrorMessage(
@@ -165,6 +169,7 @@ export default function MFAScreen({
               <View
                 style={[
                   styles.heroIconCard,
+                  { width: sh(86), height: sh(86) },
                   {
                     backgroundColor: colors.surfaceSecondary,
                   },
@@ -173,6 +178,7 @@ export default function MFAScreen({
                 <Text
                   style={[
                     styles.heroIcon,
+                    { fontSize: fs(34) },
                     {
                       color: colors.primary,
                     },
@@ -185,6 +191,7 @@ export default function MFAScreen({
               <View
                 style={[
                   styles.successBadge,
+                  { width: sh(24), height: sh(24) },
                   {
                     backgroundColor: colors.success,
                     borderColor: colors.surface,
@@ -194,6 +201,7 @@ export default function MFAScreen({
                 <Text
                   style={[
                     styles.successBadgeText,
+                    { fontSize: fs(12) },
                     {
                       color: colors.primaryText,
                     },
@@ -210,6 +218,7 @@ export default function MFAScreen({
               <Text
                 style={[
                   styles.title,
+                  { fontSize: fs(30) },
                   {
                     color: colors.text,
                   },
@@ -221,6 +230,7 @@ export default function MFAScreen({
               <Text
                 style={[
                   styles.subtitle,
+                  { fontSize: fs(14), lineHeight: fs(21) },
                   {
                     color: colors.textSecondary,
                   },
@@ -232,6 +242,7 @@ export default function MFAScreen({
               <Text
                 style={[
                   styles.emailText,
+                  { fontSize: fs(13) },
                   {
                     color: colors.primary,
                   },
@@ -266,6 +277,7 @@ export default function MFAScreen({
                     key={`otp-${index}`}
                     style={[
                       styles.otpSlot,
+                      { minHeight: sh(54) },
                       index < otpSlots.length - 1
                         ? styles.otpSlotSpacing
                         : null,
@@ -278,6 +290,7 @@ export default function MFAScreen({
                     <Text
                       style={[
                         styles.otpSlotText,
+                        { fontSize: fs(22) },
                         {
                           color: colors.text,
                         },
@@ -308,6 +321,7 @@ export default function MFAScreen({
               <Text
                 style={[
                   styles.errorText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.error,
                   },
@@ -321,6 +335,7 @@ export default function MFAScreen({
               <Text
                 style={[
                   styles.infoText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.success,
                   },
@@ -335,6 +350,7 @@ export default function MFAScreen({
             <Text
               style={[
                 styles.resendHint,
+                { fontSize: fs(12) },
                 {
                   color: colors.textSecondary,
                 },
@@ -392,23 +408,18 @@ const styles = StyleSheet.create({
   },
 
   heroIconCard: {
-    width: 86,
-    height: 86,
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
 
   heroIcon: {
-    fontSize: 34,
   },
 
   successBadge: {
     position: "absolute",
     right: -2,
     top: -2,
-    width: 24,
-    height: 24,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -416,7 +427,6 @@ const styles = StyleSheet.create({
   },
 
   successBadgeText: {
-    fontSize: 12,
     fontWeight: "800",
   },
 
@@ -427,21 +437,16 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "center",
-    fontSize: 30,
     fontWeight: "800",
   },
 
   subtitle: {
     marginTop: 10,
     textAlign: "center",
-    fontSize: 14,
-    lineHeight: 21,
-    maxWidth: 290,
   },
 
   emailText: {
     marginTop: 8,
-    fontSize: 13,
     fontWeight: "700",
   },
 
@@ -453,7 +458,6 @@ const styles = StyleSheet.create({
 
   otpSlot: {
     flex: 1,
-    height: 54,
     borderRadius: 10,
     borderWidth: 1.5,
     alignItems: "center",
@@ -465,7 +469,6 @@ const styles = StyleSheet.create({
   },
 
   otpSlotText: {
-    fontSize: 22,
     fontWeight: "800",
   },
 
@@ -479,21 +482,18 @@ const styles = StyleSheet.create({
   errorText: {
     marginBottom: 8,
     textAlign: "center",
-    fontSize: 12,
     fontWeight: "600",
   },
 
   infoText: {
     marginBottom: 8,
     textAlign: "center",
-    fontSize: 12,
     fontWeight: "600",
   },
 
   resendHint: {
     marginBottom: 8,
     textAlign: "center",
-    fontSize: 12,
     fontWeight: "600",
   },
 

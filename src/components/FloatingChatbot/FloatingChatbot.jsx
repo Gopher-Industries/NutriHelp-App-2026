@@ -5,6 +5,7 @@ import { useUser } from "../../context/UserContext";
 import { useChatbot } from "../../context/ChatbotContext";
 import ChatModal from "./ChatModal";
 
+import { colors } from "../../theme";
 export default function FloatingChatbot() {
   const { isAuthenticated } = useUser();
   const { open, openChatbot, closeChatbot } = useChatbot();
@@ -25,7 +26,7 @@ export default function FloatingChatbot() {
           accessibilityLabel="Open AI chat"
           accessibilityRole="button"
         >
-          <Ionicons name="chatbubble-ellipses" size={26} color="#FFFFFF" />
+          <Ionicons name="chatbubble-ellipses" size={26} color={colors.white} />
         </Pressable>
       </View>
     </>
@@ -47,11 +48,11 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     // iOS shadow
-    shadowColor: "#000",
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
