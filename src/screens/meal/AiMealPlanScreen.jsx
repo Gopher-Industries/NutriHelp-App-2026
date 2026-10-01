@@ -9,6 +9,7 @@ import PersonalisedPlanForm from "./ai-plan/PersonalisedPlanForm";
 import PlanLoadingView from "./ai-plan/PlanLoadingView";
 import WeeklyPlanResults from "./ai-plan/WeeklyPlanResults";
 
+import { colors } from "../../theme";
 export default function AiMealPlanScreen({ navigation }) {
   const [step, setStep] = useState("form");
   const [filters, setFilters] = useState(null);
@@ -94,5 +95,5 @@ export default function AiMealPlanScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#FFFFFF" },
+  safe: { flex: 1, backgroundColor: colors.white },
 });

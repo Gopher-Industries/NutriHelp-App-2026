@@ -2,7 +2,6 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,8 +12,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import profileApi from "../../api/profileApi";
+import Button from "../../components/common/Button";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 
+import { colors } from "../../theme";
 function computeStreak(items = []) {
   if (!items.length) return 0;
   const daysWithMeals = new Set(
@@ -97,7 +100,7 @@ function getGoalLabel(profile) {
 function StatCard({ icon, value, label }) {
   return (
     <View style={styles.statCard}>
-      <MaterialCommunityIcons name={icon} size={18} color="#0B5FA5" />
+      <MaterialCommunityIcons name={icon} size={18} color={colors.primary} />
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -138,7 +141,7 @@ export default function ProfileScreen({ navigation }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
-        <ActivityIndicator size="large" color="#0B5FA5" />
+        <LoadingSpinner />
       </SafeAreaView>
     );
   }
@@ -161,7 +164,7 @@ export default function ProfileScreen({ navigation }) {
             style={styles.iconButton}
             onPress={() => navigation.navigate("SettingsScreen")}
           >
-            <Ionicons name="menu" size={20} color="#0B5FA5" />
+            <Ionicons name="menu" size={20} color={colors.primary} />
           </Pressable>
           <Text style={styles.logoText}>NutriHelp</Text>
           <Pressable
@@ -189,23 +192,30 @@ export default function ProfileScreen({ navigation }) {
           <StatCard icon="target" value={goal} label="GOAL" />
         </View>
 
-        <Pressable
-          style={styles.primaryButton}
+        <Button
+          label="Edit Profile"
           onPress={() =>
             navigation.navigate("EditProfileScreen", {
               initialProfile: profile,
             })
           }
+          style={styles.primaryButton}
+          textStyle={styles.primaryButtonText}
+        />
+
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate("AppointmentsScreen")}
         >
-          <Ionicons name="create-outline" size={16} color="#FFFFFF" />
-          <Text style={styles.primaryButtonText}>Edit Profile</Text>
+          <Ionicons name="calendar-outline" size={16} color={colors.textMutedNavy} />
+          <Text style={styles.secondaryButtonText}>Appointments</Text>
         </Pressable>
 
         <Pressable
           style={styles.secondaryButton}
           onPress={() => navigation.navigate("SettingsScreen")}
         >
-          <Ionicons name="settings-outline" size={16} color="#3C4A63" />
+          <Ionicons name="settings-outline" size={16} color={colors.textMutedNavy} />
           <Text style={styles.secondaryButtonText}>Settings</Text>
         </Pressable>
         <Pressable
@@ -216,9 +226,9 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.secondaryButtonText}>Shopping List</Text>
         </Pressable>
 
-        <View style={styles.streakCard}>
+        <Card style={styles.streakCard}>
           <View style={styles.streakBadge}>
-            <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={18} color={colors.white} />
           </View>
           <View style={styles.streakTextWrap}>
             <Text style={styles.streakTitle}>
@@ -234,7 +244,7 @@ export default function ProfileScreen({ navigation }) {
                     : "Great start — keep going!"}
             </Text>
           </View>
-        </View>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
@@ -243,19 +253,19 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   loadingWrap: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   content: {
@@ -280,14 +290,14 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   headerAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -295,7 +305,7 @@ const styles = StyleSheet.create({
   headerAvatarText: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   profileHeader: {
@@ -309,17 +319,17 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8F2FB",
+    backgroundColor: colors.surfaceBlueTintAlt,
     marginBottom: 14,
     borderWidth: 2,
-    borderColor: "#0B5FA5",
+    borderColor: colors.primary,
   },
 
   avatarInner: {
     width: 74,
     height: 74,
     borderRadius: 37,
-    backgroundColor: "#173E6A",
+    backgroundColor: colors.c_173e6a,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -327,29 +337,29 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 24,
     fontWeight: "900",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   fullName: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#18233D",
+    color: colors.textPrimary,
     marginBottom: 4,
   },
 
   emailText: {
     fontSize: 13,
-    color: "#6B7280",
+    color: colors.textSecondary,
   },
 
   statsGrid: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderRadius: 18,
     paddingVertical: 14,
     paddingHorizontal: 10,
     marginBottom: 16,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.06,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
@@ -365,7 +375,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
     fontWeight: "800",
-    color: "#18233D",
+    color: colors.textPrimary,
     textAlign: "center",
   },
 
@@ -373,13 +383,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 10,
     fontWeight: "700",
-    color: "#9CA3AF",
+    color: colors.textMuted,
   },
 
   primaryButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -390,13 +400,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   secondaryButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#E7EEFB",
+    backgroundColor: colors.c_e7eefb,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -407,23 +417,25 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 15,
     fontWeight: "700",
-    color: "#3C4A63",
+    color: colors.textMutedNavy,
   },
 
   streakCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EEF5EF",
+    backgroundColor: colors.c_eef5ef,
     borderRadius: 16,
+    borderWidth: 0,
     paddingHorizontal: 16,
     paddingVertical: 14,
+    marginBottom: 0,
   },
 
   streakBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#10703E",
+    backgroundColor: colors.successDeep,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -436,12 +448,12 @@ const styles = StyleSheet.create({
   streakTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#173E2A",
+    color: colors.c_173e2a,
     marginBottom: 2,
   },
 
   streakSubtitle: {
     fontSize: 11,
-    color: "#5E7867",
+    color: colors.c_5e7867,
   },
 });

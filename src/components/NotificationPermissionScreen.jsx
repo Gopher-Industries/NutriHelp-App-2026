@@ -1,3 +1,4 @@
+import { colors } from "../theme";
 // src/components/NotificationPermissionScreen.jsx
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -27,7 +28,7 @@ export default function NotificationPermissionScreen({ onAllow, onSkip }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
@@ -41,14 +42,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#18233D",
+    color: colors.textPrimary,
     marginBottom: 16,
     textAlign: "center",
   },
 
   body: {
     fontSize: 14,
-    color: "#6B7280",
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 40,
@@ -57,7 +58,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 48,
     width: "100%",
-    backgroundColor: "#4CAF50",
+    backgroundColor: colors.successMaterial,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
   },
 
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: colors.white,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   },
 
   skipButtonText: {
-    color: "#6B7280",
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: "600",
   },

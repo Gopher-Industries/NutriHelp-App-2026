@@ -14,6 +14,7 @@ import {
   requestPasswordReset,
 } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import useAppTheme from "../../hooks/useAppTheme";
 
 import {
@@ -27,6 +28,7 @@ export default function ForgotPasswordStep2Screen({
   email = "",
   goTo = (_nextScreen, _params) => {},
 }) {
+  const { fs, sh } = useAccessibility();
   const { colors } = useAppTheme();
 
   const [code, setCode] = useState("");
@@ -116,6 +118,7 @@ export default function ForgotPasswordStep2Screen({
             <View
               style={[
                 styles.iconCircle,
+                { width: sh(76), height: sh(76) },
                 {
                   backgroundColor: colors.surfaceSecondary,
                 },
@@ -124,6 +127,7 @@ export default function ForgotPasswordStep2Screen({
               <Text
                 style={[
                   styles.iconText,
+                  { fontSize: fs(30) },
                   {
                     color: colors.primary,
                   },
@@ -137,6 +141,7 @@ export default function ForgotPasswordStep2Screen({
               <Text
                 style={[
                   styles.title,
+                  { fontSize: fs(22) },
                   {
                     color: colors.text,
                   },
@@ -148,6 +153,7 @@ export default function ForgotPasswordStep2Screen({
               <Text
                 style={[
                   styles.subtitle,
+                  { fontSize: fs(13), lineHeight: fs(19) },
                   {
                     color: colors.textSecondary,
                   },
@@ -159,6 +165,7 @@ export default function ForgotPasswordStep2Screen({
               <Text
                 style={[
                   styles.emailText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.primary,
                   },
@@ -171,6 +178,7 @@ export default function ForgotPasswordStep2Screen({
             <View
               style={[
                 styles.otpBox,
+                { minHeight: sh(56) },
                 {
                   borderColor: colors.primary,
                   backgroundColor: colors.inputBackground,
@@ -180,6 +188,7 @@ export default function ForgotPasswordStep2Screen({
               <TextInput
                 style={[
                   styles.otpInput,
+                  { fontSize: fs(22) },
                   {
                     color: colors.text,
                   },
@@ -198,6 +207,7 @@ export default function ForgotPasswordStep2Screen({
               <Text
                 style={[
                   styles.errorText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.error,
                   },
@@ -210,6 +220,7 @@ export default function ForgotPasswordStep2Screen({
             <Text
               style={[
                 styles.resendText,
+                { fontSize: fs(12) },
                 {
                   color:
                     resendSeconds > 0
@@ -260,8 +271,6 @@ const styles = StyleSheet.create({
 
   iconCircle: {
     alignSelf: "center",
-    width: 76,
-    height: 76,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -269,7 +278,6 @@ const styles = StyleSheet.create({
   },
 
   iconText: {
-    fontSize: 30,
     fontWeight: "800",
   },
 
@@ -280,25 +288,20 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "center",
-    fontSize: 22,
     fontWeight: "800",
   },
 
   subtitle: {
     marginTop: 10,
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 19,
   },
 
   emailText: {
     marginTop: 6,
-    fontSize: 12,
     fontWeight: "700",
   },
 
   otpBox: {
-    height: 56,
     borderRadius: 10,
     borderWidth: 1.5,
     justifyContent: "center",
@@ -306,7 +309,6 @@ const styles = StyleSheet.create({
   },
 
   otpInput: {
-    fontSize: 22,
     fontWeight: "800",
     letterSpacing: 4,
   },
@@ -315,13 +317,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 10,
     textAlign: "center",
-    fontSize: 12,
     fontWeight: "500",
   },
 
   resendText: {
     textAlign: "center",
-    fontSize: 12,
     fontWeight: "700",
     marginBottom: 8,
   },

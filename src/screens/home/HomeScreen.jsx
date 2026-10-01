@@ -13,16 +13,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import mealPlanApi from "../../api/mealPlanApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { useChatbot } from "../../context/ChatbotContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
 import { groupMealsByType, MEAL_TYPES } from "../meal/mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const CALORIE_TARGET = 2000;
 const WATER_TARGET = 8;
 const MEAL_TARGET = 3;
 
-const MEAL_ACCENTS_MAP = { breakfast: "#F59E0B", lunch: "#22C55E", dinner: "#3B82F6" };
+const MEAL_ACCENTS_MAP = { breakfast: colors.warning, lunch: colors.successBright, dinner: colors.info };
 const MEAL_LABELS_MAP = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 const FALLBACK_MEAL_IMAGES = [
   "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
@@ -83,27 +87,27 @@ function pickMealImageUrl(meal, index) {
 }
 
 
-function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
+function StatCard({ icon, value, maxValue, unit, label, accent, onPress, fs, sh }) {
   const progress = clampProgress(value, maxValue);
 
-    return (
+  return (
     <Pressable
-      style={styles.statCard}
+      style={[styles.statCard, { minHeight: sh(120) }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value} of ${maxValue} ${unit}`}
     >
-      <Text style={styles.statIcon}>{icon}</Text>
+      <Text style={[styles.statIcon, { fontSize: fs(22) }]}>{icon}</Text>
       <Text
-        style={styles.statValue}
+        style={[styles.statValue, { fontSize: fs(15) }]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.78}
       >
-        <Text style={[styles.statValueAccent, { color: accent }]}>{value}</Text>
-        <Text style={styles.statValueMuted}>/{maxValue}</Text>
+        <Text style={[styles.statValueAccent, { color: accent, fontSize: fs(21) }]}>{value}</Text>
+        <Text style={[styles.statValueMuted, { fontSize: fs(15) }]}>/{maxValue}</Text>
       </Text>
-      <Text style={styles.statLabel}>{unit}</Text>
+      <Text style={[styles.statLabel, { fontSize: fs(11) }]}>{unit}</Text>
       <View style={styles.progressTrack}>
         <View
           style={[
@@ -112,16 +116,17 @@ function StatCard({ icon, value, maxValue, unit, label, accent, onPress }) {
           ]}
         />
       </View>
-      <Text style={styles.statFooter}>{label}</Text>
+      <Text style={[styles.statFooter, { fontSize: fs(11) }]}>{label}</Text>
     </Pressable>
   );
 }
 
-function ActionButton({ icon, label, onPress, isLast = false, disabled = false }) {
+function ActionButton({ icon, label, onPress, isLast = false, disabled = false, fs, sh }) {
   return (
     <Pressable
       style={[
         styles.actionButton,
+        { minHeight: sh(58) },
         isLast ? styles.actionButtonLast : null,
         disabled ? styles.actionButtonDisabled : null,
       ]}
@@ -131,13 +136,13 @@ function ActionButton({ icon, label, onPress, isLast = false, disabled = false }
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
     >
-      <MaterialCommunityIcons name={icon} size={20} color="#FFFFFF" />
-      <Text style={styles.actionLabel}>{label}</Text>
+      <MaterialCommunityIcons name={icon} size={fs(20)} color={colors.white} />
+      <Text style={[styles.actionLabel, { fontSize: fs(12) }]}>{label}</Text>
     </Pressable>
   );
 }
 
-function MealItem({ item, onPress }) {
+function MealItem({ item, onPress, fs }) {
   return (
     <Pressable
       style={styles.mealCardHorizontal}
@@ -152,11 +157,11 @@ function MealItem({ item, onPress }) {
         accessible={false}
       />
       <View style={styles.mealCardBody}>
-        <Text style={styles.mealTitle} numberOfLines={2}>
+        <Text style={[styles.mealTitle, { fontSize: fs(14) }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={[styles.mealType, { color: item.accent }]}>{item.mealType}</Text>
-        <Text style={styles.mealCalories}>{item.calories} kcal</Text>
+        <Text style={[styles.mealType, { color: item.accent, fontSize: fs(12) }]}>{item.mealType}</Text>
+        <Text style={[styles.mealCalories, { fontSize: fs(12) }]}>{item.calories} kcal</Text>
       </View>
     </Pressable>
   );
@@ -176,6 +181,7 @@ function SkeletonCard() {
 export default function HomeScreen({ navigation }) {
   const { user } = useUser();
   const { openChatbot } = useChatbot();
+  const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
     calories: 0,
@@ -277,29 +283,32 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.topRow}>
           <View style={styles.statusSpacer} />
           <View style={styles.logoBlock}>
-            <Text style={styles.logoText}>NutriHelp</Text>
+            <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
           </View>
           <View style={styles.batteryBadge}>
-            <Ionicons name="battery-charging-outline" size={18} color="#22C55E" />
+            <Ionicons name="battery-charging-outline" size={fs(18)} color={colors.successBright} />
           </View>
         </View>
 
         <View style={styles.heroRow}>
           <View style={styles.heroTextWrap}>
-            <Text style={styles.heroGreeting}>
+            <Text style={[styles.heroGreeting, { fontSize: fs(23), lineHeight: fs(30) }]}>
               <Text style={styles.heroSun}>☼ </Text>
               {getGreeting()}, {displayName}
             </Text>
-            <Text style={styles.heroDate}>{getTodayLabel()}</Text>
+            <Text style={[styles.heroDate, { fontSize: fs(13) }]}>{getTodayLabel()}</Text>
           </View>
 
           <Pressable
-            style={styles.notificationButton}
+            style={[
+              styles.notificationButton,
+              { width: sh(50), minHeight: sh(50), height: undefined },
+            ]}
             onPress={() => navigation.navigate("HealthNewsScreen")}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
           >
-            <Ionicons name="notifications-outline" size={24} color="#4B5563" />
+            <Ionicons name="notifications-outline" size={fs(24)} color={colors.textGray600} />
             <View style={styles.notificationDot} />
           </Pressable>
         </View>
@@ -318,8 +327,10 @@ export default function HomeScreen({ navigation }) {
               maxValue={CALORIE_TARGET}
               unit="kcal"
               label="Energy"
-              accent="#F59E0B"
+              accent={colors.warning}
               onPress={() => navigation.navigate("GoalDetailsScreen")}
+              fs={fs}
+              sh={sh}
             />
             <StatCard
               icon="💧"
@@ -327,8 +338,10 @@ export default function HomeScreen({ navigation }) {
               maxValue={WATER_TARGET}
               unit="cups water"
               label="Hydration"
-              accent="#2B78C5"
+              accent={colors.primaryMutedAlt}
               onPress={() => navigation.navigate("WaterIntakeScreen")}
+              fs={fs}
+              sh={sh}
             />
             <StatCard
               icon="🍽️"
@@ -336,8 +349,10 @@ export default function HomeScreen({ navigation }) {
               maxValue={MEAL_TARGET}
               unit="Meals"
               label="Completed"
-              accent="#22C55E"
+              accent={colors.successBright}
               onPress={() => navigation.navigate("Meals")}
+              fs={fs}
+              sh={sh}
             />
           </View>
         )}
@@ -347,22 +362,28 @@ export default function HomeScreen({ navigation }) {
             icon="silverware-fork-knife"
             label="Log Meal"
             onPress={() => navigation.navigate("Meals")}
+            fs={fs}
+            sh={sh}
           />
           <ActionButton
             icon="cup-outline"
             label="Add Water"
             onPress={() => navigation.navigate("WaterIntakeScreen")}
+            fs={fs}
+            sh={sh}
           />
           <ActionButton
             icon="chat-processing-outline"
             label="Ask AI"
             onPress={openChatbot}
             isLast
+            fs={fs}
+            sh={sh}
           />
         </View>
 
         <View style={styles.mealsCard}>
-          <Text style={styles.mealsCardTitle}>Today's Meals</Text>
+          <Text style={[styles.mealsCardTitle, { fontSize: fs(15) }]}>Today's Meals</Text>
 
           {loading ? (
             <View style={styles.loadingBlock}>
@@ -378,10 +399,12 @@ export default function HomeScreen({ navigation }) {
                 .map((section) => (
                   <View key={section.type} style={styles.mealSection}>
                     <View style={styles.mealSectionHeader}>
-                      <Text style={[styles.mealSectionTitle, { color: section.accent }]}>
+                      <Text style={[styles.mealSectionTitle, { color: section.accent, fontSize: fs(14) }]}>
                         {section.label}
                       </Text>
-                      <Text style={styles.mealSectionCount}>{section.meals.length} items</Text>
+                      <Text style={[styles.mealSectionCount, { fontSize: fs(12) }]}>
+                        {section.meals.length} items
+                      </Text>
                     </View>
                     <ScrollView
                       horizontal
@@ -393,6 +416,7 @@ export default function HomeScreen({ navigation }) {
                           key={meal.id}
                           item={meal}
                           onPress={() => navigation.navigate("Meals")}
+                          fs={fs}
                         />
                       ))}
                     </ScrollView>
@@ -400,25 +424,27 @@ export default function HomeScreen({ navigation }) {
                 ))}
 
               <Pressable
-                style={styles.linkButton}
+                style={[styles.linkButton, { minHeight: sh(36) }]}
                 onPress={() => navigation.navigate("Meals")}
               >
-                <Text style={styles.linkButtonText}>View Full Meal Plan →</Text>
+                <Text style={[styles.linkButtonText, { fontSize: fs(13) }]}>
+                  View Full Meal Plan →
+                </Text>
               </Pressable>
             </>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>🍽️</Text>
-              <Text style={styles.emptyStateTitle}>No meals planned yet</Text>
-              <Text style={styles.emptyStateBody}>
-                Get started by setting up your meals for today.
-              </Text>
-              <Pressable
-                style={styles.emptyCta}
+              <EmptyState
+                icon="restaurant-outline"
+                message="No meals planned yet. Get started by setting up your meals for today."
+                style={styles.emptyStateInner}
+              />
+              <Button
+                label="Set Up Today's Meals"
                 onPress={() => navigation.navigate("Meals")}
-              >
-                <Text style={styles.emptyCtaText}>Set Up Today's Meals</Text>
-              </Pressable>
+                style={[styles.emptyCta, { minHeight: sh(48), height: undefined }]}
+                textStyle={[styles.emptyCtaText, { fontSize: fs(14) }]}
+              />
             </View>
           )}
         </View>
@@ -430,12 +456,12 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   content: {
@@ -463,7 +489,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   batteryBadge: {
@@ -487,29 +513,27 @@ const styles = StyleSheet.create({
     fontSize: 23,
     lineHeight: 30,
     fontWeight: "800",
-    color: "#22365D",
+    color: colors.c_22365d,
   },
 
   heroSun: {
-    color: "#F4B000",
+    color: colors.warningGold,
   },
 
   heroDate: {
     marginTop: 4,
     fontSize: 13,
-    color: "#7A7F8E",
+    color: colors.c_7a7f8e,
   },
 
   notificationButton: {
-    width: 50,
-    height: 50,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -523,7 +547,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#FF4D4F",
+    backgroundColor: colors.dangerSoft,
   },
 
   statsRow: {
@@ -534,13 +558,13 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 10,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -565,20 +589,20 @@ const styles = StyleSheet.create({
 
   statValueMuted: {
     fontSize: 15,
-    color: "#A0A8B6",
+    color: colors.c_a0a8b6,
   },
 
   statLabel: {
     marginTop: 4,
     fontSize: 11,
-    color: "#7A7F8E",
+    color: colors.c_7a7f8e,
   },
 
   progressTrack: {
     marginTop: 10,
     height: 4,
     borderRadius: 999,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
     overflow: "hidden",
   },
 
@@ -591,7 +615,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 11,
     fontWeight: "600",
-    color: "#7A7F8E",
+    color: colors.c_7a7f8e,
   },
 
   actionsRow: {
@@ -601,9 +625,8 @@ const styles = StyleSheet.create({
 
   actionButton: {
     flex: 1,
-    minHeight: 58,
     borderRadius: 12,
-    backgroundColor: "#2B78C5",
+    backgroundColor: colors.primaryMutedAlt,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -622,17 +645,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   mealsCard: {
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
@@ -642,7 +665,7 @@ const styles = StyleSheet.create({
   mealsCardTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#202633",
+    color: colors.c_202633,
     marginBottom: 12,
   },
 
@@ -664,7 +687,7 @@ const styles = StyleSheet.create({
 
   mealSectionCount: {
     fontSize: 12,
-    color: "#8A94A6",
+    color: colors.textMutedBlue,
     fontWeight: "600",
   },
 
@@ -675,9 +698,9 @@ const styles = StyleSheet.create({
   mealCardHorizontal: {
     width: 188,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     marginRight: 10,
     overflow: "hidden",
   },
@@ -685,7 +708,7 @@ const styles = StyleSheet.create({
   mealThumb: {
     width: "100%",
     height: 96,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: colors.borderSlateSoft,
   },
 
   mealCardBody: {
@@ -696,7 +719,7 @@ const styles = StyleSheet.create({
   mealTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#22365D",
+    color: colors.c_22365d,
   },
 
   mealType: {
@@ -708,7 +731,7 @@ const styles = StyleSheet.create({
   mealCalories: {
     marginTop: 4,
     fontSize: 12,
-    color: "#9CA3AF",
+    color: colors.textMuted,
     fontWeight: "600",
   },
 
@@ -721,7 +744,7 @@ const styles = StyleSheet.create({
   linkButtonText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2B78C5",
+    color: colors.primaryMutedAlt,
   },
 
   emptyState: {
@@ -729,47 +752,28 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
 
-  emptyStateIcon: {
-    fontSize: 34,
-    marginBottom: 10,
-  },
-
-  emptyStateTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#4B5563",
-    marginBottom: 8,
-  },
-
-  emptyStateBody: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#9CA3AF",
-    textAlign: "center",
+  emptyStateInner: {
+    marginTop: 0,
     marginBottom: 18,
   },
 
   emptyCta: {
     width: "100%",
-    height: 48,
     borderRadius: 12,
-    backgroundColor: "#2B78C5",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.primaryMutedAlt,
   },
 
   emptyCtaText: {
-    fontSize: 14,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   skeletonStatCard: {
     flex: 1,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 10,
@@ -779,7 +783,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 6,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
     marginBottom: 10,
   },
 
@@ -787,7 +791,7 @@ const styles = StyleSheet.create({
     width: "68%",
     height: 20,
     borderRadius: 8,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
     marginBottom: 8,
   },
 
@@ -795,7 +799,7 @@ const styles = StyleSheet.create({
     width: "46%",
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#F3F5F9",
+    backgroundColor: colors.c_f3f5f9,
     marginBottom: 12,
   },
 
@@ -803,7 +807,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 4,
     borderRadius: 999,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
   },
 
   loadingBlock: {
@@ -813,7 +817,7 @@ const styles = StyleSheet.create({
   loadingLineLong: {
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
     marginBottom: 14,
   },
 
@@ -821,7 +825,7 @@ const styles = StyleSheet.create({
     width: "72%",
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#F3F5F9",
+    backgroundColor: colors.c_f3f5f9,
     marginBottom: 14,
   },
 
@@ -829,6 +833,6 @@ const styles = StyleSheet.create({
     width: "54%",
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#EEF2F7",
+    backgroundColor: colors.surfaceBlueGray,
   },
 });

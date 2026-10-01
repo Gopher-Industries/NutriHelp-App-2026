@@ -9,6 +9,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import Button from "../../components/common/Button";
+
+import { colors } from "../../theme";
 export default function DeleteAccountScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -19,7 +22,7 @@ export default function DeleteAccountScreen({ navigation }) {
       >
         <View style={styles.topBar}>
           <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={22} color="#18233D" />
+            <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.logoText}>NutriHelp</Text>
           <View style={styles.iconSpacer} />
@@ -28,7 +31,7 @@ export default function DeleteAccountScreen({ navigation }) {
         <View style={styles.heroWrap}>
           <View style={styles.heroCircle}>
             <View style={styles.heroInner}>
-              <Ionicons name="alert" size={26} color="#C81E1E" />
+              <Ionicons name="alert" size={26} color={colors.dangerAlt2} />
             </View>
           </View>
         </View>
@@ -41,9 +44,13 @@ export default function DeleteAccountScreen({ navigation }) {
           blocked from performing the action.
         </Text>
 
-        <Pressable style={styles.keepButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.keepButtonText}>Keep My Account</Text>
-        </Pressable>
+        <Button
+          label="Keep My Account"
+          variant="success"
+          onPress={() => navigation.goBack()}
+          style={styles.keepButton}
+          textStyle={styles.keepButtonText}
+        />
 
         <Pressable
           style={styles.deleteButton}
@@ -58,7 +65,7 @@ export default function DeleteAccountScreen({ navigation }) {
         </Pressable>
 
         <View style={styles.footerPill}>
-          <Ionicons name="shield-checkmark-outline" size={12} color="#9CA3AF" />
+          <Ionicons name="shield-checkmark-outline" size={12} color={colors.textMuted} />
           <Text style={styles.footerPillText}>VITALITY SECURITY PROTOCOL</Text>
         </View>
       </ScrollView>
@@ -69,12 +76,12 @@ export default function DeleteAccountScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   content: {
@@ -106,7 +113,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   heroWrap: {
@@ -118,7 +125,7 @@ const styles = StyleSheet.create({
     width: 108,
     height: 108,
     borderRadius: 54,
-    backgroundColor: "#FFE6E6",
+    backgroundColor: colors.c_ffe6e6,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -127,7 +134,7 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: 33,
-    backgroundColor: "#FFD1D1",
+    backgroundColor: colors.c_ffd1d1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -135,7 +142,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#18233D",
+    color: colors.textPrimary,
     textAlign: "center",
     marginBottom: 12,
   },
@@ -144,7 +151,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     lineHeight: 22,
-    color: "#6B7280",
+    color: colors.textSecondary,
     marginBottom: 24,
   },
 
@@ -152,7 +159,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#10703E",
+    backgroundColor: colors.successDeep,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -161,16 +168,16 @@ const styles = StyleSheet.create({
   keepButtonText: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   deleteButton: {
     width: "100%",
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#FFF5F5",
+    backgroundColor: colors.c_fff5f5,
     borderWidth: 1,
-    borderColor: "#E9B6B6",
+    borderColor: colors.c_e9b6b6,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 22,
@@ -179,14 +186,14 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#C81E1E",
+    color: colors.dangerAlt2,
   },
 
   footerPill: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 999,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: colors.c_f5f7fb,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -195,6 +202,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 10,
     fontWeight: "800",
-    color: "#9CA3AF",
+    color: colors.textMuted,
   },
 });

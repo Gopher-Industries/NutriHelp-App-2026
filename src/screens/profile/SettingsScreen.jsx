@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -17,10 +16,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import notificationApi from "../../api/notificationApi";
 import useBiometric from "../../hooks/useBiometric";
 import profileApi from "../../api/profileApi";
+import Button from "../../components/common/Button";
+import Card from "../../components/common/Card";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useUser } from "../../context/UserContext";
 import { useAccessibility, FONT_SIZE_OPTIONS } from "../../context/AccessibilityContext";
 import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
 
+import { colors } from "../../theme";
 const SETTINGS_FALLBACK_KEY = "nutrihelp.settings.local";
 
 function buildSettingsFallbackKey(userId) {
@@ -142,7 +145,7 @@ export default function SettingsScreen({ navigation }) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingWrap} edges={["top"]}>
-        <ActivityIndicator size="large" color="#0B5FA5" />
+        <LoadingSpinner />
       </SafeAreaView>
     );
   }
@@ -156,7 +159,7 @@ export default function SettingsScreen({ navigation }) {
       >
         <View style={styles.topBar}>
           <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="menu" size={20} color="#0B5FA5" />
+            <Ionicons name="menu" size={20} color={colors.primary} />
           </Pressable>
           <Text style={styles.logoText}>NutriHelp</Text>
           <Pressable style={styles.headerAvatar}>
@@ -173,7 +176,7 @@ export default function SettingsScreen({ navigation }) {
 
         {/* ── ACCESSIBILITY ─────────────────────────────────────────────── */}
         <SectionTitle>ACCESSIBILITY</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <View style={styles.row}>
             <View style={styles.rowTextWrap}>
               <Text style={styles.rowLabel}>Text Size</Text>
@@ -204,11 +207,11 @@ export default function SettingsScreen({ navigation }) {
               </Pressable>
             ))}
           </View>
-        </View>
+        </Card>
 
         {/* ── HEALTH CONDITIONS ─────────────────────────────────────────── */}
         <SectionTitle>HEALTH CONDITIONS</SectionTitle>
-        <View style={[styles.sectionCard, { paddingBottom: 14 }]}>
+        <Card style={[styles.sectionCard, { paddingBottom: 14 }]}>
           <View style={styles.row}>
             <View style={styles.rowTextWrap}>
               <Text style={styles.rowLabel}>My Conditions</Text>
@@ -237,24 +240,24 @@ export default function SettingsScreen({ navigation }) {
                     {c.label}
                   </Text>
                   {active && (
-                    <Ionicons name="checkmark-circle" size={14} color="#0B5FA5" />
+                    <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
                   )}
                 </Pressable>
               );
             })}
           </View>
-        </View>
+        </Card>
 
         <SectionTitle>NOTIFICATIONS</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <SettingRow
             label="Meal Reminders"
             right={
               <Switch
                 value={preferences.mealReminders}
                 onValueChange={() => togglePreference("mealReminders")}
-                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
-                thumbColor="#FFFFFF"
+                trackColor={{ false: colors.c_d7ddf0, true: colors.successDeep }}
+                thumbColor={colors.white}
               />
             }
             onPress={() => togglePreference("mealReminders")}
@@ -265,17 +268,17 @@ export default function SettingsScreen({ navigation }) {
               <Switch
                 value={preferences.waterReminders}
                 onValueChange={() => togglePreference("waterReminders")}
-                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
-                thumbColor="#FFFFFF"
+                trackColor={{ false: colors.c_d7ddf0, true: colors.successDeep }}
+                thumbColor={colors.white}
               />
             }
             onPress={() => togglePreference("waterReminders")}
             last
           />
-        </View>
+        </Card>
 
         <SectionTitle>SECURITY</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <SettingRow
             label="Face ID"
             description={
@@ -288,15 +291,15 @@ export default function SettingsScreen({ navigation }) {
                 value={isEnabled}
                 onValueChange={setEnabled}
                 disabled={!isAvailable}
-                trackColor={{ false: "#D7DDF0", true: "#10703E" }}
-                thumbColor="#FFFFFF"
+                trackColor={{ false: colors.c_d7ddf0, true: colors.successDeep }}
+                thumbColor={colors.white}
               />
             }
             onPress={() => isAvailable && setEnabled(!isEnabled)}
           />
           <SettingRow
             label="Change Password"
-            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            right={<Ionicons name="chevron-forward" size={18} color={colors.c_9aa4b2} />}
             onPress={() =>
               navigation.navigate("EditProfileScreen", {
                 initialProfile: profile,
@@ -304,13 +307,13 @@ export default function SettingsScreen({ navigation }) {
             }
             last
           />
-        </View>
+        </Card>
 
         <SectionTitle>ACCOUNT</SectionTitle>
-        <View style={styles.sectionCard}>
+        <Card style={styles.sectionCard}>
           <SettingRow
             label="Edit Profile"
-            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            right={<Ionicons name="chevron-forward" size={18} color={colors.c_9aa4b2} />}
             onPress={() =>
               navigation.navigate("EditProfileScreen", {
                 initialProfile: profile,
@@ -320,17 +323,17 @@ export default function SettingsScreen({ navigation }) {
           <SettingRow
             label="Delete Account"
             description="Review deletion details before taking action."
-            right={<Ionicons name="chevron-forward" size={18} color="#9AA4B2" />}
+            right={<Ionicons name="chevron-forward" size={18} color={colors.c_9aa4b2} />}
             onPress={() => navigation.navigate("DeleteAccountScreen")}
           />
           <SettingRow
             label="Log Out"
             danger
-            right={<Ionicons name="log-out-outline" size={18} color="#D62828" />}
+            right={<Ionicons name="log-out-outline" size={18} color={colors.dangerAlt} />}
             onPress={() => setShowLogoutModal(true)}
             last
           />
-        </View>
+        </Card>
       </ScrollView>
 
       <Modal
@@ -343,22 +346,23 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.modalSheet}>
             <View style={styles.sheetHandle} />
             <View style={styles.modalIconWrap}>
-              <Ionicons name="log-out-outline" size={18} color="#D62828" />
+              <Ionicons name="log-out-outline" size={18} color={colors.dangerAlt} />
             </View>
             <Text style={styles.modalTitle}>Are you sure you want to log out?</Text>
             <Text style={styles.modalSubtitle}>
               You will need to re-enter your credentials to access your health data.
             </Text>
 
-            <Pressable
-              style={styles.logoutButton}
+            <Button
+              label="Log Out"
+              variant="danger"
               onPress={() => {
                 setShowLogoutModal(false);
                 logout();
               }}
-            >
-              <Text style={styles.logoutButtonText}>Log Out</Text>
-            </Pressable>
+              style={styles.logoutButton}
+              textStyle={styles.logoutButtonText}
+            />
 
             <Pressable
               style={styles.cancelButton}
@@ -376,19 +380,19 @@ export default function SettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   loadingWrap: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
 
   content: {
@@ -413,14 +417,14 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   headerAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#E7EEFB",
+    backgroundColor: colors.c_e7eefb,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -428,34 +432,36 @@ const styles = StyleSheet.create({
   headerAvatarText: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#173E6A",
+    color: colors.c_173e6a,
   },
 
   title: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#18233D",
+    color: colors.textPrimary,
     marginBottom: 6,
   },
 
   subtitle: {
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
+    color: colors.textSecondary,
     marginBottom: 20,
   },
 
   sectionTitle: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#9CA3AF",
+    color: colors.textMuted,
     marginBottom: 8,
   },
 
   sectionCard: {
     borderRadius: 16,
-    backgroundColor: "#EEF3FF",
+    backgroundColor: colors.c_eef3ff,
+    borderWidth: 0,
     paddingHorizontal: 16,
+    paddingVertical: 0,
     marginBottom: 18,
   },
 
@@ -475,23 +481,23 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
 
   rowLabelDanger: {
-    color: "#D62828",
+    color: colors.dangerAlt,
   },
 
   rowDescription: {
     marginTop: 4,
     fontSize: 11,
     lineHeight: 16,
-    color: "#6B7280",
+    color: colors.textSecondary,
   },
 
   rowDivider: {
     height: 1,
-    backgroundColor: "#D9E2F4",
+    backgroundColor: colors.c_d9e2f4,
   },
 
   modalOverlay: {
@@ -501,7 +507,7 @@ const styles = StyleSheet.create({
   },
 
   modalSheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 22,
@@ -514,7 +520,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 4,
     borderRadius: 999,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.border,
     marginBottom: 18,
   },
 
@@ -523,7 +529,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFF1F1",
+    backgroundColor: colors.c_fff1f1,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -533,7 +539,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 20,
     fontWeight: "800",
-    color: "#18233D",
+    color: colors.textPrimary,
     marginBottom: 8,
   },
 
@@ -541,14 +547,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     lineHeight: 18,
-    color: "#6B7280",
+    color: colors.textSecondary,
     marginBottom: 22,
   },
 
   logoutButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#C81E1E",
+    backgroundColor: colors.dangerAlt2,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
@@ -557,13 +563,13 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.white,
   },
 
   cancelButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#E1E8F7",
+    backgroundColor: colors.c_e1e8f7,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -571,7 +577,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#55627D",
+    color: colors.c_55627d,
   },
 
   // Font size picker
@@ -585,22 +591,22 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: "#D9E2F4",
+    borderColor: colors.c_d9e2f4,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   fontSizeChipActive: {
-    borderColor: "#0B5FA5",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceBlue,
   },
   fontSizeChipText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6B7280",
+    color: colors.textSecondary,
   },
   fontSizeChipTextActive: {
-    color: "#0B5FA5",
+    color: colors.primary,
   },
 
   // Health conditions
@@ -616,19 +622,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: "#D9E2F4",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.c_d9e2f4,
+    backgroundColor: colors.white,
   },
   conditionChipActive: {
-    borderColor: "#0B5FA5",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceBlue,
   },
   conditionChipEmoji: { fontSize: 18 },
   conditionChipText: {
     flex: 1,
     fontSize: 14,
     fontWeight: "600",
-    color: "#374151",
+    color: colors.textGray700,
   },
-  conditionChipTextActive: { color: "#0B5FA5" },
+  conditionChipTextActive: { color: colors.primary },
 });

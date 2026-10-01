@@ -1,3 +1,4 @@
+import { colors } from "../../theme";
 const RECIPE_IMAGES = [
   "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80",
@@ -7,10 +8,10 @@ const RECIPE_IMAGES = [
 
 export const MEAL_TYPES = ["breakfast", "lunch", "dinner"];
 export const SUMMARY_COLORS = {
-  Protein: "#1877F2",
-  Fiber: "#39D353",
-  Sugar: "#FF4D00",
-  Sodium: "#FFC400",
+  Protein: colors.facebookBlue,
+  Fiber: colors.successGithub,
+  Sugar: colors.warningOrangeHot,
+  Sodium: colors.warningAmber,
 };
 
 export function formatDisplayName(value = "") {

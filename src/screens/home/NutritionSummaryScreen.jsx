@@ -1,15 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { buildNutritionSummary, groupMealsByType } from "../meal/mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 export default function NutritionSummaryScreen({ navigation }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const [totalCalories, setTotalCalories] = useState(0);
@@ -50,17 +56,20 @@ export default function NutritionSummaryScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color="#667085" />
-          <Text style={styles.backText}>Back</Text>
+        <Pressable
+          style={[styles.backButton, { minHeight: sh(44) }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={fs(22)} color={colors.textSecondaryAlt} />
+          <Text style={[styles.backText, { fontSize: fs(15) }]}>Back</Text>
         </Pressable>
-        <Text style={styles.logoText}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Nutrition Summary</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { fontSize: fs(30) }]}>Nutrition Summary</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(16), lineHeight: fs(23) }]}>
           {loading
             ? "Loading today's nutrition data..."
             : `Today's total: ${totalCalories} kcal consumed`}
@@ -68,28 +77,29 @@ export default function NutritionSummaryScreen({ navigation }) {
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color="#1877F2" />
+            <LoadingSpinner color={colors.facebookBlue} />
           </View>
         ) : rows.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🥗</Text>
-            <Text style={styles.emptyTitle}>No meal data for today</Text>
-            <Text style={styles.emptyBody}>
-              Add meals to your plan to see nutrition breakdown here.
-            </Text>
-            <Pressable
-              style={styles.planButton}
+            <EmptyState
+              message="No meal data for today. Add meals to your plan to see nutrition breakdown here."
+              style={styles.emptyStateInner}
+            />
+            <Button
+              label="Go to Meal Plan"
               onPress={() => navigation.navigate("MealPlanOverviewScreen")}
-            >
-              <Text style={styles.planButtonText}>Go to Meal Plan</Text>
-            </Pressable>
+              style={[styles.planButton, { minHeight: sh(48), height: undefined }]}
+              textStyle={[styles.planButtonText, { fontSize: fs(14) }]}
+            />
           </View>
         ) : (
           rows.map((item) => (
             <View key={item.label} style={styles.rowCard}>
               <View style={styles.rowHeader}>
-                <Text style={[styles.rowTitle, { color: item.color }]}>{item.label}</Text>
-                <Text style={styles.rowValue}>{item.value}</Text>
+                <Text style={[styles.rowTitle, { color: item.color, fontSize: fs(22) }]}>
+                  {item.label}
+                </Text>
+                <Text style={[styles.rowValue, { fontSize: fs(16) }]}>{item.value}</Text>
               </View>
               <View style={styles.track}>
                 <View
@@ -99,7 +109,9 @@ export default function NutritionSummaryScreen({ navigation }) {
                   ]}
                 />
               </View>
-              <Text style={styles.rowProgress}>{Math.round(item.progress * 100)}% of daily target</Text>
+              <Text style={[styles.rowProgress, { fontSize: fs(12) }]}>
+                {Math.round(item.progress * 100)}% of daily target
+              </Text>
             </View>
           ))
         )}
@@ -109,7 +121,7 @@ export default function NutritionSummaryScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -117,20 +129,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.surfaceGray,
   },
   backButton: { flexDirection: "row", alignItems: "center", width: 60 },
-  backText: { marginLeft: 4, fontSize: 15, color: "#667085" },
-  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
+  backText: { marginLeft: 4, color: colors.textSecondaryAlt },
+  logoText: { fontWeight: "700", color: colors.textPrimary },
   headerSpacer: { width: 60 },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { padding: 20, paddingBottom: 32 },
-  title: { fontSize: 30, fontWeight: "800", color: "#111111", marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: "#555555", marginBottom: 20 },
+  title: { fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
+  subtitle: { color: colors.textGray, marginBottom: 20 },
   loadingWrap: { alignItems: "center", paddingVertical: 60 },
   rowCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 26,
     padding: 18,
     marginBottom: 14,
@@ -141,22 +153,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 14,
   },
-  rowTitle: { fontSize: 22, fontWeight: "800" },
-  rowValue: { fontSize: 16, color: "#111111" },
-  track: { height: 14, borderRadius: 99, backgroundColor: "#D9D9D9", overflow: "hidden" },
+  rowTitle: { fontWeight: "800" },
+  rowValue: { color: colors.textNearBlack },
+  track: { height: 14, borderRadius: 99, backgroundColor: colors.c_d9d9d9, overflow: "hidden" },
   fill: { height: "100%", borderRadius: 99 },
-  rowProgress: { marginTop: 8, fontSize: 12, color: "#888888" },
+  rowProgress: { marginTop: 8, color: colors.textGrayLight },
   emptyState: { alignItems: "center", paddingVertical: 48 },
-  emptyIcon: { fontSize: 48, marginBottom: 14 },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151", marginBottom: 8 },
-  emptyBody: { fontSize: 14, color: "#9CA3AF", textAlign: "center", lineHeight: 21, marginBottom: 20 },
+  emptyStateInner: { marginTop: 0 },
   planButton: {
-    height: 48,
     borderRadius: 14,
-    backgroundColor: "#2B78C5",
+    backgroundColor: colors.primaryMutedAlt,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 16,
   },
-  planButtonText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+  planButtonText: { fontWeight: "700", color: colors.white },
 });

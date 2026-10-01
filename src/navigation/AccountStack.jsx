@@ -1,5 +1,8 @@
 import { createStackNavigator } from "@react-navigation/stack";
 
+import AppointmentDetailScreen from "../screens/appointments/AppointmentDetailScreen";
+import AppointmentsScreen from "../screens/appointments/AppointmentsScreen";
+import BookAppointmentScreen from "../screens/appointments/BookAppointmentScreen";
 import DeleteAccountScreen from "../screens/profile/DeleteAccountScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
 import ProfileScreen from "../screens/profile/ProfileScreen";
@@ -44,8 +47,18 @@ export default function AccountStack() {
       />
       <Stack.Screen
         name="AppointmentsScreen"
-        component={PlaceholderScreen}
-        options={{ title: "Appointments" }}
+        component={AppointmentsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AppointmentDetailScreen"
+        component={AppointmentDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BookAppointmentScreen"
+        component={BookAppointmentScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="TimerScreen"

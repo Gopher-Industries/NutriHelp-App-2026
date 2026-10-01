@@ -1,9 +1,10 @@
 import { View, Text } from "react-native";
 
+import { colors } from "../../theme";
 export default function Badge({ label, variant = "category" }) {
-  let backgroundColor = "#16A34A";
-  if (variant === "tag") backgroundColor = "#2563EB"; 
-  if (variant === "status") backgroundColor = "#DC2626"; 
+  let backgroundColor = colors.successStrong;
+  if (variant === "tag") backgroundColor = colors.infoStrong; 
+  if (variant === "status") backgroundColor = colors.dangerStrong; 
   return (
     <View
       style={{
@@ -14,7 +15,7 @@ export default function Badge({ label, variant = "category" }) {
         alignSelf: "flex-start",
       }}
     >
-      <Text style={{ color: "#fff", fontSize: 12 }}>
+      <Text style={{ color: colors.white, fontSize: 12 }}>
         {label}
       </Text>
     </View>

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -177,7 +178,12 @@ export default function ElderlyHomeScreen({ navigation }) {
             label="Health Tools"
             sublabel="Charts & trackers"
             accent="#F59E0B"
-            onPress={() => navigation.navigate("HealthToolsScreen")}
+            onPress={() =>
+              Alert.alert(
+                "Coming soon",
+                "Health Tools isn't available yet. We'll let you know when this is ready."
+              )
+            }
             fs={fs} sh={sh}
           />
           <Tile

@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import {
-  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -14,7 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useUser } from "../../context/UserContext";
 import { addScanEntry } from "../../utils/scanHistoryStorage";
+import Button from "../../components/common/Button";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
+import { colors } from "../../theme";
 const OFF_FIELDS = "product_name,allergens_tags,allergens_from_ingredients,ingredients_text";
 
 // FE-17: Barcode lookups deliberately use the Open Food Facts public API
@@ -70,8 +72,11 @@ function normalizeBarcodeResult(product, barcode) {
 function LoadingOverlay() {
   return (
     <View style={styles.loadingOverlay}>
-      <ActivityIndicator size="large" color="#FFFFFF" />
-      <Text style={styles.loadingText}>Looking up barcode…</Text>
+      <LoadingSpinner
+        message="Looking up barcode…"
+        color={colors.white}
+        textStyle={styles.loadingText}
+      />
     </View>
   );
 }
@@ -91,11 +96,11 @@ function ResultSheet({ result, onClose, onSave, saveState }) {
           <Ionicons
             name={hasAllergens ? "warning-outline" : "shield-checkmark-outline"}
             size={22}
-            color={hasAllergens ? "#F59E0B" : "#22C55E"}
+            color={hasAllergens ? colors.warning : colors.successBright}
           />
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.allergenCardLabel}>Product Allergens</Text>
-            <Text style={[styles.allergenCardStatus, { color: hasAllergens ? "#F59E0B" : "#22C55E" }]}>
+            <Text style={[styles.allergenCardStatus, { color: hasAllergens ? colors.warning : colors.successBright }]}>
               {hasAllergens ? `Contains ${result.productAllergens.length} allergen${result.productAllergens.length > 1 ? "s" : ""}` : "No allergens declared"}
             </Text>
           </View>
@@ -139,21 +144,20 @@ function ResultSheet({ result, onClose, onSave, saveState }) {
         </View>
       )}
 
-      <Pressable
-        style={[styles.primaryBtn, saveState === "saved" && styles.savedBtn]}
+      <Button
+        label={
+          saveState === "saving"
+            ? "Saving…"
+            : saveState === "saved"
+            ? "Saved to History"
+            : "Save to History"
+        }
         onPress={onSave}
-        disabled={saveState === "saving" || saveState === "saved"}
-      >
-        <Ionicons
-          name={saveState === "saved" ? "checkmark-circle-outline" : "bookmark-outline"}
-          size={18}
-          color="#FFFFFF"
-          style={{ marginRight: 8 }}
-        />
-        <Text style={styles.primaryBtnText}>
-          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved to History" : "Save to History"}
-        </Text>
-      </Pressable>
+        loading={saveState === "saving"}
+        disabled={saveState === "saved"}
+        style={[styles.primaryBtn, saveState === "saved" && styles.savedBtn]}
+        textStyle={styles.primaryBtnText}
+      />
 
       <Pressable style={styles.secondaryBtn} onPress={onClose}>
         <Text style={styles.secondaryBtnText}>{saveState === "saved" ? "Done" : "Scan Another Product"}</Text>
@@ -167,16 +171,19 @@ function PermissionExplanationScreen({ onRequest }) {
     <SafeAreaView style={styles.permissionSafe} edges={["top"]}>
       <View style={styles.permissionContainer}>
         <View style={styles.permissionIconWrap}>
-          <Ionicons name="camera-outline" size={40} color="#2A78C5" />
+          <Ionicons name="camera-outline" size={40} color={colors.primaryMuted} />
         </View>
         <Text style={styles.permissionTitle}>Camera Access Needed</Text>
         <Text style={styles.permissionText}>
           NutriHelp needs access to your camera to scan barcodes and look up
           nutritional information for your food products.
         </Text>
-        <Pressable style={styles.primaryBtn} onPress={onRequest}>
-          <Text style={styles.primaryBtnText}>Allow Camera Access</Text>
-        </Pressable>
+        <Button
+          label="Allow Camera Access"
+          onPress={onRequest}
+          style={styles.primaryBtn}
+          textStyle={styles.primaryBtnText}
+        />
       </View>
     </SafeAreaView>
   );
@@ -186,17 +193,20 @@ function PermissionDeniedScreen() {
   return (
     <SafeAreaView style={styles.permissionSafe} edges={["top"]}>
       <View style={styles.permissionContainer}>
-        <View style={[styles.permissionIconWrap, { backgroundColor: "#FEF2F2" }]}>
-          <Ionicons name="camera-off-outline" size={40} color="#EF4444" />
+        <View style={[styles.permissionIconWrap, { backgroundColor: colors.surfaceRed }]}>
+          <Ionicons name="camera-off-outline" size={40} color={colors.danger} />
         </View>
         <Text style={styles.permissionTitle}>Camera Access Denied</Text>
         <Text style={styles.permissionText}>
           To use the barcode scanner, please enable camera permissions in your
           device settings.
         </Text>
-        <Pressable style={styles.primaryBtn} onPress={() => Linking.openSettings()}>
-          <Text style={styles.primaryBtnText}>Open Settings</Text>
-        </Pressable>
+        <Button
+          label="Open Settings"
+          onPress={() => Linking.openSettings()}
+          style={styles.primaryBtn}
+          textStyle={styles.primaryBtnText}
+        />
       </View>
     </SafeAreaView>
   );
@@ -316,7 +326,7 @@ export default function BarcodeScannerScreen({ navigation }) {
 
       {/* Torch toggle */}
       <Pressable style={styles.torchBtn} onPress={() => setTorchOn((p) => !p)}>
-        <Ionicons name={torchOn ? "flash" : "flash-off"} size={18} color={torchOn ? "#FCD34D" : "#FFFFFF"} />
+        <Ionicons name={torchOn ? "flash" : "flash-off"} size={18} color={torchOn ? colors.c_fcd34d : colors.white} />
         <Text style={styles.torchBtnText}>{torchOn ? "Flash On" : "Flash Off"}</Text>
       </Pressable>
 
@@ -329,21 +339,21 @@ export default function BarcodeScannerScreen({ navigation }) {
             value={manualBarcode}
             onChangeText={setManualBarcode}
             placeholder="e.g. 9300675023228"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
             editable={!loading}
           />
-          <Pressable
-            style={[styles.manualBtn, loading && { opacity: 0.6 }]}
+          <Button
+            label="Search"
             onPress={handleManualSubmit}
             disabled={loading}
-          >
-            <Text style={styles.manualBtnText}>Search</Text>
-          </Pressable>
+            style={styles.manualBtn}
+            textStyle={styles.manualBtnText}
+          />
         </View>
         {error ? (
           <View style={styles.errorRow}>
-            <Ionicons name="alert-circle-outline" size={14} color="#FCA5A5" />
+            <Ionicons name="alert-circle-outline" size={14} color={colors.c_fca5a5} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
@@ -374,7 +384,7 @@ const CORNER_SIZE = 22;
 const CORNER_THICK = 3;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000000" },
+  container: { flex: 1, backgroundColor: colors.black },
   camera: { flex: 1 },
 
   scanFrameWrap: {
@@ -391,13 +401,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: CORNER_SIZE,
     height: CORNER_SIZE,
-    borderColor: "#FFFFFF",
+    borderColor: colors.white,
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK, borderTopLeftRadius: 4 },
   cornerTR: { top: 0, right: 0, borderTopWidth: CORNER_THICK, borderRightWidth: CORNER_THICK, borderTopRightRadius: 4 },
   cornerBL: { bottom: 0, left: 0, borderBottomWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK, borderBottomLeftRadius: 4 },
   cornerBR: { bottom: 0, right: 0, borderBottomWidth: CORNER_THICK, borderRightWidth: CORNER_THICK, borderBottomRightRadius: 4 },
-  scanHintText: { color: "#FFFFFF", fontSize: 13, fontWeight: "500", textAlign: "center", opacity: 0.85 },
+  scanHintText: { color: colors.white, fontSize: 13, fontWeight: "500", textAlign: "center", opacity: 0.85 },
 
   torchBtn: {
     position: "absolute",
@@ -413,7 +423,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
   },
-  torchBtnText: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
+  torchBtnText: { color: colors.white, fontSize: 13, fontWeight: "600" },
 
   manualContainer: {
     position: "absolute",
@@ -427,24 +437,24 @@ const styles = StyleSheet.create({
   manualInput: {
     flex: 1,
     height: 46,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: "#18233D",
+    color: colors.textPrimary,
   },
   manualBtn: {
     height: 46,
     paddingHorizontal: 18,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  manualBtnText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+  manualBtnText: { color: colors.white, fontSize: 14, fontWeight: "700" },
 
   errorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  errorText: { color: "#FCA5A5", fontSize: 12 },
+  errorText: { color: colors.c_fca5a5, fontSize: 12 },
 
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -453,7 +463,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
   },
-  loadingText: { color: "#FFFFFF", fontSize: 14, fontWeight: "500" },
+  loadingText: { color: colors.white, fontSize: 14, fontWeight: "500" },
 
   resultSheetWrap: {
     position: "absolute",
@@ -463,7 +473,7 @@ const styles = StyleSheet.create({
     maxHeight: "78%",
   },
   resultSheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
@@ -474,7 +484,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#D1D5DB",
+    backgroundColor: colors.borderStrong,
     alignSelf: "center",
     marginBottom: 18,
   },
@@ -483,10 +493,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase",
-    color: "#2A78C5",
+    color: colors.primaryMuted,
     marginBottom: 4,
   },
-  resultTitle: { fontSize: 24, fontWeight: "800", color: "#253B63", marginBottom: 16 },
+  resultTitle: { fontSize: 24, fontWeight: "800", color: colors.textNavy, marginBottom: 16 },
 
   allergenCard: {
     flexDirection: "row",
@@ -494,70 +504,70 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 14,
     marginBottom: 14,
   },
   allergenCardLeft: { flexDirection: "row", alignItems: "center" },
-  allergenCardLabel: { fontSize: 12, color: "#94A3B8", fontWeight: "500", marginBottom: 2 },
+  allergenCardLabel: { fontSize: 12, color: colors.textSlate400, fontWeight: "500", marginBottom: 2 },
   allergenCardStatus: { fontSize: 14, fontWeight: "700" },
   statusChip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
-  chipSafe: { backgroundColor: "#DCFCE7" },
-  chipWarning: { backgroundColor: "#FEF3C7" },
-  chipDanger: { backgroundColor: "#FEE2E2" },
-  statusChipText: { fontSize: 12, fontWeight: "700", color: "#374151" },
+  chipSafe: { backgroundColor: colors.c_dcfce7 },
+  chipWarning: { backgroundColor: colors.surfaceAmberSoft },
+  chipDanger: { backgroundColor: colors.surfaceRedSoft },
+  statusChipText: { fontSize: 12, fontWeight: "700", color: colors.textGray700 },
 
   metricRow: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     paddingVertical: 14,
     marginBottom: 14,
   },
   metricItem: { flex: 1, alignItems: "center" },
-  metricDivider: { width: 1, height: 32, backgroundColor: "#E5E7EB" },
-  metricValue: { fontSize: 16, fontWeight: "800", color: "#253B63", marginBottom: 2 },
-  metricLabel: { fontSize: 11, color: "#94A3B8", fontWeight: "500" },
+  metricDivider: { width: 1, height: 32, backgroundColor: colors.border },
+  metricValue: { fontSize: 16, fontWeight: "800", color: colors.textNavy, marginBottom: 2 },
+  metricLabel: { fontSize: 11, color: colors.textSlate400, fontWeight: "500" },
 
   infoCard: {
     borderRadius: 14,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 10,
   },
-  infoCardTitle: { fontSize: 13, fontWeight: "700", color: "#253B63", marginBottom: 5 },
-  infoCardText: { fontSize: 13, color: "#667085", lineHeight: 19 },
+  infoCardTitle: { fontSize: 13, fontWeight: "700", color: colors.textNavy, marginBottom: 5 },
+  infoCardText: { fontSize: 13, color: colors.textSecondaryAlt, lineHeight: 19 },
 
   primaryBtn: {
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
     marginBottom: 10,
   },
-  primaryBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
-  savedBtn: { backgroundColor: "#22C55E" },
+  primaryBtnText: { fontSize: 15, fontWeight: "700", color: colors.white },
+  savedBtn: { backgroundColor: colors.successBright },
 
   secondaryBtn: {
     height: 46,
     borderRadius: 23,
     borderWidth: 1.5,
-    borderColor: "#CBD5E1",
+    borderColor: colors.borderSlate,
     alignItems: "center",
     justifyContent: "center",
   },
-  secondaryBtnText: { fontSize: 15, fontWeight: "600", color: "#667085" },
+  secondaryBtnText: { fontSize: 15, fontWeight: "600", color: colors.textSecondaryAlt },
 
-  permissionSafe: { flex: 1, backgroundColor: "#FFFFFF" },
+  permissionSafe: { flex: 1, backgroundColor: colors.white },
   permissionContainer: {
     flex: 1,
     alignItems: "center",
@@ -568,11 +578,11 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 24,
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 24,
   },
-  permissionTitle: { fontSize: 22, fontWeight: "800", color: "#253B63", marginBottom: 12, textAlign: "center" },
-  permissionText: { fontSize: 14, color: "#667085", textAlign: "center", lineHeight: 22, marginBottom: 32 },
+  permissionTitle: { fontSize: 22, fontWeight: "800", color: colors.textNavy, marginBottom: 12, textAlign: "center" },
+  permissionText: { fontSize: 14, color: colors.textSecondaryAlt, textAlign: "center", lineHeight: 22, marginBottom: 32 },
 });

@@ -10,6 +10,7 @@ import {
 
 import { requestPasswordReset } from "../../api/authApi";
 import { toErrorMessage } from "../../api/baseApi";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import useFormValidation from "../../hooks/useFormValidation";
 import useAppTheme from "../../hooks/useAppTheme";
 
@@ -31,6 +32,7 @@ const forgotPasswordSchema = {
 export default function ForgotPasswordStep1Screen({
   goTo = (_nextScreen, _params) => {},
 }) {
+  const { fs, sh } = useAccessibility();
   const { colors } = useAppTheme();
 
   const [loading, setLoading] = useState(false);
@@ -85,6 +87,7 @@ export default function ForgotPasswordStep1Screen({
             <View
               style={[
                 styles.iconCircle,
+                { width: sh(76), height: sh(76) },
                 {
                   backgroundColor: colors.surfaceSecondary,
                 },
@@ -93,6 +96,7 @@ export default function ForgotPasswordStep1Screen({
               <Text
                 style={[
                   styles.iconText,
+                  { fontSize: fs(30) },
                   {
                     color: colors.primary,
                   },
@@ -106,6 +110,7 @@ export default function ForgotPasswordStep1Screen({
               <Text
                 style={[
                   styles.title,
+                  { fontSize: fs(22) },
                   {
                     color: colors.text,
                   },
@@ -117,6 +122,7 @@ export default function ForgotPasswordStep1Screen({
               <Text
                 style={[
                   styles.subtitle,
+                  { fontSize: fs(13), lineHeight: fs(19) },
                   {
                     color: colors.textSecondary,
                   },
@@ -140,6 +146,7 @@ export default function ForgotPasswordStep1Screen({
                 <Text
                   style={[
                     styles.infoText,
+                    { fontSize: fs(12) },
                     {
                       color: colors.error,
                     },
@@ -191,8 +198,6 @@ const styles = StyleSheet.create({
 
   iconCircle: {
     alignSelf: "center",
-    width: 76,
-    height: 76,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -200,7 +205,6 @@ const styles = StyleSheet.create({
   },
 
   iconText: {
-    fontSize: 30,
     fontWeight: "800",
   },
 
@@ -211,16 +215,12 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "center",
-    fontSize: 22,
     fontWeight: "800",
   },
 
   subtitle: {
     marginTop: 10,
     textAlign: "center",
-    fontSize: 13,
-    lineHeight: 19,
-    maxWidth: 290,
   },
 
   infoBox: {
@@ -232,7 +232,6 @@ const styles = StyleSheet.create({
   },
 
   infoText: {
-    fontSize: 12,
     fontWeight: "500",
   },
 
