@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getRecommendations } from "../../api/recommendationApi";
 import { toErrorMessage } from "../../api/baseApi";
+import { useThemedStyles } from "../../styles/themeColors";
 
 /**
  * FE-26 — RecommendedDetails: real recipe data (no static mock).
@@ -32,6 +33,7 @@ function nutritionValue(nutrition, keys) {
 }
 
 export default function RecommendedDetailsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [status, setStatus] = useState("loading"); // loading | ready | empty | error
   const [item, setItem] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -137,42 +139,43 @@ export default function RecommendedDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+const makeStyles = (t) =>
+StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: t.bg("#FFFFFF") },
+  screen: { flex: 1, backgroundColor: t.bg("#FFFFFF") },
   content: { padding: 20, paddingBottom: 32 },
   centerWrap: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
-  title: { fontSize: 30, fontWeight: "800", color: "#111111", marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: "#555555", marginBottom: 20, textAlign: "center" },
+  title: { fontSize: 30, fontWeight: "800", color: t.fg("#111111"), marginBottom: 8 },
+  subtitle: { fontSize: 16, lineHeight: 23, color: t.fg("#555555"), marginBottom: 20, textAlign: "center" },
   heroImage: { width: "100%", height: 220, borderRadius: 28, marginBottom: 18 },
   infoCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: t.bd("#111111"),
     borderRadius: 28,
     padding: 20,
   },
-  foodTitle: { fontSize: 24, fontWeight: "800", color: "#111111", marginBottom: 10 },
-  foodDescription: { fontSize: 16, lineHeight: 23, color: "#444444", marginBottom: 18 },
+  foodTitle: { fontSize: 24, fontWeight: "800", color: t.fg("#111111"), marginBottom: 10 },
+  foodDescription: { fontSize: 16, lineHeight: 23, color: t.fg("#444444"), marginBottom: 18 },
   metricRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  metricLabel: { fontSize: 16, color: "#555555" },
-  metricValue: { fontSize: 17, fontWeight: "700", color: "#111111" },
-  errorText: { color: "#D62828", fontSize: 15, textAlign: "center", marginBottom: 16 },
+  metricLabel: { fontSize: 16, color: t.fg("#555555") },
+  metricValue: { fontSize: 17, fontWeight: "700", color: t.fg("#111111") },
+  errorText: { color: t.fg("#D62828"), fontSize: 15, textAlign: "center", marginBottom: 16 },
   retryButton: {
-    backgroundColor: "#0B5FA5",
+    backgroundColor: t.bg("#0B5FA5"),
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 12,
   },
-  retryText: { color: "#FFFFFF", fontWeight: "700" },
+  retryText: { color: t.fg("#FFFFFF"), fontWeight: "700" },
 });

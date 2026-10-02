@@ -15,6 +15,7 @@ import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
 import { useAccessibility } from "../../context/AccessibilityContext";
 import { useHealthConditions } from "../../context/HealthConditionsContext";
 import { useUser } from "../../context/UserContext";
+import { useThemedStyles } from "../../styles/themeColors";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -33,6 +34,7 @@ function getTodayLabel() {
 
 // ── Large tappable tile ───────────────────────────────────────────────────────
 function Tile({ emoji, label, sublabel, accent, onPress, fs, sh }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -54,6 +56,7 @@ function Tile({ emoji, label, sublabel, accent, onPress, fs, sh }) {
 
 // ── Condition banner ──────────────────────────────────────────────────────────
 function ConditionBanner({ conditions, fs }) {
+  const styles = useThemedStyles(makeStyles);
   if (conditions.length === 0) return null;
   return (
     <View style={styles.conditionBanner}>
@@ -67,6 +70,7 @@ function ConditionBanner({ conditions, fs }) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ElderlyHomeScreen({ navigation }) {
+  const styles = useThemedStyles(makeStyles);
   const { user } = useUser();
   const { fs, sh } = useAccessibility();
   const { conditions, activeWarnings } = useHealthConditions();
@@ -208,8 +212,9 @@ export default function ElderlyHomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+const makeStyles = (t) =>
+StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: t.bg("#FFFFFF") },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
 
@@ -220,11 +225,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  greeting: { fontWeight: "500", color: "#667085" },
-  name: { fontWeight: "800", color: "#18233D", lineHeight: 36 },
-  date: { color: "#94A3B8", marginTop: 2 },
+  greeting: { fontWeight: "500", color: t.fg("#667085") },
+  name: { fontWeight: "800", color: t.fg("#18233D"), lineHeight: 36 },
+  date: { color: t.fg("#94A3B8"), marginTop: 2 },
   settingsBtn: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: t.bg("#EFF6FF"),
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
@@ -234,67 +239,67 @@ const styles = StyleSheet.create({
   conditionBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFBEB",
+    backgroundColor: t.bg("#FFFBEB"),
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: t.bd("#FDE68A"),
   },
-  conditionText: { color: "#92400E", flex: 1, lineHeight: 19 },
+  conditionText: { color: t.fg("#92400E"), flex: 1, lineHeight: 19 },
 
   // Water strip
   waterStrip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EFF6FF",
+    backgroundColor: t.bg("#EFF6FF"),
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
+    borderColor: t.bd("#BFDBFE"),
     gap: 12,
   },
   waterEmoji: {},
   waterTextCol: { flex: 1 },
-  waterLabel: { color: "#667085", fontWeight: "500" },
-  waterValue: { fontWeight: "800", color: "#1D4ED8" },
-  waterUnit: { color: "#94A3B8", fontWeight: "400" },
+  waterLabel: { color: t.fg("#667085"), fontWeight: "500" },
+  waterValue: { fontWeight: "800", color: t.fg("#1D4ED8") },
+  waterUnit: { color: t.fg("#94A3B8"), fontWeight: "400" },
   waterBarWrap: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: t.bg("#DBEAFE"),
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
   },
   waterBarFill: {
     height: 3,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: t.bg("#0B5FA5"),
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
   },
 
   // Warnings
   warningsBlock: {
-    backgroundColor: "#FFFBEB",
+    backgroundColor: t.bg("#FFFBEB"),
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: t.bd("#FDE68A"),
     gap: 6,
   },
   warningRow: { flexDirection: "row", alignItems: "flex-start" },
-  warningText: { color: "#92400E", flex: 1, lineHeight: 19 },
+  warningText: { color: t.fg("#92400E"), flex: 1, lineHeight: 19 },
 
   // Tiles
   sectionLabel: {
     fontWeight: "800",
-    color: "#94A3B8",
+    color: t.fg("#94A3B8"),
     letterSpacing: 0.6,
     marginBottom: 10,
     marginTop: 4,
@@ -307,7 +312,7 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: "47%",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: t.bg("#F8FAFC"),
     borderRadius: 20,
     borderWidth: 1.5,
     padding: 18,
@@ -317,8 +322,8 @@ const styles = StyleSheet.create({
   },
   tilePressed: { opacity: 0.8 },
   tileEmoji: {},
-  tileLabel: { fontWeight: "800", color: "#18233D" },
-  tileSublabel: { color: "#94A3B8", lineHeight: 17 },
+  tileLabel: { fontWeight: "800", color: t.fg("#18233D") },
+  tileSublabel: { color: t.fg("#94A3B8"), lineHeight: 17 },
 
   // Settings shortcut
   settingsShortcut: {
@@ -326,10 +331,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: t.bd("#E5E7EB"),
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: t.bg("#FAFAFA"),
   },
-  settingsShortcutText: { flex: 1, color: "#667085", fontWeight: "500" },
+  settingsShortcutText: { flex: 1, color: t.fg("#667085"), fontWeight: "500" },
 });
