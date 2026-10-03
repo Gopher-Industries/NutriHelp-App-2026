@@ -150,9 +150,15 @@ function ConditionWarningBanner({ activeWarnings }) {
   );
 }
 
-export default function HealthPlanScreen() {
+export default function HealthPlanScreen({ navigation }) {
   const { activeWarnings, conditions } = useHealthConditions();
   const { fs, sh } = useAccessibility();
+
+  const hasDiabetes = conditions?.some(
+    (condition) => condition.key === "diabetes"
+  );
+
+
   const [medicalReport, setMedicalReport] = useState("");
   const [healthGoal, setHealthGoal] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -275,6 +281,36 @@ export default function HealthPlanScreen() {
         </Text>
 
         <ConditionWarningBanner activeWarnings={activeWarnings} />
+        {hasDiabetes && (
+          <Pressable
+            style={styles.diabetesPersonalisationCard}
+            onPress={() => navigation.navigate("DiabetesPersonalisation")}
+            accessibilityRole="button"
+            accessibilityLabel="Open diabetes personalisation"
+          >
+            <View style={styles.diabetesPersonalisationIcon}>
+              <Ionicons
+                name="medical-outline"
+                size={24}
+                color="#2563EB"
+              />
+            </View>
+
+            <View style={styles.diabetesPersonalisationContent}>
+              <Text style={styles.diabetesPersonalisationTitle}>
+                Diabetes Personalisation
+              </Text>
+
+              <Text style={styles.diabetesPersonalisationText}>
+                Personalise your health plan based on your diabetes needs.
+              </Text>
+
+              <Text style={styles.diabetesPersonalisationLink}>
+                Set up personalisation →
+              </Text>
+            </View>
+          </Pressable>
+        )}
 
         {/* Medical summary */}
         <View style={styles.fieldBlock}>
@@ -559,4 +595,42 @@ const styles = StyleSheet.create({
   conditionWarningRow: { flexDirection: "row", marginBottom: 4 },
   conditionWarningBullet: { fontSize: 13, color: colors.warningDark, marginRight: 6, lineHeight: 19 },
   conditionWarningText: { fontSize: 13, color: colors.warningDarker, lineHeight: 19, flex: 1 },
+
+  diabetesPersonalisationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+  },
+  diabetesPersonalisationIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#DBEAFE",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  diabetesPersonalisationContent: { flex: 1 },
+  diabetesPersonalisationTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1E3A8A",
+    marginBottom: 4,
+  },
+  diabetesPersonalisationText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#475569",
+    marginBottom: 6,
+  },
+  diabetesPersonalisationLink: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2563EB",
+  },
 });
