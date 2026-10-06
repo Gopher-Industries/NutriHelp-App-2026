@@ -20,6 +20,8 @@ import profileApi from "../../api/profileApi";
 import { useUser } from "../../context/UserContext";
 import { useAccessibility, FONT_SIZE_OPTIONS } from "../../context/AccessibilityContext";
 import { useHealthConditions, ALL_CONDITIONS } from "../../context/HealthConditionsContext";
+import { useTheme, THEME_MODES } from "../../context/ThemeContext";
+import { useThemedStyles } from "../../styles/themeColors";
 
 const SETTINGS_FALLBACK_KEY = "nutrihelp.settings.local";
 
@@ -29,6 +31,7 @@ function buildSettingsFallbackKey(userId) {
 }
 
 function SectionTitle({ children }) {
+  const styles = useThemedStyles(makeStyles);
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
@@ -41,6 +44,7 @@ function SettingRow({
   danger = false,
   last = false,
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <>
       <Pressable style={styles.row} onPress={onPress}>
@@ -66,9 +70,11 @@ function SettingRow({
 }
 
 export default function SettingsScreen({ navigation }) {
+  const styles = useThemedStyles(makeStyles);
   const { logout, user } = useUser();
   const { fontSizeKey, setFontSizeKey } = useAccessibility();
   const { conditions, toggleCondition } = useHealthConditions();
+  const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -197,6 +203,43 @@ export default function SettingsScreen({ navigation }) {
                   style={[
                     styles.fontSizeChipText,
                     fontSizeKey === opt.key && styles.fontSizeChipTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* ── APPEARANCE ────────────────────────────────────────────────── */}
+        <SectionTitle>APPEARANCE</SectionTitle>
+        <View style={styles.sectionCard}>
+          <View style={styles.row}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>Dark Mode</Text>
+              <Text style={styles.rowDescription}>
+                Choose System to follow your device, or force Light or Dark.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.fontSizeRow}>
+            {THEME_MODES.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.fontSizeChip,
+                  themeMode === opt.key && styles.fontSizeChipActive,
+                ]}
+                onPress={() => setThemeMode(opt.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`Set appearance to ${opt.label}`}
+              >
+                <Text
+                  style={[
+                    styles.fontSizeChipText,
+                    themeMode === opt.key && styles.fontSizeChipTextActive,
                   ]}
                 >
                   {opt.label}
@@ -379,22 +422,23 @@ export default function SettingsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t) =>
+StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
   },
 
   loadingWrap: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
     alignItems: "center",
     justifyContent: "center",
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
   },
 
   content: {
@@ -419,14 +463,14 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#18233D",
+    color: t.fg("#18233D"),
   },
 
   headerAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#E7EEFB",
+    backgroundColor: t.bg("#E7EEFB"),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -434,33 +478,33 @@ const styles = StyleSheet.create({
   headerAvatarText: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#173E6A",
+    color: t.fg("#173E6A"),
   },
 
   title: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#18233D",
+    color: t.fg("#18233D"),
     marginBottom: 6,
   },
 
   subtitle: {
     fontSize: 13,
     lineHeight: 19,
-    color: "#6B7280",
+    color: t.fg("#6B7280"),
     marginBottom: 20,
   },
 
   sectionTitle: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#9CA3AF",
+    color: t.fg("#9CA3AF"),
     marginBottom: 8,
   },
 
   sectionCard: {
     borderRadius: 16,
-    backgroundColor: "#EEF3FF",
+    backgroundColor: t.bg("#EEF3FF"),
     paddingHorizontal: 16,
     marginBottom: 18,
   },
@@ -481,23 +525,23 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#18233D",
+    color: t.fg("#18233D"),
   },
 
   rowLabelDanger: {
-    color: "#D62828",
+    color: t.fg("#D62828"),
   },
 
   rowDescription: {
     marginTop: 4,
     fontSize: 11,
     lineHeight: 16,
-    color: "#6B7280",
+    color: t.fg("#6B7280"),
   },
 
   rowDivider: {
     height: 1,
-    backgroundColor: "#D9E2F4",
+    backgroundColor: t.bg("#D9E2F4"),
   },
 
   modalOverlay: {
@@ -507,7 +551,7 @@ const styles = StyleSheet.create({
   },
 
   modalSheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 22,
@@ -520,7 +564,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 4,
     borderRadius: 999,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: t.bg("#E5E7EB"),
     marginBottom: 18,
   },
 
@@ -529,7 +573,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFF1F1",
+    backgroundColor: t.bg("#FFF1F1"),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -539,7 +583,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 20,
     fontWeight: "800",
-    color: "#18233D",
+    color: t.fg("#18233D"),
     marginBottom: 8,
   },
 
@@ -547,14 +591,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     lineHeight: 18,
-    color: "#6B7280",
+    color: t.fg("#6B7280"),
     marginBottom: 22,
   },
 
   logoutButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#C81E1E",
+    backgroundColor: t.bg("#C81E1E"),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
@@ -563,13 +607,13 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: t.fg("#FFFFFF"),
   },
 
   cancelButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#E1E8F7",
+    backgroundColor: t.bg("#E1E8F7"),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -577,7 +621,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#55627D",
+    color: t.fg("#55627D"),
   },
 
   // Font size picker
@@ -591,22 +635,22 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: "#D9E2F4",
+    borderColor: t.bd("#D9E2F4"),
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
   },
   fontSizeChipActive: {
-    borderColor: "#0B5FA5",
-    backgroundColor: "#EFF6FF",
+    borderColor: t.bd("#0B5FA5"),
+    backgroundColor: t.bg("#EFF6FF"),
   },
   fontSizeChipText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6B7280",
+    color: t.fg("#6B7280"),
   },
   fontSizeChipTextActive: {
-    color: "#0B5FA5",
+    color: t.fg("#0B5FA5"),
   },
 
   // Health conditions
@@ -622,19 +666,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: "#D9E2F4",
-    backgroundColor: "#FFFFFF",
+    borderColor: t.bd("#D9E2F4"),
+    backgroundColor: t.bg("#FFFFFF"),
   },
   conditionChipActive: {
-    borderColor: "#0B5FA5",
-    backgroundColor: "#EFF6FF",
+    borderColor: t.bd("#0B5FA5"),
+    backgroundColor: t.bg("#EFF6FF"),
   },
   conditionChipEmoji: { fontSize: 18 },
   conditionChipText: {
     flex: 1,
     fontSize: 14,
     fontWeight: "600",
-    color: "#374151",
+    color: t.fg("#374151"),
   },
-  conditionChipTextActive: { color: "#0B5FA5" },
+  conditionChipTextActive: { color: t.fg("#0B5FA5") },
 });

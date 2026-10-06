@@ -7,8 +7,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useThemedStyles } from "../../styles/themeColors";
 
 export default function DeleteAccountScreen({ navigation }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView
@@ -72,15 +74,16 @@ export default function DeleteAccountScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t) =>
+StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
   },
 
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: t.bg("#FFFFFF"),
   },
 
   content: {
@@ -112,7 +115,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#18233D",
+    color: t.fg("#18233D"),
   },
 
   heroWrap: {
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
     width: 108,
     height: 108,
     borderRadius: 54,
-    backgroundColor: "#FFE6E6",
+    backgroundColor: t.bg("#FFE6E6"),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -133,7 +136,7 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: 33,
-    backgroundColor: "#FFD1D1",
+    backgroundColor: t.bg("#FFD1D1"),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#18233D",
+    color: t.fg("#18233D"),
     textAlign: "center",
     marginBottom: 12,
   },
@@ -150,7 +153,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     lineHeight: 22,
-    color: "#6B7280",
+    color: t.fg("#6B7280"),
     marginBottom: 24,
   },
 
@@ -158,7 +161,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#10703E",
+    backgroundColor: t.bg("#10703E"),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -167,7 +170,7 @@ const styles = StyleSheet.create({
   keepButtonText: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: t.fg("#FFFFFF"),
   },
 
   noticeBanner: {
@@ -175,9 +178,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    backgroundColor: "#FFFBEB",
+    backgroundColor: t.bg("#FFFBEB"),
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: t.bd("#FDE68A"),
     borderRadius: 14,
     padding: 12,
     marginBottom: 24,
@@ -187,16 +190,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 19,
-    color: "#92400E",
+    color: t.fg("#92400E"),
   },
 
   deleteButtonDisabled: {
     width: "100%",
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: t.bg("#F3F4F6"),
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: t.bd("#E5E7EB"),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 22,
@@ -206,14 +209,14 @@ const styles = StyleSheet.create({
   deleteButtonDisabledText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#9CA3AF",
+    color: t.fg("#9CA3AF"),
   },
 
   footerPill: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 999,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: t.bg("#F5F7FB"),
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -222,6 +225,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 10,
     fontWeight: "800",
-    color: "#9CA3AF",
+    color: t.fg("#9CA3AF"),
   },
 });

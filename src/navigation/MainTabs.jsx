@@ -10,9 +10,10 @@ import MealStack from "./MealStack";
 import RecipeStack from "./RecipeStack";
 import ScanStack from "./ScanStack";
 
+import { colors } from "../theme";
 const Tab = createBottomTabNavigator();
 
-const NUTRIHELP_PRIMARY = "#0B5FA5";
+const NUTRIHELP_PRIMARY = colors.primary;
 
 const TAB_ICON_BY_ROUTE = {
   Home: "home",
@@ -34,10 +35,10 @@ export default function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: NUTRIHELP_PRIMARY,
-        tabBarInactiveTintColor: isDark ? "#9CA3AF" : "#6B7280",
+        tabBarInactiveTintColor: isDark ? colors.textMuted : colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: isDark ? "#0B1220" : "#FFFFFF",
-          borderTopColor: isDark ? "#1F2937" : "#E5E7EB",
+          backgroundColor: isDark ? colors.c_0b1220 : colors.white,
+          borderTopColor: isDark ? colors.textGray800 : colors.border,
         },
         tabBarIcon: ({ color, size, focused }) => {
           const baseName = TAB_ICON_BY_ROUTE[route.name] ?? "ellipse";

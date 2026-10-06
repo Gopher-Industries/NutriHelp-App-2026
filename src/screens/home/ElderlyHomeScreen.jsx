@@ -15,6 +15,7 @@ import { useAccessibility } from "../../context/AccessibilityContext";
 import { useHealthConditions } from "../../context/HealthConditionsContext";
 import { useUser } from "../../context/UserContext";
 
+import { colors } from "../../theme";
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -56,7 +57,7 @@ function ConditionBanner({ conditions, fs }) {
   if (conditions.length === 0) return null;
   return (
     <View style={styles.conditionBanner}>
-      <Ionicons name="medkit-outline" size={fs(15)} color="#B45309" />
+      <Ionicons name="medkit-outline" size={fs(15)} color={colors.warningDark} />
       <Text style={[styles.conditionText, { fontSize: fs(13) }]}>
         {" "}Active conditions: {conditions.join(", ")}
       </Text>
@@ -111,7 +112,7 @@ export default function ElderlyHomeScreen({ navigation }) {
             style={[styles.settingsBtn, { width: sh(48), height: sh(48), borderRadius: sh(24) }]}
             onPress={() => navigation.navigate("GoalDetailsScreen")}
           >
-            <Ionicons name="stats-chart" size={fs(22)} color="#0B5FA5" />
+            <Ionicons name="stats-chart" size={fs(22)} color={colors.primary} />
           </Pressable>
         </View>
 
@@ -133,7 +134,7 @@ export default function ElderlyHomeScreen({ navigation }) {
           <View style={styles.waterBarWrap}>
             <View style={[styles.waterBarFill, { width: `${Math.min(waterGlasses / 8, 1) * 100}%` }]} />
           </View>
-          <Ionicons name="chevron-forward" size={fs(20)} color="#94A3B8" />
+          <Ionicons name="chevron-forward" size={fs(20)} color={colors.textSlate400} />
         </Pressable>
 
         {/* Active condition warnings */}
@@ -141,7 +142,7 @@ export default function ElderlyHomeScreen({ navigation }) {
           <View style={styles.warningsBlock}>
             {activeWarnings.map((w) => (
               <View key={w.key} style={styles.warningRow}>
-                <Ionicons name="warning-outline" size={fs(14)} color="#D97706" style={{ marginTop: 2 }} />
+                <Ionicons name="warning-outline" size={fs(14)} color={colors.warningStrong} style={{ marginTop: 2 }} />
                 <Text style={[styles.warningText, { fontSize: fs(13) }]}> {w.text}</Text>
               </View>
             ))}
@@ -156,7 +157,7 @@ export default function ElderlyHomeScreen({ navigation }) {
             emoji="🍽️"
             label="My Meals"
             sublabel="View & plan your meals"
-            accent="#22C55E"
+            accent={colors.successBright}
             onPress={() => navigation.navigate("WeeklyPlanScreen")}
             fs={fs} sh={sh}
           />
@@ -164,7 +165,7 @@ export default function ElderlyHomeScreen({ navigation }) {
             emoji="📋"
             label="AI Health Plan"
             sublabel="Generate 8-week plan"
-            accent="#0B5FA5"
+            accent={colors.primary}
             onPress={() => navigation.getParent()?.navigate("AIPlan")}
             fs={fs} sh={sh}
           />
@@ -172,7 +173,7 @@ export default function ElderlyHomeScreen({ navigation }) {
             emoji="🏥"
             label="Health Tools"
             sublabel="Charts & trackers"
-            accent="#F59E0B"
+            accent={colors.warning}
             onPress={() => navigation.navigate("HealthToolsScreen")}
             fs={fs} sh={sh}
           />
@@ -180,7 +181,7 @@ export default function ElderlyHomeScreen({ navigation }) {
             emoji="🎯"
             label="My Goals"
             sublabel="Calories & progress"
-            accent="#8B5CF6"
+            accent={colors.accentViolet}
             onPress={() => navigation.navigate("GoalDetailsScreen")}
             fs={fs} sh={sh}
           />
@@ -191,11 +192,11 @@ export default function ElderlyHomeScreen({ navigation }) {
           style={[styles.settingsShortcut, { minHeight: sh(56) }]}
           onPress={() => navigation.getParent()?.navigate("Profile", { screen: "SettingsScreen" })}
         >
-          <Ionicons name="settings-outline" size={fs(20)} color="#667085" />
+          <Ionicons name="settings-outline" size={fs(20)} color={colors.textSecondaryAlt} />
           <Text style={[styles.settingsShortcutText, { fontSize: fs(15) }]}>
             {" "}Settings · Text Size · Health Conditions
           </Text>
-          <Ionicons name="chevron-forward" size={fs(18)} color="#94A3B8" />
+          <Ionicons name="chevron-forward" size={fs(18)} color={colors.textSlate400} />
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -203,7 +204,7 @@ export default function ElderlyHomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
 
@@ -214,11 +215,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  greeting: { fontWeight: "500", color: "#667085" },
-  name: { fontWeight: "800", color: "#18233D", lineHeight: 36 },
-  date: { color: "#94A3B8", marginTop: 2 },
+  greeting: { fontWeight: "500", color: colors.textSecondaryAlt },
+  name: { fontWeight: "800", color: colors.textPrimary, lineHeight: 36 },
+  date: { color: colors.textSlate400, marginTop: 2 },
   settingsBtn: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
@@ -228,67 +229,67 @@ const styles = StyleSheet.create({
   conditionBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFBEB",
+    backgroundColor: colors.surfaceAmber,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: colors.c_fde68a,
   },
-  conditionText: { color: "#92400E", flex: 1, lineHeight: 19 },
+  conditionText: { color: colors.warningDarker, flex: 1, lineHeight: 19 },
 
   // Water strip
   waterStrip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.surfaceBlue,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
+    borderColor: colors.surfaceInfoStrong,
     gap: 12,
   },
   waterEmoji: {},
   waterTextCol: { flex: 1 },
-  waterLabel: { color: "#667085", fontWeight: "500" },
-  waterValue: { fontWeight: "800", color: "#1D4ED8" },
-  waterUnit: { color: "#94A3B8", fontWeight: "400" },
+  waterLabel: { color: colors.textSecondaryAlt, fontWeight: "500" },
+  waterValue: { fontWeight: "800", color: colors.infoDark },
+  waterUnit: { color: colors.textSlate400, fontWeight: "400" },
   waterBarWrap: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: colors.surfaceInfo,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
   },
   waterBarFill: {
     height: 3,
-    backgroundColor: "#0B5FA5",
+    backgroundColor: colors.primary,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
   },
 
   // Warnings
   warningsBlock: {
-    backgroundColor: "#FFFBEB",
+    backgroundColor: colors.surfaceAmber,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: colors.c_fde68a,
     gap: 6,
   },
   warningRow: { flexDirection: "row", alignItems: "flex-start" },
-  warningText: { color: "#92400E", flex: 1, lineHeight: 19 },
+  warningText: { color: colors.warningDarker, flex: 1, lineHeight: 19 },
 
   // Tiles
   sectionLabel: {
     fontWeight: "800",
-    color: "#94A3B8",
+    color: colors.textSlate400,
     letterSpacing: 0.6,
     marginBottom: 10,
     marginTop: 4,
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: "47%",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: colors.surface,
     borderRadius: 20,
     borderWidth: 1.5,
     padding: 18,
@@ -311,8 +312,8 @@ const styles = StyleSheet.create({
   },
   tilePressed: { opacity: 0.8 },
   tileEmoji: {},
-  tileLabel: { fontWeight: "800", color: "#18233D" },
-  tileSublabel: { color: "#94A3B8", lineHeight: 17 },
+  tileLabel: { fontWeight: "800", color: colors.textPrimary },
+  tileSublabel: { color: colors.textSlate400, lineHeight: 17 },
 
   // Settings shortcut
   settingsShortcut: {
@@ -320,10 +321,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: colors.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#FAFAFA",
+    backgroundColor: colors.surfaceNeutral,
   },
-  settingsShortcutText: { flex: 1, color: "#667085", fontWeight: "500" },
+  settingsShortcutText: { flex: 1, color: colors.textSecondaryAlt, fontWeight: "500" },
 });

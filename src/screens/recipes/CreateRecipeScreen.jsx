@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Platform,
@@ -15,21 +14,25 @@ import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import recipeApi from "../../api/recipeApi";
+import Button from "../../components/common/Button";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { colors } from "../../theme";
 const C = {
-  primary: "#1A6DB5",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  gray500: "#6b7280",
-  red600: "#dc2626",
-  red50: "#fef2f2",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  gray500: colors.textSecondary,
+  red600: colors.dangerStrong,
+  red50: colors.surfaceRed,
+  white: colors.white,
 };
 
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -148,6 +151,7 @@ function normalizeIngredientRows(rows) {
 
 export default function CreateRecipeScreen({ navigation }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const userId = useMemo(() => extractUserId(user), [user]);
   const effectiveUserId = userId ?? 0;
 
@@ -438,11 +442,11 @@ export default function CreateRecipeScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.pageChrome}>
         <View style={styles.header}>
-          <Pressable onPress={() => navigation?.goBack?.()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="arrow-back" size={22} color="#253B63" />
+          <Pressable onPress={() => navigation?.goBack?.()} style={[styles.backBtn, { width: sh(44), height: sh(44) }]} hitSlop={8}>
+            <Ionicons name="arrow-back" size={fs(22)} color={colors.textNavy} />
           </Pressable>
-          <Text style={styles.headerTitle}>Create Recipe</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={[styles.headerTitle, { fontSize: fs(17) }]}>Create Recipe</Text>
+          <View style={[styles.headerSpacer, { width: sh(44) }]} />
         </View>
 
         <ScrollView
@@ -453,42 +457,42 @@ export default function CreateRecipeScreen({ navigation }) {
           <View style={styles.card}>
             {isLookupLoading ? (
               <View style={styles.lookupLoadingRow}>
-                <ActivityIndicator size="small" color={C.primary} />
-                <Text style={styles.lookupLoadingText}>Loading recipe lookups...</Text>
+                <LoadingSpinner size="small" color={C.primary} />
+                <Text style={[styles.lookupLoadingText, { fontSize: fs(14) }]}>Loading recipe lookups...</Text>
               </View>
             ) : null}
-            {lookupWarning ? <Text style={styles.lookupWarning}>{lookupWarning}</Text> : null}
+            {lookupWarning ? <Text style={[styles.lookupWarning, { fontSize: fs(13) }]}>{lookupWarning}</Text> : null}
 
-            <Text style={styles.fieldLabel}>Recipe Name</Text>
+            <Text style={[styles.fieldLabel, { fontSize: fs(16) }]}>Recipe Name</Text>
             <TextInput
               value={recipeName}
               onChangeText={setRecipeName}
               placeholder="Enter recipe name"
-              style={styles.input}
+              style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
             />
-            {showErrors && errors.recipeName ? <Text style={styles.errorText}>{errors.recipeName}</Text> : null}
+            {showErrors && errors.recipeName ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.recipeName}</Text> : null}
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Cuisine</Text>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Cuisine</Text>
             {cuisineOptions.length > 0 ? (
               <View style={styles.pickerShell}>
-                <Picker selectedValue={cuisine} onValueChange={(value) => setCuisine(value)} style={{ minHeight: 44 }}>
+                <Picker selectedValue={cuisine} onValueChange={(value) => setCuisine(value)} style={{ minHeight: sh(44) }}>
                   {cuisineOptions.map((item) => (
                     <Picker.Item key={`cuisine-${item.id}`} label={item.name} value={item.name} />
                   ))}
                 </Picker>
               </View>
             ) : (
-              <TextInput value={cuisine} onChangeText={setCuisine} placeholder="Type cuisine" style={styles.input} />
+              <TextInput value={cuisine} onChangeText={setCuisine} placeholder="Type cuisine" style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]} />
             )}
-            {showErrors && errors.cuisine ? <Text style={styles.errorText}>{errors.cuisine}</Text> : null}
+            {showErrors && errors.cuisine ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.cuisine}</Text> : null}
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Cooking Method</Text>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Cooking Method</Text>
             {cookingMethodOptions.length > 0 ? (
               <View style={styles.pickerShell}>
                 <Picker
                   selectedValue={cookingMethod}
                   onValueChange={(value) => setCookingMethod(value)}
-                  style={{ minHeight: 44 }}
+                  style={{ minHeight: sh(44) }}
                 >
                   {cookingMethodOptions.map((item) => (
                     <Picker.Item key={`method-${item.id}`} label={item.name} value={item.name} />
@@ -500,41 +504,44 @@ export default function CreateRecipeScreen({ navigation }) {
                 value={cookingMethod}
                 onChangeText={setCookingMethod}
                 placeholder="Type cooking method"
-                style={styles.input}
+                style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
               />
             )}
-            {showErrors && errors.cookingMethod ? <Text style={styles.errorText}>{errors.cookingMethod}</Text> : null}
+            {showErrors && errors.cookingMethod ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.cookingMethod}</Text> : null}
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Cooking Time (mins)</Text>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Cooking Time (mins)</Text>
             <TextInput
               value={timeMinutes}
               onChangeText={setTimeMinutes}
               placeholder="e.g. 30"
               keyboardType="numeric"
-              style={styles.input}
+              style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
             />
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Servings</Text>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Servings</Text>
             <TextInput
               value={servings}
               onChangeText={setServings}
               placeholder="e.g. 2"
               keyboardType="numeric"
-              style={styles.input}
+              style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
             />
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Recipe Photo</Text>
-            <Pressable onPress={openImagePickerMenu} style={styles.primaryBtn}>
-              <Text style={styles.primaryBtnText}>Choose / Take Photo</Text>
-            </Pressable>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced, { fontSize: fs(16) }]}>Recipe Photo</Text>
+            <Button
+              label="Choose / Take Photo"
+              onPress={openImagePickerMenu}
+              style={[styles.primaryBtn, { minHeight: sh(44) }]}
+              textStyle={[styles.primaryBtnText, { fontSize: fs(16) }]}
+            />
             {imageUri ? <Image source={{ uri: imageUri }} style={styles.previewImage} /> : null}
           </View>
 
           <View style={[styles.card, styles.cardSpaced]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Ingredients</Text>
-              <Pressable onPress={addIngredientRow} style={styles.addBtn}>
-                <Text style={styles.addBtnText}>+ Add</Text>
+              <Text style={[styles.sectionTitle, { fontSize: fs(18) }]}>Ingredients</Text>
+              <Pressable onPress={addIngredientRow} style={[styles.addBtn, { minHeight: sh(44) }]}>
+                <Text style={[styles.addBtnText, { fontSize: fs(16) }]}>+ Add</Text>
               </Pressable>
             </View>
 
@@ -543,14 +550,14 @@ export default function CreateRecipeScreen({ navigation }) {
 
               return (
                 <View key={item.id} style={styles.subCard}>
-                  <Text style={styles.ingredientRowTitle}>Ingredient {index + 1}</Text>
-                  <Text style={styles.inputLabel}>Category</Text>
+                  <Text style={[styles.ingredientRowTitle, { fontSize: fs(14) }]}>Ingredient {index + 1}</Text>
+                  <Text style={[styles.inputLabel, { fontSize: fs(14) }]}>Category</Text>
                   {ingredientCategories.length > 0 ? (
                     <View style={styles.pickerShell}>
                       <Picker
                         selectedValue={item.category}
                         onValueChange={(value) => updateIngredientRow(item.id, "category", value)}
-                        style={{ minHeight: 44 }}
+                        style={{ minHeight: sh(44) }}
                       >
                         <Picker.Item label="Select category" value="" />
                         {ingredientCategories.map((cat) => (
@@ -563,17 +570,17 @@ export default function CreateRecipeScreen({ navigation }) {
                       value={item.category}
                       onChangeText={(value) => updateIngredientRow(item.id, "category", value)}
                       placeholder="Ingredient category"
-                      style={styles.input}
+                      style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
                     />
                   )}
 
-                  <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>Ingredient</Text>
+                  <Text style={[styles.inputLabel, styles.inputLabelSpaced, { fontSize: fs(14) }]}>Ingredient</Text>
                   {names.length > 0 ? (
                     <View style={styles.pickerShell}>
                       <Picker
                         selectedValue={item.name}
                         onValueChange={(value) => updateIngredientRow(item.id, "ingredientName", value)}
-                        style={{ minHeight: 44 }}
+                        style={{ minHeight: sh(44) }}
                       >
                         <Picker.Item label="Select ingredient" value="" />
                         {names.map((name) => (
@@ -586,24 +593,24 @@ export default function CreateRecipeScreen({ navigation }) {
                       value={item.name}
                       onChangeText={(value) => updateIngredientRow(item.id, "name", value)}
                       placeholder="Ingredient name"
-                      style={styles.input}
+                      style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
                     />
                   )}
 
-                  <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>Quantity</Text>
+                  <Text style={[styles.inputLabel, styles.inputLabelSpaced, { fontSize: fs(14) }]}>Quantity</Text>
                   <TextInput
                     value={item.quantity}
                     onChangeText={(value) => updateIngredientRow(item.id, "quantity", value)}
                     placeholder="e.g. 150"
-                    style={styles.input}
+                    style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
                   />
 
-                  <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>Unit</Text>
+                  <Text style={[styles.inputLabel, styles.inputLabelSpaced, { fontSize: fs(14) }]}>Unit</Text>
                   <View style={styles.pickerShell}>
                     <Picker
                       selectedValue={item.unit}
                       onValueChange={(value) => updateIngredientRow(item.id, "unit", value)}
-                      style={{ minHeight: 44 }}
+                      style={{ minHeight: sh(44) }}
                     >
                       {UNIT_OPTIONS.map((u) => (
                         <Picker.Item key={u} label={u} value={u} />
@@ -611,58 +618,62 @@ export default function CreateRecipeScreen({ navigation }) {
                     </Picker>
                   </View>
 
-                  <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>Cost (AUD, optional)</Text>
+                  <Text style={[styles.inputLabel, styles.inputLabelSpaced, { fontSize: fs(14) }]}>Cost (AUD, optional)</Text>
                   <TextInput
                     value={item.cost}
                     onChangeText={(value) => updateIngredientRow(item.id, "cost", value)}
                     placeholder="e.g. 2.65"
                     keyboardType="decimal-pad"
-                    style={styles.input}
+                    style={[styles.input, { fontSize: fs(16), minHeight: sh(44) }]}
                   />
 
                   {ingredients.length > 1 ? (
-                    <Pressable onPress={() => removeIngredientRow(item.id)} style={styles.removeBtn}>
-                      <Text style={styles.removeBtnText}>Remove</Text>
+                    <Pressable onPress={() => removeIngredientRow(item.id)} style={[styles.removeBtn, { minHeight: sh(44) }]}>
+                      <Text style={[styles.removeBtnText, { fontSize: fs(16) }]}>Remove</Text>
                     </Pressable>
                   ) : null}
                 </View>
               );
             })}
-            {showErrors && errors.ingredients ? <Text style={styles.errorText}>{errors.ingredients}</Text> : null}
+            {showErrors && errors.ingredients ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.ingredients}</Text> : null}
           </View>
 
           <View style={[styles.card, styles.cardSpaced]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Instructions</Text>
-              <Pressable onPress={addStepRow} style={styles.addBtn}>
-                <Text style={styles.addBtnText}>+ Add</Text>
+              <Text style={[styles.sectionTitle, { fontSize: fs(18) }]}>Instructions</Text>
+              <Pressable onPress={addStepRow} style={[styles.addBtn, { minHeight: sh(44) }]}>
+                <Text style={[styles.addBtnText, { fontSize: fs(16) }]}>+ Add</Text>
               </Pressable>
             </View>
 
             {steps.map((item, index) => (
               <View key={item.id} style={styles.subCard}>
-                <Text style={styles.stepLabel}>Step {index + 1}</Text>
+                <Text style={[styles.stepLabel, { fontSize: fs(14) }]}>Step {index + 1}</Text>
                 <TextInput
                   value={item.text}
                   onChangeText={(value) => updateStepRow(item.id, value)}
                   placeholder="Describe this step"
                   multiline
                   textAlignVertical="top"
-                  style={styles.stepInput}
+                  style={[styles.stepInput, { fontSize: fs(16), minHeight: sh(90) }]}
                 />
                 {steps.length > 1 ? (
-                  <Pressable onPress={() => removeStepRow(item.id)} style={styles.removeBtn}>
-                    <Text style={styles.removeBtnText}>Remove</Text>
+                  <Pressable onPress={() => removeStepRow(item.id)} style={[styles.removeBtn, { minHeight: sh(44) }]}>
+                    <Text style={[styles.removeBtnText, { fontSize: fs(16) }]}>Remove</Text>
                   </Pressable>
                 ) : null}
               </View>
             ))}
-            {showErrors && errors.steps ? <Text style={styles.errorText}>{errors.steps}</Text> : null}
+            {showErrors && errors.steps ? <Text style={[styles.errorText, { fontSize: fs(14) }]}>{errors.steps}</Text> : null}
           </View>
 
-          <Pressable onPress={handleSubmit} disabled={isSubmitting} style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}>
-            {isSubmitting ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.submitBtnText}>Save Recipe</Text>}
-          </Pressable>
+          <Button
+            label="Save Recipe"
+            onPress={handleSubmit}
+            loading={isSubmitting}
+            style={[styles.submitBtn, { minHeight: sh(48), height: undefined }]}
+            textStyle={[styles.submitBtnText, { fontSize: fs(16) }]}
+          />
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -670,7 +681,7 @@ export default function CreateRecipeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   pageChrome: { flex: 1 },
   header: {
     flexDirection: "row",
@@ -678,8 +689,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   backBtn: {
     width: 44,
@@ -692,17 +703,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   headerSpacer: { width: 44 },
   flex1: { flex: 1 },
-  scrollSurface: { backgroundColor: "#F8FAFC" },
+  scrollSurface: { backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 },
   card: {
     ...SURFACE_SHADOW,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 16,
   },
@@ -716,7 +727,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     fontSize: 16,
     color: C.slate900,
@@ -735,7 +746,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   primaryBtn: {
@@ -756,7 +767,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: colors.surfaceGray,
     paddingHorizontal: 12,
   },
   addBtnText: { fontSize: 16, fontWeight: "600", color: C.primary },
@@ -764,9 +775,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     padding: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
   },
   ingredientRowTitle: {
     marginBottom: 8,
@@ -779,7 +790,7 @@ const styles = StyleSheet.create({
     minHeight: 90,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,
@@ -803,6 +814,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: C.primary,
   },
-  submitBtnDisabled: { opacity: 0.7 },
   submitBtnText: { fontSize: 16, fontWeight: "600", color: C.white },
 });

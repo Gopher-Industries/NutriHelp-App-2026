@@ -1,5 +1,6 @@
 import { View, Text, Modal, TouchableOpacity, Pressable } from "react-native";
 
+import { colors } from "../../theme";
 export default function BottomSheet({
   visible,
   onClose,
@@ -30,7 +31,7 @@ export default function BottomSheet({
           bottom: 0,
           width: "100%",
           height: sheetHeight, 
-          backgroundColor: "#fff",
+          backgroundColor: colors.white,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           padding: 20,
@@ -44,7 +45,7 @@ export default function BottomSheet({
           style={{
             marginTop: 20,
             padding: 12,
-            backgroundColor: "#eee",
+            backgroundColor: colors.borderLight,
             borderRadius: 10,
             alignItems: "center",
           }}
