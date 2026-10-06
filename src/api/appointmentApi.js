@@ -3,10 +3,10 @@ import baseApi from "./baseApi";
 const { get, post, put, delete: remove } = baseApi;
 
 const APPOINTMENT_ENDPOINTS = {
-  list: "/api/appointments",
-  create: "/api/appointments",
-  update: "/api/appointments/:id",
-  cancel: "/api/appointments/:id",
+  list: "/api/appointments/v2",
+  create: "/api/appointments/v2",
+  update: "/api/appointments/v2/:id",
+  cancel: "/api/appointments/v2/:id",
 };
 
 function buildPath(template, params = {}) {

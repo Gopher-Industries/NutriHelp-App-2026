@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Platform,
@@ -17,6 +16,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import StarRating from "react-native-star-rating-widget";
 import baseApi from "../../api/baseApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
 import recipeApi from "../../api/recipeApi";
@@ -26,23 +29,24 @@ import {
   removeRecipeBookmark,
 } from "../../utils/recipeBookmarks";
 
+import { colors } from "../../theme";
 const C = {
-  primary: "#1A6DB5",
-  navy: "#0f2454",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  slate700: "#334155",
-  slate600: "#475569",
-  slate500: "#64748b",
-  gray100: "#f3f4f6",
-  gray300: "#d1d5db",
-  gray500: "#6b7280",
-  white: "#fff",
+  primary: colors.primaryDeepAlt,
+  navy: colors.c_0f2454,
+  slate900: colors.textSlate,
+  slate800: colors.textSlate800,
+  slate700: colors.c_334155,
+  slate600: colors.c_475569,
+  slate500: colors.textSlate500,
+  gray100: colors.surfaceGray,
+  gray300: colors.borderStrong,
+  gray500: colors.textSecondary,
+  white: colors.white,
 };
 
 /** Home mealsCard-style */
 const SURFACE_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 12,
   shadowOffset: { width: 0, height: 8 },
@@ -50,7 +54,7 @@ const SURFACE_SHADOW = {
 };
 /** Home statCard-style (compact metrics) */
 const STAT_SHADOW = {
-  shadowColor: "#0F172A",
+  shadowColor: colors.textSlate,
   shadowOpacity: 0.05,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
@@ -293,11 +297,11 @@ function detailPlaceholder(recipeId, variant) {
   };
 }
 
-function MetaItem({ label, value }) {
+function MetaItem({ label, value, fs }) {
   return (
     <View style={[styles.metaItem, { flexBasis: 0 }]}>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValue} numberOfLines={2}>
+      <Text style={[styles.metaLabel, { fontSize: fs(12) }]}>{label}</Text>
+      <Text style={[styles.metaValue, { fontSize: fs(16) }]} numberOfLines={2}>
         {value}
       </Text>
     </View>
@@ -306,6 +310,7 @@ function MetaItem({ label, value }) {
 
 export default function RecipeDetailScreen({ navigation, route }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const { showToast } = useToast();
   const userId = useMemo(() => extractUserId(user), [user]);
   const effectiveUserId = userId ?? 0;
@@ -657,10 +662,13 @@ export default function RecipeDetailScreen({ navigation, route }) {
               style={[
                 styles.ingredientRow,
                 index < recipe.ingredients.length - 1 ? styles.ingredientRowBorder : null,
+                { minHeight: sh(44) },
               ]}
             >
-              <Text style={styles.ingredientName}>{item.name}</Text>
-              <Text style={styles.ingredientQty}>{[item.quantity, item.unit].filter(Boolean).join(" ")}</Text>
+              <Text style={[styles.ingredientName, { fontSize: fs(16) }]}>{item.name}</Text>
+              <Text style={[styles.ingredientQty, { fontSize: fs(16) }]}>
+                {[item.quantity, item.unit].filter(Boolean).join(" ")}
+              </Text>
             </View>
           ))}
         </View>
@@ -678,12 +686,14 @@ export default function RecipeDetailScreen({ navigation, route }) {
                 index < recipe.instructions.length - 1 ? styles.instructionBlockBorder : null,
               ]}
             >
-              <Text style={styles.stepLabel}>
+              <Text style={[styles.stepLabel, { fontSize: fs(16) }]}>
                 Step {String(step.number).padStart(2, "0")} of{" "}
                 {String(recipe.instructions.length).padStart(2, "0")}
               </Text>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepDesc}>{step.description}</Text>
+              <Text style={[styles.stepTitle, { fontSize: fs(18) }]}>{step.title}</Text>
+              <Text style={[styles.stepDesc, { fontSize: fs(16), lineHeight: fs(24) }]}>
+                {step.description}
+              </Text>
             </View>
           ))}
         </View>
@@ -700,14 +710,17 @@ export default function RecipeDetailScreen({ navigation, route }) {
                 style={[
                   styles.nutritionRow,
                   index < recipe.nutrition.length - 1 ? styles.nutritionRowBorder : null,
+                  { minHeight: sh(40) },
                 ]}
               >
-                <Text style={styles.nutritionName}>{item.name}</Text>
-                <Text style={styles.nutritionValue}>{item.value}</Text>
+                <Text style={[styles.nutritionName, { fontSize: fs(16) }]}>{item.name}</Text>
+                <Text style={[styles.nutritionValue, { fontSize: fs(16) }]}>{item.value}</Text>
               </View>
             ))
           ) : (
-            <Text style={styles.nutritionEmptyText}>No nutrition information available yet.</Text>
+            <Text style={[styles.nutritionEmptyText, { fontSize: fs(14) }]}>
+              No nutrition information available yet.
+            </Text>
           )}
         </View>
       </View>
@@ -874,27 +887,27 @@ export default function RecipeDetailScreen({ navigation, route }) {
               />
             ) : (
               <View style={styles.heroPlaceholder} accessibilityRole="image" accessibilityLabel="No recipe image">
-                <Ionicons name="image-outline" size={56} color="#a8a29e" />
+                <Ionicons name="image-outline" size={fs(56)} color={colors.c_a8a29e} />
               </View>
             )}
             <Pressable
               onPress={handleBackPress}
-              style={styles.heroBackBtn}
+              style={[styles.heroBackBtn, { minHeight: sh(44), minWidth: sh(44) }]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               hitSlop={8}
             >
-              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={fs(22)} color={colors.white} />
             </Pressable>
             <Pressable
               onPress={handleToggleBookmark}
-              style={styles.bookmarkBtn}
+              style={[styles.bookmarkBtn, { minHeight: sh(44), minWidth: sh(44) }]}
               accessibilityRole="button"
               accessibilityLabel="Toggle bookmark"
             >
               <Ionicons
                 name={isSaved ? "bookmark" : "bookmark-outline"}
-                size={24}
+                size={fs(24)}
                 color={isSaved ? C.primary : C.white}
               />
             </Pressable>
@@ -904,15 +917,15 @@ export default function RecipeDetailScreen({ navigation, route }) {
         <View style={styles.minH0}>
           {isLoading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color={C.primary} />
-              <Text style={styles.loadingText}>Loading recipe details...</Text>
+              <LoadingSpinner size="small" color={C.primary} />
+              <Text style={[styles.loadingText, { fontSize: fs(16) }]}>Loading recipe details...</Text>
             </View>
           ) : null}
         </View>
 
         <View style={styles.bodyPad}>
           <View style={styles.titleRow}>
-            <Text style={styles.recipeTitle}>{recipe.title}</Text>
+            <Text style={[styles.recipeTitle, { fontSize: fs(30) }]}>{recipe.title}</Text>
             <Pressable
               onPress={() => navigation.navigate("TimerScreen")}
               style={styles.shareBtn}
@@ -923,31 +936,35 @@ export default function RecipeDetailScreen({ navigation, route }) {
             </Pressable>
             <Pressable
               onPress={handleShare}
-              style={styles.shareBtn}
+              style={[styles.shareBtn, { minHeight: sh(44), minWidth: sh(44) }]}
               accessibilityRole="button"
               accessibilityLabel="Share recipe"
             >
-              <Ionicons name="share-outline" size={22} color={C.primary} />
+              <Ionicons name="share-outline" size={fs(22)} color={C.primary} />
             </Pressable>
           </View>
-          {recipe.description ? <Text style={styles.desc}>{recipe.description}</Text> : null}
+          {recipe.description ? (
+            <Text style={[styles.desc, { fontSize: fs(16) }]}>{recipe.description}</Text>
+          ) : null}
           <View style={styles.badgeRow}>
             {recipe.source ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>
+                <Text style={[styles.badgeText, { fontSize: fs(12) }]}>
                   {recipe.source === "community" ? "Community" : "Library"}
                 </Text>
               </View>
             ) : null}
             {recipe.cuisine ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{recipe.cuisine}</Text>
+                <Text style={[styles.badgeText, { fontSize: fs(12) }]}>{recipe.cuisine}</Text>
               </View>
             ) : null}
             {recipe.authorName ? (
               <View style={styles.authorChip}>
-                <Ionicons name="person-circle-outline" size={16} color={C.slate600} />
-                <Text style={styles.authorChipText}>By {recipe.authorName}</Text>
+                <Ionicons name="person-circle-outline" size={fs(16)} color={C.slate600} />
+                <Text style={[styles.authorChipText, { fontSize: fs(12) }]}>
+                  By {recipe.authorName}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -955,21 +972,22 @@ export default function RecipeDetailScreen({ navigation, route }) {
             <MetaItem
               label="Rating"
               value={`${(Number(recipe.rating) || 0).toFixed(1)} / 5`}
+              fs={fs}
             />
-            <MetaItem label="Time" value={`${recipe.timeMinutes} mins`} />
-            <MetaItem label="Servings" value={`${Number(baseRecipeData.servings) || 1}`} />
-            <MetaItem label="Difficulty" value={recipe.difficulty} />
+            <MetaItem label="Time" value={`${recipe.timeMinutes} mins`} fs={fs} />
+            <MetaItem label="Servings" value={`${Number(baseRecipeData.servings) || 1}`} fs={fs} />
+            <MetaItem label="Difficulty" value={recipe.difficulty} fs={fs} />
           </View>
         </View>
 
         <View style={styles.sectionPad}>
           <View style={styles.scaleCard}>
-            <Text style={styles.scaleTitle}>Serving scale</Text>
+            <Text style={[styles.scaleTitle, { fontSize: fs(14) }]}>Serving scale</Text>
             <View style={styles.pickerShell}>
               <Picker
                 selectedValue={scaleValue}
                 onValueChange={(v) => handleScaleChange(Number(v))}
-                style={{ minHeight: 48 }}
+                style={{ minHeight: sh(48) }}
                 accessibilityLabel="Serving scale"
               >
                 {SERVING_SCALE_OPTIONS.map((opt) => (
@@ -979,14 +997,14 @@ export default function RecipeDetailScreen({ navigation, route }) {
             </View>
 
             <View style={styles.servingsBlock}>
-              <Text style={styles.servingsNumber}>{displayedServings}</Text>
-              <Text style={styles.servingsLabel}>servings</Text>
+              <Text style={[styles.servingsNumber, { fontSize: fs(24) }]}>{displayedServings}</Text>
+              <Text style={[styles.servingsLabel, { fontSize: fs(16) }]}>servings</Text>
             </View>
 
             {isScaling ? (
               <View style={styles.scalingRow}>
-                <ActivityIndicator size="small" color={C.primary} />
-                <Text style={styles.scalingText}>Updating quantities...</Text>
+                <LoadingSpinner size="small" color={C.primary} />
+                <Text style={[styles.scalingText, { fontSize: fs(14) }]}>Updating quantities...</Text>
               </View>
             ) : null}
           </View>
@@ -1001,10 +1019,18 @@ export default function RecipeDetailScreen({ navigation, route }) {
                   <Pressable
                     key={tab}
                     onPress={() => setActiveTab(tab)}
-                    style={[styles.tabCell, selected ? styles.tabCellActive : styles.tabCellInactive]}
+                    style={[
+                      styles.tabCell,
+                      selected ? styles.tabCellActive : styles.tabCellInactive,
+                      { minHeight: sh(44) },
+                    ]}
                   >
                     <Text
-                      style={[styles.tabCellText, selected ? styles.tabCellTextActive : styles.tabCellTextInactive]}
+                      style={[
+                        styles.tabCellText,
+                        { fontSize: fs(14) },
+                        selected ? styles.tabCellTextActive : styles.tabCellTextInactive,
+                      ]}
                       numberOfLines={1}
                     >
                       {tab === "ingredients"
@@ -1022,15 +1048,17 @@ export default function RecipeDetailScreen({ navigation, route }) {
           </View>
 
           <View style={styles.reviewComposerCard}>
-            <Text style={styles.reviewComposerTitle}>Your review</Text>
-            <Text style={styles.reviewComposerHint}>Choose stars and write a short comment.</Text>
+            <Text style={[styles.reviewComposerTitle, { fontSize: fs(18) }]}>Your review</Text>
+            <Text style={[styles.reviewComposerHint, { fontSize: fs(13) }]}>
+              Choose stars and write a short comment.
+            </Text>
             <View style={styles.reviewStarsWrap}>
               <StarRating
                 rating={Number(reviewRating) || 0}
                 maxStars={5}
-                starSize={30}
-                color="#F59E0B"
-                emptyColor="#D1D5DB"
+                starSize={fs(30)}
+                color={colors.warning}
+                emptyColor={colors.borderStrong}
                 enableHalfStar={false}
                 onChange={(value) => setReviewRating(Math.round(value))}
                 enableSwiping={false}
@@ -1040,38 +1068,41 @@ export default function RecipeDetailScreen({ navigation, route }) {
               value={reviewDraft}
               onChangeText={setReviewDraft}
               placeholder="Share your experience with this recipe..."
-              placeholderTextColor="#94A3B8"
-              style={styles.reviewInput}
+              placeholderTextColor={colors.textSlate400}
+              style={[styles.reviewInput, { fontSize: fs(15), minHeight: sh(96) }]}
               multiline
               maxLength={1200}
               textAlignVertical="top"
             />
-            <Text style={styles.reviewInputCounter}>{reviewDraft.trim().length}/1200</Text>
-            <Pressable
+            <Text style={[styles.reviewInputCounter, { fontSize: fs(12) }]}>
+              {reviewDraft.trim().length}/1200
+            </Text>
+            <Button
+              label="Submit review"
               onPress={handleSubmitReview}
-              disabled={isSubmittingReview}
-              style={[styles.reviewSubmitBtn, isSubmittingReview ? styles.reviewSubmitBtnDisabled : null]}
-            >
-              {isSubmittingReview ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.reviewSubmitBtnText}>Submit review</Text>
-              )}
-            </Pressable>
+              loading={isSubmittingReview}
+              style={[styles.reviewSubmitBtn, { minHeight: sh(44) }]}
+              textStyle={[styles.reviewSubmitBtnText, { fontSize: fs(15) }]}
+            />
           </View>
 
           <View style={styles.reviewListCard}>
             <View style={styles.reviewListHeader}>
-              <Text style={styles.reviewListTitle}>Community reviews</Text>
-              <Text style={styles.reviewListCount}>{reviewItems.length}</Text>
+              <Text style={[styles.reviewListTitle, { fontSize: fs(18) }]}>Community reviews</Text>
+              <Text style={[styles.reviewListCount, { fontSize: fs(13) }]}>{reviewItems.length}</Text>
             </View>
             {isReviewsLoading ? (
               <View style={styles.reviewListLoading}>
-                <ActivityIndicator size="small" color={C.primary} />
-                <Text style={styles.reviewListLoadingText}>Loading reviews...</Text>
+                <LoadingSpinner size="small" color={C.primary} />
+                <Text style={[styles.reviewListLoadingText, { fontSize: fs(14) }]}>
+                  Loading reviews...
+                </Text>
               </View>
             ) : reviewItems.length === 0 ? (
-              <Text style={styles.reviewEmptyText}>No reviews yet. Be the first to leave one.</Text>
+              <EmptyState
+                message="No reviews yet. Be the first to leave one."
+                style={styles.reviewEmptyState}
+              />
             ) : (
               reviewItems.map((item, index) => (
                 <View
@@ -1083,15 +1114,19 @@ export default function RecipeDetailScreen({ navigation, route }) {
                 >
                   <View style={styles.reviewItemTop}>
                     <View style={styles.reviewAuthorWrap}>
-                      <Ionicons name="person-circle-outline" size={18} color={C.slate600} />
-                      <Text style={styles.reviewAuthor} numberOfLines={1}>
+                      <Ionicons name="person-circle-outline" size={fs(18)} color={C.slate600} />
+                      <Text style={[styles.reviewAuthor, { fontSize: fs(14) }]} numberOfLines={1}>
                         {item.userName || "NutriHelp user"}
                       </Text>
                     </View>
-                    <Text style={styles.reviewDate}>{formatReviewDate(item.createdAt)}</Text>
+                    <Text style={[styles.reviewDate, { fontSize: fs(12) }]}>
+                      {formatReviewDate(item.createdAt)}
+                    </Text>
                   </View>
-                  <Text style={styles.reviewStarsText}>{"★".repeat(Math.max(0, Math.min(5, item.rating)))}</Text>
-                  <Text style={styles.reviewComment}>{item.comment}</Text>
+                  <Text style={[styles.reviewStarsText, { fontSize: fs(14) }]}>
+                    {"★".repeat(Math.max(0, Math.min(5, item.rating)))}
+                  </Text>
+                  <Text style={[styles.reviewComment, { fontSize: fs(15) }]}>{item.comment}</Text>
                 </View>
               ))
             )}
@@ -1104,9 +1139,9 @@ export default function RecipeDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   pageChrome: { flex: 1 },
-  scrollViewport: { backgroundColor: "#FFFFFF" },
+  scrollViewport: { backgroundColor: colors.white },
   flex1: { flex: 1 },
   scrollContent: { paddingBottom: 24 },
   heroPad: { paddingHorizontal: 18, paddingTop: 8 },
@@ -1116,7 +1151,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
   },
   heroPlaceholder: {
     height: 256,
@@ -1125,8 +1160,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#E5E7EB",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.border,
   },
   heroBackBtn: {
     position: "absolute",
@@ -1172,7 +1207,7 @@ const styles = StyleSheet.create({
     paddingRight: 4,
     fontSize: 30,
     fontWeight: "600",
-    color: "#253B63",
+    color: colors.textNavy,
   },
   shareBtn: {
     marginTop: 4,
@@ -1182,9 +1217,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
-    shadowColor: "#0F172A",
+    shadowColor: colors.textSlate,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -1206,8 +1241,8 @@ const styles = StyleSheet.create({
   badge: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
@@ -1221,7 +1256,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -1239,7 +1274,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 8,
     paddingVertical: 8,
@@ -1251,7 +1286,7 @@ const styles = StyleSheet.create({
     ...SURFACE_SHADOW,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -1268,7 +1303,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
   },
   servingsBlock: { marginTop: 12, alignItems: "center" },
@@ -1280,7 +1315,7 @@ const styles = StyleSheet.create({
     ...SURFACE_SHADOW,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 12,
   },
@@ -1288,7 +1323,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 4,
   },
@@ -1323,7 +1358,7 @@ const styles = StyleSheet.create({
   stepLabel: { fontSize: 16, fontWeight: "600", color: C.primary },
   stepTitle: { marginTop: 4, fontSize: 18, fontWeight: "600", color: C.slate800 },
   stepDesc: { marginTop: 4, fontSize: 16, lineHeight: 24, color: C.slate600 },
-  nutritionShell: { borderRadius: 12, backgroundColor: "#F9FAFB", padding: 12 },
+  nutritionShell: { borderRadius: 12, backgroundColor: colors.surfaceSoft, padding: 12 },
   nutritionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
   nutritionRowBorder: { borderBottomWidth: 1, borderBottomColor: C.gray300 },
   nutritionName: { fontSize: 16, color: C.slate600 },
@@ -1334,11 +1369,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     padding: 12,
   },
-  reviewComposerTitle: { fontSize: 18, fontWeight: "700", color: "#253B63" },
+  reviewComposerTitle: { fontSize: 18, fontWeight: "700", color: colors.textNavy },
   reviewComposerHint: { marginTop: 2, fontSize: 13, color: C.slate500 },
   reviewStarsWrap: { marginTop: 8, alignItems: "flex-start" },
   reviewInput: {
@@ -1346,8 +1381,8 @@ const styles = StyleSheet.create({
     minHeight: 96,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.surfaceBlueWash,
+    backgroundColor: colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
@@ -1368,20 +1403,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: C.primary,
   },
-  reviewSubmitBtnDisabled: {
-    opacity: 0.75,
-  },
   reviewSubmitBtnText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   reviewListCard: {
     ...SURFACE_SHADOW,
     marginTop: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EDF5",
+    borderColor: colors.surfaceBlueWash,
     backgroundColor: C.white,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -1391,7 +1423,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  reviewListTitle: { fontSize: 18, fontWeight: "700", color: "#253B63" },
+  reviewListTitle: { fontSize: 18, fontWeight: "700", color: colors.textNavy },
   reviewListCount: {
     minWidth: 26,
     textAlign: "center",
@@ -1399,8 +1431,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: C.primary,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
-    backgroundColor: "#EFF6FF",
+    borderColor: colors.surfaceInfoStrong,
+    backgroundColor: colors.surfaceBlue,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -1415,10 +1447,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: C.primary,
   },
-  reviewEmptyText: {
+  reviewEmptyState: {
     marginTop: 12,
-    fontSize: 14,
-    color: C.slate500,
+    paddingHorizontal: 0,
   },
   reviewItem: {
     marginTop: 12,
@@ -1426,7 +1457,7 @@ const styles = StyleSheet.create({
   },
   reviewItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.surfaceSlate,
   },
   reviewItemTop: {
     flexDirection: "row",
@@ -1453,7 +1484,7 @@ const styles = StyleSheet.create({
   reviewStarsText: {
     marginTop: 6,
     fontSize: 14,
-    color: "#F59E0B",
+    color: colors.warning,
     letterSpacing: 1.2,
   },
   reviewComment: {

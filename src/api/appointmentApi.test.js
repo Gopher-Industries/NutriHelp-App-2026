@@ -22,23 +22,22 @@ describe("appointmentApi", () => {
     jest.clearAllMocks();
   });
 
-  it("gets paginated appointments from /appointments/v2", async () => {
+  it("gets paginated appointments from /api/appointments/v2", async () => {
     mockBaseApi.get.mockResolvedValueOnce({ appointments: [] });
 
     await getAppointments({ page: 2, pageSize: 20, search: "gp" });
 
-    expect(mockBaseApi.get).toHaveBeenCalledWith("/appointments/v2", {
+    expect(mockBaseApi.get).toHaveBeenCalledWith("/api/appointments/v2", {
       query: { page: 2, pageSize: 20, search: "gp" },
     });
   });
 
-  it("creates appointment on /appointments/v2", async () => {
+  it("creates appointment on /api/appointments/v2", async () => {
     const payload = { title: "General Checkup" };
     mockBaseApi.post.mockResolvedValueOnce({ success: true });
 
     await createAppointment(payload);
-
-    expect(mockBaseApi.post).toHaveBeenCalledWith("/appointments/v2", payload);
+    expect(mockBaseApi.post).toHaveBeenCalledWith("/api/appointments/v2", payload);
   });
 
   it("updates appointment by id", async () => {
@@ -47,7 +46,7 @@ describe("appointmentApi", () => {
 
     await updateAppointment(11, payload);
 
-    expect(mockBaseApi.put).toHaveBeenCalledWith("/appointments/v2/11", payload);
+    expect(mockBaseApi.put).toHaveBeenCalledWith("/api/appointments/v2/11", payload);
   });
 
   it("cancels appointment by id", async () => {
@@ -55,6 +54,6 @@ describe("appointmentApi", () => {
 
     await cancelAppointment(11);
 
-    expect(mockBaseApi.delete).toHaveBeenCalledWith("/appointments/v2/11");
+    expect(mockBaseApi.delete).toHaveBeenCalledWith("/api/appointments/v2/11");
   });
 });

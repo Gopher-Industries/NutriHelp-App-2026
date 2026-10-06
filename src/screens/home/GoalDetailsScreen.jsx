@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import { getTodayIntakeLocal } from "../../api/waterIntakeApi";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { groupMealsByType } from "../meal/mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const CALORIE_TARGET = 2000;
 const PROTEIN_TARGET = 80;
 const WATER_TARGET = 8;
@@ -20,6 +23,7 @@ function toNumber(v) {
 
 export default function GoalDetailsScreen({ navigation }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [calories, setCalories] = useState(0);
   const [protein, setProtein] = useState(0);
@@ -71,25 +75,28 @@ export default function GoalDetailsScreen({ navigation }) {
   const progressPercent = Math.round(calorieProgress * 100);
 
   const metricItems = [
-    { label: "Calories remaining", value: `${caloriesRemaining} kcal`, color: "#1877F2" },
-    { label: "Protein consumed", value: `${protein} / ${PROTEIN_TARGET} g`, color: "#39D353" },
-    { label: "Water intake", value: `${water} / ${WATER_TARGET} glasses`, color: "#13B5EA" },
+    { label: "Calories remaining", value: `${caloriesRemaining} kcal`, color: colors.facebookBlue },
+    { label: "Protein consumed", value: `${protein} / ${PROTEIN_TARGET} g`, color: colors.successGithub },
+    { label: "Water intake", value: `${water} / ${WATER_TARGET} glasses`, color: colors.accentCyan },
   ];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color="#667085" />
-          <Text style={styles.backText}>Back</Text>
+        <Pressable
+          style={[styles.backButton, { minHeight: sh(44) }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={fs(22)} color={colors.textSecondaryAlt} />
+          <Text style={[styles.backText, { fontSize: fs(15) }]}>Back</Text>
         </Pressable>
-        <Text style={styles.logoText}>NutriHelp</Text>
+        <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Goal Progress</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { fontSize: fs(30) }]}>Goal Progress</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(16), lineHeight: fs(23) }]}>
           {loading
             ? "Loading today's progress..."
             : progressPercent >= 80
@@ -99,7 +106,7 @@ export default function GoalDetailsScreen({ navigation }) {
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color="#1877F2" />
+            <LoadingSpinner color={colors.facebookBlue} />
           </View>
         ) : (
           <>
@@ -112,30 +119,41 @@ export default function GoalDetailsScreen({ navigation }) {
                   ]}
                 />
                 <View style={styles.innerCircle}>
-                  <Text style={styles.ringValue}>{calories}</Text>
-                  <Text style={styles.ringUnit}>of {CALORIE_TARGET} kcal</Text>
+                  <Text style={[styles.ringValue, { fontSize: fs(34) }]}>{calories}</Text>
+                  <Text style={[styles.ringUnit, { fontSize: fs(16) }]}>
+                    of {CALORIE_TARGET} kcal
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.heroHeadline}>{progressPercent}% of your daily goal reached</Text>
+              <Text style={[styles.heroHeadline, { fontSize: fs(20) }]}>
+                {progressPercent}% of your daily goal reached
+              </Text>
             </View>
 
             {metricItems.map((item) => (
-              <View key={item.label} style={styles.metricCard}>
-                <View style={[styles.metricIconWrap, { backgroundColor: item.color }]}>
-                  <Ionicons name="flag-outline" size={20} color="#FFFFFF" />
+              <View key={item.label} style={[styles.metricCard, { minHeight: sh(72) }]}>
+                <View
+                  style={[
+                    styles.metricIconWrap,
+                    { backgroundColor: item.color, width: sh(42), height: sh(42), borderRadius: sh(21) },
+                  ]}
+                >
+                  <Ionicons name="flag-outline" size={fs(20)} color={colors.white} />
                 </View>
                 <View style={styles.metricBody}>
-                  <Text style={styles.metricLabel}>{item.label}</Text>
-                  <Text style={styles.metricValue}>{item.value}</Text>
+                  <Text style={[styles.metricLabel, { fontSize: fs(15) }]}>{item.label}</Text>
+                  <Text style={[styles.metricValue, { fontSize: fs(22) }]}>{item.value}</Text>
                 </View>
               </View>
             ))}
 
             <Pressable
-              style={styles.nutritionLink}
+              style={[styles.nutritionLink, { minHeight: sh(44) }]}
               onPress={() => navigation.navigate("NutritionSummaryScreen")}
             >
-              <Text style={styles.nutritionLinkText}>View Full Nutrition Summary →</Text>
+              <Text style={[styles.nutritionLinkText, { fontSize: fs(14) }]}>
+                View Full Nutrition Summary →
+              </Text>
             </Pressable>
           </>
         )}
@@ -145,7 +163,7 @@ export default function GoalDetailsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -153,20 +171,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: colors.surfaceGray,
   },
   backButton: { flexDirection: "row", alignItems: "center", width: 60 },
-  backText: { marginLeft: 4, fontSize: 15, color: "#667085" },
-  logoText: { fontSize: 14, fontWeight: "700", color: "#18233D" },
+  backText: { marginLeft: 4, color: colors.textSecondaryAlt },
+  logoText: { fontWeight: "700", color: colors.textPrimary },
   headerSpacer: { width: 60 },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { padding: 20, paddingBottom: 32 },
-  title: { fontSize: 30, fontWeight: "800", color: "#111111", marginBottom: 8 },
-  subtitle: { fontSize: 16, lineHeight: 23, color: "#555555", marginBottom: 20 },
+  title: { fontWeight: "800", color: colors.textNearBlack, marginBottom: 8 },
+  subtitle: { color: colors.textGray, marginBottom: 20 },
   loadingWrap: { alignItems: "center", paddingVertical: 60 },
   heroCard: {
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     borderRadius: 34,
     padding: 24,
     alignItems: "center",
@@ -177,9 +195,9 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 90,
     borderWidth: 16,
-    borderColor: "#D6D6D6",
-    borderTopColor: "#1877F2",
-    borderLeftColor: "#1877F2",
+    borderColor: colors.c_d6d6d6,
+    borderTopColor: colors.facebookBlue,
+    borderLeftColor: colors.facebookBlue,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 18,
@@ -192,33 +210,30 @@ const styles = StyleSheet.create({
     borderRadius: 90,
     borderWidth: 16,
     borderColor: "transparent",
-    borderTopColor: "#1877F2",
-    borderRightColor: "#1877F2",
+    borderTopColor: colors.facebookBlue,
+    borderRightColor: colors.facebookBlue,
   },
   innerCircle: { transform: [{ rotate: "20deg" }], alignItems: "center" },
-  ringValue: { fontSize: 34, fontWeight: "800", color: "#111111" },
-  ringUnit: { fontSize: 16, color: "#555555" },
-  heroHeadline: { fontSize: 20, fontWeight: "700", color: "#111111", textAlign: "center" },
+  ringValue: { fontWeight: "800", color: colors.textNearBlack },
+  ringUnit: { color: colors.textGray },
+  heroHeadline: { fontWeight: "700", color: colors.textNearBlack, textAlign: "center" },
   metricCard: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: colors.textNearBlack,
     padding: 16,
     marginBottom: 14,
   },
   metricIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
   },
   metricBody: { flex: 1 },
-  metricLabel: { fontSize: 15, color: "#555555", marginBottom: 4 },
-  metricValue: { fontSize: 22, fontWeight: "800", color: "#111111" },
+  metricLabel: { color: colors.textGray, marginBottom: 4 },
+  metricValue: { fontWeight: "800", color: colors.textNearBlack },
   nutritionLink: { alignItems: "center", paddingVertical: 12 },
-  nutritionLinkText: { fontSize: 14, fontWeight: "700", color: "#1877F2" },
+  nutritionLinkText: { fontWeight: "700", color: colors.facebookBlue },
 });

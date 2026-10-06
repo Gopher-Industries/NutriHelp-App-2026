@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -16,9 +15,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import mealPlanApi from "../../api/mealPlanApi";
 import recipeApi from "../../api/recipeApi";
+import Button from "../../components/common/Button";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { formatDisplayName, groupMealsByType, MEAL_TYPES, normalizeRecipe } from "./mealPlanUiHelpers";
 
+import { colors } from "../../theme";
 const FALLBACK_MEALS = [
   { id: "oatmeal", title: "Oatmeal", calories: 320 },
   { id: "greek-yogurt-bowl", title: "Greek Yogurt Bowl", calories: 280 },
@@ -28,9 +32,9 @@ const FALLBACK_MEALS = [
 ];
 
 const MEAL_ACCENTS = {
-  breakfast: "#F59E0B",
-  lunch: "#22C55E",
-  dinner: "#3B82F6",
+  breakfast: colors.warning,
+  lunch: colors.successBright,
+  dinner: colors.info,
 };
 
 function formatLongDate(value) {
@@ -42,41 +46,43 @@ function formatLongDate(value) {
   }).format(date);
 }
 
-function EmptyMealCard({ mealType, onAdd }) {
+function EmptyMealCard({ mealType, onAdd, fs, sh }) {
   return (
     <>
-      <View style={styles.emptyCard}>
-        <Text style={styles.emptyTitle}>Nothing planned yet</Text>
-        <Text style={styles.emptySubtitle}>
+      <View style={[styles.emptyCard, { minHeight: sh(98) }]}>
+        <Text style={[styles.emptyTitle, { fontSize: fs(16) }]}>Nothing planned yet</Text>
+        <Text style={[styles.emptySubtitle, { fontSize: fs(14) }]}>
           Add a meal for {formatDisplayName(mealType)}
         </Text>
       </View>
-      <Pressable style={styles.outlineAddButton} onPress={onAdd}>
-        <Text style={styles.outlineAddButtonText}>
-          + Add {formatDisplayName(mealType)}
-        </Text>
-      </Pressable>
+      <Button
+        label={`+ Add ${formatDisplayName(mealType)}`}
+        onPress={onAdd}
+        style={[styles.outlineAddButton, { minHeight: sh(48), height: undefined }]}
+        textStyle={[styles.outlineAddButtonText, { fontSize: fs(15) }]}
+      />
     </>
   );
 }
 
-function FilledMealCard({ recipe, accent, mealType }) {
+function FilledMealCard({ recipe, accent, mealType, fs, sh }) {
   return (
-    <View style={styles.filledCard}>
+    <View style={[styles.filledCard, { minHeight: sh(78) }]}>
       <View style={[styles.accentBar, { backgroundColor: accent }]} />
       <View style={styles.recipeTextWrap}>
-        <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
-        <Text style={[styles.recipeTypeLabel, { color: accent }]}>
+        <Text style={[styles.recipeTitle, { fontSize: fs(15) }]} numberOfLines={1}>{recipe.title}</Text>
+        <Text style={[styles.recipeTypeLabel, { color: accent, fontSize: fs(13) }]}>
           {formatDisplayName(mealType)}
         </Text>
       </View>
-      <Text style={styles.recipeCal}>{Math.round(recipe.calories || 0)} cal</Text>
+      <Text style={[styles.recipeCal, { fontSize: fs(14) }]}>{Math.round(recipe.calories || 0)} cal</Text>
     </View>
   );
 }
 
 export default function DailyPlanScreen({ navigation, route }) {
   const { user } = useUser();
+  const { fs, sh } = useAccessibility();
   const selectedDate = route?.params?.date || new Date().toISOString().slice(0, 10);
   const [groups, setGroups] = useState([]);
   const [draftMeals, setDraftMeals] = useState({});
@@ -218,17 +224,17 @@ export default function DailyPlanScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topRow}>
-          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color="#667085" />
-            <Text style={styles.backText}>Back</Text>
+          <Pressable style={[styles.backButton, { minHeight: sh(44) }]} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={fs(22)} color={colors.textSecondaryAlt} />
+            <Text style={[styles.backText, { fontSize: fs(16) }]}>Back</Text>
           </Pressable>
-          <Text style={styles.logoText}>NutriHelp</Text>
+          <Text style={[styles.logoText, { fontSize: fs(14) }]}>NutriHelp</Text>
         </View>
 
-        <Text style={styles.dayTitle}>
+        <Text style={[styles.dayTitle, { fontSize: fs(34) }]}>
           {new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(selectedDate))}
         </Text>
-        <Text style={styles.dayDate}>{formatLongDate(selectedDate)}</Text>
+        <Text style={[styles.dayDate, { fontSize: fs(16) }]}>{formatLongDate(selectedDate)}</Text>
 
         {MEAL_TYPES.map((mealType) => {
           const group = groupsByType.get(mealType);
@@ -241,31 +247,35 @@ export default function DailyPlanScreen({ navigation, route }) {
           return (
             <View key={mealType} style={styles.sectionBlock}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionLabel, { color: accent }]}>
+                <Text style={[styles.sectionLabel, { color: accent, fontSize: fs(18) }]}>
                   {formatDisplayName(mealType)}
                 </Text>
                 {isSaving && (
-                  <ActivityIndicator size="small" color={accent} style={styles.sectionSpinner} />
+                  <LoadingSpinner
+                    size="small"
+                    color={accent}
+                    style={styles.sectionSpinner}
+                  />
                 )}
               </View>
 
               {recipe ? (
                 <>
-                  <FilledMealCard recipe={recipe} accent={accent} mealType={mealType} />
-                  <Pressable
-                    style={[styles.solidAddButton, isSaving && styles.buttonDisabled]}
-                    onPress={() => !isSaving && openAddMeal(mealType)}
+                  <FilledMealCard recipe={recipe} accent={accent} mealType={mealType} fs={fs} sh={sh} />
+                  <Button
+                    label={`+ Add ${formatDisplayName(mealType)}`}
+                    onPress={() => openAddMeal(mealType)}
                     disabled={isSaving}
-                  >
-                    <Text style={styles.solidAddButtonText}>
-                      + Add {formatDisplayName(mealType)}
-                    </Text>
-                  </Pressable>
+                    style={[styles.solidAddButton, { minHeight: sh(48), height: undefined }]}
+                    textStyle={[styles.solidAddButtonText, { fontSize: fs(15) }]}
+                  />
                 </>
               ) : (
                 <EmptyMealCard
                   mealType={mealType}
                   onAdd={() => openAddMeal(mealType)}
+                  fs={fs}
+                  sh={sh}
                 />
               )}
             </View>
@@ -283,41 +293,46 @@ export default function DailyPlanScreen({ navigation, route }) {
           <Pressable style={styles.sheetBackdrop} onPress={() => setSheetVisible(false)} />
           <View style={styles.sheetContainer}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>
+            <Text style={[styles.sheetTitle, { fontSize: fs(18) }]}>
               Add {formatDisplayName(sheetMealType)}
             </Text>
 
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { fontSize: fs(16), minHeight: sh(48), height: undefined }]}
               placeholder="Search meals"
-              placeholderTextColor="#98A2B3"
+              placeholderTextColor={colors.textMutedAlt}
               value={searchText}
               onChangeText={setSearchText}
             />
 
             {recipesLoading ? (
-              <View style={styles.sheetLoading}>
-                <ActivityIndicator size="large" color="#2A78C5" />
-                <Text style={styles.sheetLoadingText}>Loading meals...</Text>
-              </View>
+              <LoadingSpinner
+                message="Loading meals..."
+                color={colors.primaryMuted}
+                style={styles.sheetLoading}
+                textStyle={[styles.sheetLoadingText, { fontSize: fs(14) }]}
+              />
             ) : (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {visibleOptions.length === 0 ? (
-                  <View style={styles.emptyResults}>
-                    <Text style={styles.emptyResultsText}>No meals found</Text>
-                  </View>
+                  <EmptyState message="No meals found" style={styles.emptyResults} />
                 ) : (
                   visibleOptions.map((meal) => (
-                    <View key={meal.id} style={styles.optionRow}>
+                    <View key={meal.id} style={[styles.optionRow, { minHeight: sh(68) }]}>
                       <View style={styles.optionInfo}>
-                        <Text style={styles.optionTitle}>{meal.title}</Text>
-                        <Text style={styles.optionCalories}>{Math.round(meal.calories || 0)} Cal</Text>
+                        <Text style={[styles.optionTitle, { fontSize: fs(16) }]}>{meal.title}</Text>
+                        <Text style={[styles.optionCalories, { fontSize: fs(14) }]}>
+                          {Math.round(meal.calories || 0)} Cal
+                        </Text>
                       </View>
                       <Pressable
-                        style={styles.optionAddButton}
+                        style={[
+                          styles.optionAddButton,
+                          { width: sh(32), height: sh(32), borderRadius: sh(16) },
+                        ]}
                         onPress={() => handleAddMeal(meal)}
                       >
-                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                        <Ionicons name="add" size={fs(18)} color={colors.white} />
                       </Pressable>
                     </View>
                   ))
@@ -332,8 +347,8 @@ export default function DailyPlanScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  screen: { flex: 1, backgroundColor: "#FFFFFF" },
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  screen: { flex: 1, backgroundColor: colors.white },
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32 },
   topRow: {
     flexDirection: "row",
@@ -348,22 +363,22 @@ const styles = StyleSheet.create({
   backText: {
     marginLeft: 6,
     fontSize: 16,
-    color: "#667085",
+    color: colors.textSecondaryAlt,
   },
   logoText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#18233D",
+    color: colors.textPrimary,
   },
   dayTitle: {
     fontSize: 34,
     fontWeight: "800",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 6,
   },
   dayDate: {
     fontSize: 16,
-    color: "#667085",
+    color: colors.textSecondaryAlt,
     marginBottom: 18,
   },
   sectionBlock: {
@@ -385,8 +400,8 @@ const styles = StyleSheet.create({
     minHeight: 78,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.borderSlate,
+    backgroundColor: colors.white,
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
@@ -405,7 +420,7 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 4,
   },
   recipeTypeLabel: {
@@ -414,15 +429,15 @@ const styles = StyleSheet.create({
   },
   recipeCal: {
     fontSize: 14,
-    color: "#9CA3AF",
+    color: colors.textMuted,
     marginRight: 14,
   },
   emptyCard: {
     minHeight: 98,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.borderSlate,
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -431,37 +446,37 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
     textAlign: "center",
   },
   solidAddButton: {
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },
   solidAddButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   outlineAddButton: {
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },
   outlineAddButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -476,7 +491,7 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     maxHeight: "62%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 18,
@@ -488,23 +503,23 @@ const styles = StyleSheet.create({
     width: 52,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "#D0D5DD",
+    backgroundColor: colors.c_d0d5dd,
     marginBottom: 16,
   },
   sheetTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#E17A00",
+    color: colors.warningOrange,
     marginBottom: 14,
   },
   searchInput: {
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: colors.borderSlate,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 10,
   },
   sheetLoading: {
@@ -514,7 +529,7 @@ const styles = StyleSheet.create({
   sheetLoadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
   },
   emptyResults: {
     alignItems: "center",
@@ -522,12 +537,12 @@ const styles = StyleSheet.create({
   },
   emptyResultsText: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
   },
   optionRow: {
     minHeight: 68,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: colors.border,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -540,18 +555,18 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#253B63",
+    color: colors.textNavy,
     marginBottom: 4,
   },
   optionCalories: {
     fontSize: 14,
-    color: "#98A2B3",
+    color: colors.textMutedAlt,
   },
   optionAddButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#2A78C5",
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, useColorScheme } from 'react-native';
 import { PolarChart, Pie } from 'victory-native';
 
-const DEFAULT_COLORS = ['#16a34a', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'];
+import { colors } from "../../theme";
+const DEFAULT_COLORS = [colors.successStrong, colors.warning, colors.info, colors.danger, colors.accentViolet];
 
 export default function NutritionPieChart({ data }) {
   const isDark = useColorScheme() === 'dark';
@@ -19,7 +20,7 @@ export default function NutritionPieChart({ data }) {
   return (
     <View 
       className={`rounded-2xl overflow-hidden ${isDark ? 'border border-slate-700' : 'border border-slate-200'}`}
-      style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}
+      style={{ backgroundColor: isDark ? colors.textSlate800 : colors.white }}
     >
       {/* Header */}
       <View className="px-5 pt-5 pb-2">
@@ -53,7 +54,7 @@ export default function NutritionPieChart({ data }) {
                 <View 
                   key={index} 
                   className="flex-row items-center mx-2 my-1.5 px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}
+                  style={{ backgroundColor: isDark ? colors.textSlate : colors.surface }}
                 >
                   <View style={{ backgroundColor: item.colour || DEFAULT_COLORS[index % DEFAULT_COLORS.length], width: 10, height: 10, borderRadius: 5, marginRight: 6 }} />
                   <Text className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>

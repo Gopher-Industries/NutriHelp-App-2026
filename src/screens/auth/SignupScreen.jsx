@@ -11,6 +11,7 @@ import {
 import { ApiError, toErrorMessage } from "../../api/baseApi";
 import { registerUser } from "../../api/authApi";
 import useFormValidation from "../../hooks/useFormValidation";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import useAppTheme from "../../hooks/useAppTheme";
 
 import {
@@ -45,6 +46,7 @@ const signupSchema = {
 };
 
 export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
+  const { fs, sh } = useAccessibility();
   const { colors } = useAppTheme();
 
   const [loading, setLoading] = useState(false);
@@ -122,6 +124,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
           <View
             style={[
               styles.successCircle,
+              { width: sh(120), height: sh(120) },
               {
                 borderColor: colors.successBackground,
               },
@@ -130,6 +133,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
             <Text
               style={[
                 styles.successTick,
+                { width: sh(56), height: sh(56), fontSize: fs(34), lineHeight: fs(54), },
                 {
                   backgroundColor: colors.success,
                   color: colors.primaryText,
@@ -143,6 +147,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
           <Text
             style={[
               styles.successTitle,
+              { fontSize: fs(24) },
               {
                 color: colors.success,
               },
@@ -154,6 +159,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
           <Text
             style={[
               styles.successMessage,
+              { fontSize: fs(14), lineHeight: fs(20) },
               {
                 color: colors.textSecondary,
               },
@@ -193,6 +199,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
               <Text
                 style={[
                   styles.title,
+                  { fontSize: fs(24) },
                   {
                     color: colors.text,
                   },
@@ -204,6 +211,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
               <Text
                 style={[
                   styles.subtitle,
+                  { fontSize: fs(13), lineHeight: fs(19) },
                   {
                     color: colors.textSecondary,
                   },
@@ -228,6 +236,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
                 <Text
                   style={[
                     styles.errorBoxText,
+                    { fontSize: fs(12) },
                     {
                       color: colors.error,
                     },
@@ -328,6 +337,7 @@ export default function SignupScreen({ goTo = (_nextScreen) => {} }) {
               <Text
                 style={[
                   styles.footerText,
+                  { fontSize: fs(12) },
                   {
                     color: colors.textSecondary,
                   },
@@ -372,16 +382,12 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "left",
-    fontSize: 24,
     fontWeight: "800",
   },
 
   subtitle: {
     marginTop: 8,
     textAlign: "left",
-    fontSize: 13,
-    lineHeight: 19,
-    maxWidth: 290,
   },
 
   errorBox: {
@@ -393,7 +399,6 @@ const styles = StyleSheet.create({
   },
 
   errorBoxText: {
-    fontSize: 12,
     fontWeight: "500",
   },
 
@@ -403,7 +408,6 @@ const styles = StyleSheet.create({
 
   footerText: {
     textAlign: "center",
-    fontSize: 12,
   },
 
   footerLinkDark: {
@@ -417,8 +421,6 @@ const styles = StyleSheet.create({
 
   successCircle: {
     alignSelf: "center",
-    width: 120,
-    height: 120,
     borderRadius: 999,
     borderWidth: 4,
     alignItems: "center",
@@ -427,18 +429,13 @@ const styles = StyleSheet.create({
   },
 
   successTick: {
-    width: 56,
-    height: 56,
     borderRadius: 999,
-    fontSize: 34,
     fontWeight: "800",
     textAlign: "center",
-    lineHeight: 54,
   },
 
   successTitle: {
     textAlign: "center",
-    fontSize: 24,
     fontWeight: "800",
   },
 
@@ -446,7 +443,5 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 24,
     textAlign: "center",
-    fontSize: 14,
-    lineHeight: 20,
   },
 });

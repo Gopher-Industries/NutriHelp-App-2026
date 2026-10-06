@@ -19,9 +19,9 @@ export default function HealthToolsScreen() {
   const userId = user?.id || null;
 
   return (
-    <ScrollView className="flex-1 bg-slate-50">
+    <ScrollView className="flex-1 bg-slate-50 dark:bg-[#0B1220]">
       <View className="p-4 pt-12">
-        <Text className="text-3xl font-black text-slate-900 mb-6">Health Tools</Text>
+        <Text className="text-3xl font-black text-slate-900 dark:text-slate-100 mb-6">Health Tools</Text>
         
         {/* MOB-FE05: WaterTracker on HealthToolsScreen */}
         <View className="mb-6">
@@ -31,10 +31,10 @@ export default function HealthToolsScreen() {
         {/* MOB-FE05: CalorieBarChart on HealthToolsScreen */}
         <View className="mb-6">
           <View className="flex-row items-center mb-2">
-            <Text className="text-xs font-bold text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">
+            <Text className="text-xs font-bold text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40 rounded-full px-2 py-0.5">
               DEMO
             </Text>
-            <Text className="text-xs text-slate-500 ml-2">
+            <Text className="text-xs text-slate-500 dark:text-slate-400 ml-2">
               Sample data — calorie tracking is not connected to live data yet.
             </Text>
           </View>
