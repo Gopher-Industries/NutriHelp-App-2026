@@ -2,6 +2,8 @@ import { createStackNavigator } from "@react-navigation/stack";
 
 import GoalDetailsScreen from "../screens/home/GoalDetailsScreen";
 import HomeScreen from "../screens/home/HomeScreen";
+import ElderlyHomeScreen from "../screens/home/ElderlyHomeScreen";
+import { useAccessibility } from "../context/AccessibilityContext";
 import HealthToolsScreen from "../screens/health/HealthToolsScreen";
 import WaterIntakeScreen from "../screens/health/WaterIntakeScreen";
 import MealPlanOverviewScreen from "../screens/home/MealPlanOverviewScreen";
@@ -14,11 +16,13 @@ import PlaceholderScreen from "./_PlaceholderScreen";
 
 const Stack = createStackNavigator();
 export default function HomeStack() {
+  const { elderlyModeEnabled } = useAccessibility();
+
   return (
     <Stack.Navigator initialRouteName="HomeScreen">
       <Stack.Screen
         name="HomeScreen"
-        component={HomeScreen}
+        component={elderlyModeEnabled ? ElderlyHomeScreen : HomeScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
