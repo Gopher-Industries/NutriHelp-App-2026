@@ -17,10 +17,10 @@ import {
 import Svg, { Circle } from "react-native-svg";
 
 import { getTodayIntakeLocal, saveTodayIntakeLocal } from "../api/waterIntakeApi";
+import { useNutritionTargets } from "../context/NutritionTargetsContext";
 import { useToast } from "../context/ToastContext";
 
 import { colors } from "../theme";
-const DAILY_GOAL_CUPS = 8;
 const REMINDERS_KEY = "nutrihelp.water.dailyReminders";
 const WATER_NOTIFICATION_KEY = "nutrihelp.water.notificationId";
 const WATER_CHANNEL_ID = "water-reminders";
@@ -122,7 +122,9 @@ function QuickAction({ label, onPress }) {
   );
 }
 
-export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
+export default function WaterTracker({ userId, dailyGoal }) {
+  const { waterTarget } = useNutritionTargets();
+  const goal = dailyGoal ?? waterTarget;
   const { showToast } = useToast();
   const [glasses, setGlasses] = useState(0);
   const [remindersEnabled, setRemindersEnabled] = useState(false);
@@ -149,12 +151,12 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
   }, [userId]);
 
   const progress = useMemo(
-    () => Math.min(Math.max(glasses / dailyGoal, 0), 1),
-    [glasses, dailyGoal]
+    () => Math.min(Math.max(glasses / goal, 0), 1),
+    [glasses, goal]
   );
 
   const persistIntake = async (nextGlasses) => {
-    const safeValue = Math.max(0, Math.min(nextGlasses, dailyGoal));
+    const safeValue = Math.max(0, Math.min(nextGlasses, goal));
     setGlasses(safeValue);
     await saveTodayIntakeLocal(userId, safeValue);
   };
@@ -191,7 +193,7 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
   };
 
   const pct = Math.round(progress * 100);
-  const remaining = Math.max(dailyGoal - glasses, 0);
+  const remaining = Math.max(goal - glasses, 0);
 
   return (
     <ScrollView
@@ -199,7 +201,7 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <ProgressRing current={glasses} goal={dailyGoal} />
+      <ProgressRing current={glasses} goal={goal} />
 
       <Text style={styles.statusTitle}>
         {pct >= 100 ? "Daily goal reached!" : `${pct}% of daily goal`}
@@ -225,11 +227,11 @@ export default function WaterTracker({ userId, dailyGoal = DAILY_GOAL_CUPS }) {
         </View>
 
         <Pressable
-          style={[styles.counterBtn, glasses >= dailyGoal && styles.counterBtnDisabled]}
+          style={[styles.counterBtn, glasses >= goal && styles.counterBtnDisabled]}
           onPress={() => adjustGlasses(1)}
-          disabled={glasses >= dailyGoal}
+          disabled={glasses >= goal}
         >
-          <Ionicons name="add" size={24} color={glasses >= dailyGoal ? colors.borderSlate : colors.primaryMuted} />
+          <Ionicons name="add" size={24} color={glasses >= goal ? colors.borderSlate : colors.primaryMuted} />
         </Pressable>
       </View>
 

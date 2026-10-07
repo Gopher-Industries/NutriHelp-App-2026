@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { UserProvider, useUser } from "../context/UserContext";
 import { AccessibilityProvider } from "../context/AccessibilityContext";
 import { HealthConditionsProvider } from "../context/HealthConditionsContext";
+import { NutritionTargetsProvider } from "../context/NutritionTargetsContext";
 import { ChatbotProvider } from "../context/ChatbotContext";
 import { ToastProvider } from "../context/ToastContext";
 
@@ -54,6 +55,7 @@ export default function AppNavigator() {
     <UserProvider>
       <AccessibilityProvider>
       <HealthConditionsProvider>
+      <NutritionTargetsProvider>
       <ChatbotProvider>
       <ToastProvider>
       <NavigationContainer theme={navTheme}>
@@ -68,6 +70,7 @@ export default function AppNavigator() {
       </NavigationContainer>
       </ToastProvider>
       </ChatbotProvider>
+      </NutritionTargetsProvider>
       </HealthConditionsProvider>
       </AccessibilityProvider>
     </UserProvider>

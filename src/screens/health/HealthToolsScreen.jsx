@@ -3,6 +3,7 @@ import { View, ScrollView, Text } from 'react-native';
 import WaterTracker from '../../components/WaterTracker';
 import CalorieBarChart from '../../components/charts/CalorieBarChart';
 import { useUser } from '../../context/UserContext';
+import { useNutritionTargets } from '../../context/NutritionTargetsContext';
 
 const MOCK_CALORIE_DATA = [
   { label: "Breakfast", intake: 450 },
@@ -14,6 +15,7 @@ const MOCK_CALORIE_DATA = [
 export default function HealthToolsScreen() {
   const { user } = useUser();
   const userId = user?.id || null;
+  const { waterTarget } = useNutritionTargets();
 
   return (
     <ScrollView className="flex-1 bg-slate-50">
@@ -22,7 +24,7 @@ export default function HealthToolsScreen() {
         
         {/* MOB-FE05: WaterTracker on HealthToolsScreen */}
         <View className="mb-6">
-          <WaterTracker userId={userId} dailyGoal={8} />
+          <WaterTracker userId={userId} dailyGoal={waterTarget} />
         </View>
 
         {/* MOB-FE05: CalorieBarChart on HealthToolsScreen */}

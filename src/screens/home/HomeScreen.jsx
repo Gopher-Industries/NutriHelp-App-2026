@@ -18,12 +18,11 @@ import EmptyState from "../../components/common/EmptyState";
 import { useAccessibility } from "../../context/AccessibilityContext";
 import { useUser } from "../../context/UserContext";
 import { useChatbot } from "../../context/ChatbotContext";
+import { useNutritionTargets } from "../../context/NutritionTargetsContext";
 import { getDailyMeals } from "../../utils/dailyMealsStorage";
 import { groupMealsByType, MEAL_TYPES } from "../meal/mealPlanUiHelpers";
 
 import { colors } from "../../theme";
-const CALORIE_TARGET = 2000;
-const WATER_TARGET = 8;
 const MEAL_TARGET = 3;
 
 const MEAL_ACCENTS_MAP = { breakfast: colors.warning, lunch: colors.successBright, dinner: colors.info };
@@ -181,6 +180,7 @@ function SkeletonCard() {
 export default function HomeScreen({ navigation }) {
   const { user } = useUser();
   const { openChatbot } = useChatbot();
+  const { calorieTarget, waterTarget } = useNutritionTargets();
   const { fs, sh } = useAccessibility();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({
@@ -324,7 +324,7 @@ export default function HomeScreen({ navigation }) {
             <StatCard
               icon="🔥"
               value={summary.calories}
-              maxValue={CALORIE_TARGET}
+              maxValue={calorieTarget}
               unit="kcal"
               label="Energy"
               accent={colors.warning}
@@ -335,7 +335,7 @@ export default function HomeScreen({ navigation }) {
             <StatCard
               icon="💧"
               value={summary.water}
-              maxValue={WATER_TARGET}
+              maxValue={waterTarget}
               unit="cups water"
               label="Hydration"
               accent={colors.primaryMutedAlt}

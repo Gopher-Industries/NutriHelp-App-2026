@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 
+import { useNutritionTargets } from "../../../context/NutritionTargetsContext";
 import Button from "../../../components/common/Button";
 import { useAccessibility } from "../../../context/AccessibilityContext";
 
@@ -233,10 +234,12 @@ function FieldLabel({ text, fs }) {
 }
 
 export default function PersonalisedPlanForm({ onSubmit, onBack }) {
+  const { calorieTarget: sharedCalorieTarget, setCalorieTarget: setSharedCalorieTarget } =
+    useNutritionTargets();
   const { fs, sh } = useAccessibility();
   const [dietType, setDietType] = useState("balanced");
   const [goal, setGoal] = useState("maintain weight");
-  const [calories, setCalories] = useState("1800");
+  const [calories, setCalories] = useState(String(sharedCalorieTarget));
   const [calorieError, setCalorieError] = useState("");
   const [cuisine, setCuisine] = useState("any");
 
@@ -271,6 +274,10 @@ export default function PersonalisedPlanForm({ onSubmit, onBack }) {
       return;
     }
     setCalorieError("");
+
+    // Submitting this form is the point the user commits to this calorie
+    // target, so this is where it becomes the app-wide shared value.
+    setSharedCalorieTarget(cal);
 
     const payload = {
       dietType,
